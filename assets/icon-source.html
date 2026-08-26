@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>icon</title></head>
+<body style="margin:0;background:#000;">
+<canvas id="c" width="1024" height="1024"></canvas>
+<script>
+const ctx = document.getElementById('c').getContext('2d');
+const S = 1024;
+
+// --- background: deep space gradient ---
+let g = ctx.createRadialGradient(S*0.32, S*0.28, 10, S*0.5, S*0.5, S*0.85);
+g.addColorStop(0, '#241a52');
+g.addColorStop(0.45, '#130d33');
+g.addColorStop(1, '#05040d');
+ctx.fillStyle = g;
+ctx.fillRect(0, 0, S, S);
+
+// soft nebula glows
+function glow(x, y, r, color, alpha) {
+  const rg = ctx.createRadialGradient(x, y, 0, x, y, r);
+  rg.addColorStop(0, color);
+  rg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = rg;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+  ctx.globalAlpha = 1;
+}
+glow(S*0.15, S*0.85, S*0.5, '#22d3ee', 0.18);
+glow(S*0.88, S*0.15, S*0.45, '#8b5cf6', 0.22);
+
+// stars
+function seededRandom(seed) { let x = Math.sin(seed) * 10000; return x - Math.floor(x); }
+for (let i = 0; i < 90; i++) {
+  const x = seededRandom(i*1.1) * S, y = seededRandom(i*2.7+3) * S;
+  const r = seededRandom(i*3.3+7) * 2.2 + 0.5;
+  ctx.globalAlpha = seededRandom(i*4.1+1) * 0.6 + 0.25;
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+}
+ctx.globalAlpha = 1;
+
+// --- ring (behind planet, back half) ---
+const cx = S*0.56, cy = S*0.58, planetR = S*0.245;
+function drawRing(alphaMul) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(-0.22);
+  ctx.scale(1, 0.34);
+  const ringGrad = ctx.createLinearGradient(-planetR*2.05, 0, planetR*2.05, 0);
+  ringGrad.addColorStop(0, 'rgba(139,92,246,0)');
+  ringGrad.addColorStop(0.15, `rgba(196,181,253,${0.85*alphaMul})`);
+  ringGrad.addColorStop(0.5, `rgba(139,92,246,${0.55*alphaMul})`);
+  ringGrad.addColorStop(0.85, `rgba(34,211,238,${0.8*alphaMul})`);
+  ringGrad.addColorStop(1, 'rgba(34,211,238,0)');
+  ctx.strokeStyle = ringGrad;
+  ctx.lineWidth = planetR*0.16;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, planetR*2.05, planetR*2.05, 0, 0, Math.PI*2);
+  ctx.stroke();
+  ctx.restore();
+}
+ctx.save();
+ctx.beginPath();
+ctx.rect(0, 0, S, cy);
+ctx.clip();
+drawRing(0.55);
+ctx.restore();
+
+// --- planet body ---
+const pg = ctx.createRadialGradient(cx - planetR*0.35, cy - planetR*0.4, planetR*0.1, cx, cy, planetR*1.05);
+pg.addColorStop(0, '#fffdf5');
+pg.addColorStop(0.45, '#ffe9a8');
+pg.addColorStop(0.75, '#f7b733');
+pg.addColorStop(1, '#c9781a');
+ctx.fillStyle = pg;
+ctx.beginPath(); ctx.arc(cx, cy, planetR, 0, Math.PI*2); ctx.fill();
+
+// terminator shading
+const shade = ctx.createRadialGradient(cx + planetR*0.55, cy + planetR*0.55, planetR*0.1, cx, cy, planetR*1.02);
+shade.addColorStop(0, 'rgba(90,40,10,0)');
+shade.addColorStop(1, 'rgba(50,15,50,0.55)');
+ctx.fillStyle = shade;
+ctx.beginPath(); ctx.arc(cx, cy, planetR, 0, Math.PI*2); ctx.fill();
+
+// front half of ring (over planet)
+ctx.save();
+ctx.beginPath();
+ctx.rect(0, cy, S, S-cy);
+ctx.clip();
+drawRing(1);
+ctx.restore();
+
+// rim light
+ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+ctx.lineWidth = 6;
+ctx.beginPath(); ctx.arc(cx, cy, planetR-3, -2.5, -0.6); ctx.stroke();
+
+// --- small merging moon with trail (upper-left, approaching) ---
+const mx = S*0.235, my = S*0.225, mr = S*0.052;
+for (let i = 0; i < 5; i++) {
+  const t = i/5;
+  const tx = mx + (cx-mx)*t*0.55, ty = my + (cy-my)*t*0.55;
+  ctx.globalAlpha = 0.5 - t*0.4;
+  ctx.fillStyle = '#8b5cf6';
+  ctx.beginPath(); ctx.arc(tx, ty, mr*(0.35-t*0.15), 0, Math.PI*2); ctx.fill();
+}
+ctx.globalAlpha = 1;
+const mg = ctx.createRadialGradient(mx-mr*0.3, my-mr*0.3, mr*0.1, mx, my, mr);
+mg.addColorStop(0, '#e9e6ff');
+mg.addColorStop(0.6, '#a78bfa');
+mg.addColorStop(1, '#5b21b6');
+ctx.fillStyle = mg;
+ctx.beginPath(); ctx.arc(mx, my, mr, 0, Math.PI*2); ctx.fill();
+
+console.log('done');
+</script>
+</body></html>

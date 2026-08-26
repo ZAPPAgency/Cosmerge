@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>share</title></head>
+<body style="margin:0;background:#000;">
+<canvas id="c" width="1200" height="630"></canvas>
+<script>
+const ctx = document.getElementById('c').getContext('2d');
+const W = 1200, H = 630;
+
+let g = ctx.createRadialGradient(W*0.78, H*0.4, 10, W*0.78, H*0.5, W*0.7);
+g.addColorStop(0, '#241a52');
+g.addColorStop(0.5, '#130d33');
+g.addColorStop(1, '#05040d');
+ctx.fillStyle = g;
+ctx.fillRect(0, 0, W, H);
+
+function seededRandom(seed) { let x = Math.sin(seed) * 10000; return x - Math.floor(x); }
+for (let i = 0; i < 70; i++) {
+  const x = seededRandom(i*1.1) * W, y = seededRandom(i*2.7+3) * H;
+  const r = seededRandom(i*3.3+7) * 2 + 0.5;
+  ctx.globalAlpha = seededRandom(i*4.1+1) * 0.6 + 0.2;
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+}
+ctx.globalAlpha = 1;
+
+// planet on the right
+const cx = W*0.79, cy = H*0.52, planetR = H*0.34;
+function drawRing(alphaMul) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(-0.22);
+  ctx.scale(1, 0.34);
+  const ringGrad = ctx.createLinearGradient(-planetR*2.05, 0, planetR*2.05, 0);
+  ringGrad.addColorStop(0, 'rgba(139,92,246,0)');
+  ringGrad.addColorStop(0.15, `rgba(196,181,253,${0.85*alphaMul})`);
+  ringGrad.addColorStop(0.5, `rgba(139,92,246,${0.55*alphaMul})`);
+  ringGrad.addColorStop(0.85, `rgba(34,211,238,${0.8*alphaMul})`);
+  ringGrad.addColorStop(1, 'rgba(34,211,238,0)');
+  ctx.strokeStyle = ringGrad;
+  ctx.lineWidth = planetR*0.16;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, planetR*2.05, planetR*2.05, 0, 0, Math.PI*2);
+  ctx.stroke();
+  ctx.restore();
+}
+ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, cy); ctx.clip(); drawRing(0.55); ctx.restore();
+
+const pg = ctx.createRadialGradient(cx - planetR*0.35, cy - planetR*0.4, planetR*0.1, cx, cy, planetR*1.05);
+pg.addColorStop(0, '#fffdf5'); pg.addColorStop(0.45, '#ffe9a8'); pg.addColorStop(0.75, '#f7b733'); pg.addColorStop(1, '#c9781a');
+ctx.fillStyle = pg;
+ctx.beginPath(); ctx.arc(cx, cy, planetR, 0, Math.PI*2); ctx.fill();
+
+const shade = ctx.createRadialGradient(cx + planetR*0.55, cy + planetR*0.55, planetR*0.1, cx, cy, planetR*1.02);
+shade.addColorStop(0, 'rgba(90,40,10,0)'); shade.addColorStop(1, 'rgba(50,15,50,0.55)');
+ctx.fillStyle = shade;
+ctx.beginPath(); ctx.arc(cx, cy, planetR, 0, Math.PI*2); ctx.fill();
+
+ctx.save(); ctx.beginPath(); ctx.rect(0, cy, W, H-cy); ctx.clip(); drawRing(1); ctx.restore();
+
+ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 5;
+ctx.beginPath(); ctx.arc(cx, cy, planetR-3, -2.5, -0.6); ctx.stroke();
+
+// wordmark
+ctx.textBaseline = 'alphabetic';
+ctx.textAlign = 'left';
+ctx.fillStyle = '#ffffff';
+ctx.font = '800 92px -apple-system, "Helvetica Neue", Arial, sans-serif';
+ctx.shadowColor = 'rgba(139,92,246,0.5)'; ctx.shadowBlur = 30;
+ctx.fillText('Cosmerge', W*0.06, H*0.46);
+ctx.shadowBlur = 0;
+
+ctx.fillStyle = '#c9c3f0';
+ctx.font = '500 30px -apple-system, "Helvetica Neue", Arial, sans-serif';
+ctx.fillText('Fusionnez. Produisez. Explosez.', W*0.062, H*0.56);
+ctx.fillText('Recommencez plus fort.', W*0.062, H*0.615);
+
+console.log('done');
+</script>
+</body></html>

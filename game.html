@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Nebula Merge</title>
+<style>
+  :root{
+    --bg-deep:#05040d;
+    --bg-panel:#0d0a1f;
+    --bg-panel2:#14103080;
+    --accent:#8b5cf6;
+    --accent2:#22d3ee;
+    --stardust:#fbbf24;
+    --gems:#38bdf8;
+    --text:#f1eefc;
+    --text-dim:#9089b8;
+    --locked:#1a1730;
+    --danger:#f87171;
+    --radius:14px;
+    --safe-top:env(safe-area-inset-top,0px);
+    --safe-bottom:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;}
+  html,body{
+    margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    overflow:hidden;overscroll-behavior:none;touch-action:none;
+  }
+  #starsBg{position:fixed;inset:0;z-index:0;pointer-events:none;background:
+    radial-gradient(ellipse at 20% 10%, #1c1440 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 85%, #10203f 0%, transparent 55%),
+    var(--bg-deep);
+  }
+  .star{position:absolute;background:#fff;border-radius:50%;opacity:.6;animation:twinkle 3s ease-in-out infinite;}
+  @keyframes twinkle{0%,100%{opacity:.15}50%{opacity:.9}}
+
+  .app{
+    position:relative;z-index:1;height:100%;max-width:480px;margin:0 auto;
+    display:flex;flex-direction:column;
+    padding:calc(var(--safe-top) + 8px) 10px calc(var(--safe-bottom) + 8px);
+  }
+
+  .topbar{display:flex;gap:8px;justify-content:space-between;margin-bottom:8px;}
+  .currency{
+    flex:1;display:flex;align-items:center;gap:6px;background:var(--bg-panel);
+    border:1px solid #2a2450;border-radius:12px;padding:8px 10px;min-width:0;
+  }
+  .currency .icon{font-size:18px;flex-shrink:0;}
+  .currency .value{font-weight:700;font-size:16px;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;}
+  .currency.stardust .value{color:var(--stardust);}
+  .currency.gems .value{color:var(--gems);}
+  .currency .rate{font-size:11px;color:var(--text-dim);margin-left:auto;flex-shrink:0;}
+
+  .toolbar{display:flex;align-items:center;gap:8px;margin-bottom:8px;min-height:40px;}
+  .btn{
+    appearance:none;border:none;border-radius:12px;padding:10px 14px;font-size:14px;font-weight:700;
+    color:var(--text);background:#241e46;display:flex;align-items:center;gap:6px;
+    transition:transform .1s ease, opacity .15s ease;
+  }
+  .btn:active{transform:scale(.95);}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),#5b21b6);box-shadow:0 4px 14px #8b5cf655;}
+  .btn.primary .cost{color:#fde68a;}
+  .btn:disabled,.btn.disabled{opacity:.45;}
+  .hint{font-size:11px;color:var(--text-dim);flex:1;text-align:right;line-height:1.3;}
+
+  .grid{
+    flex:1;display:grid;grid-template-columns:repeat(6,1fr);gap:6px;align-content:center;
+    min-height:0;
+  }
+  .cell{
+    position:relative;aspect-ratio:1/1;border-radius:12px;display:flex;align-items:center;justify-content:center;
+    background:#100c26;border:1px solid #2a244a;overflow:visible;
+  }
+  .cell.empty{background:#0c0920;border-style:dashed;}
+  .cell.locked{background:var(--locked);border-style:solid;cursor:pointer;}
+  .cell.locked .lockLabel{display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--text-dim);font-size:10px;}
+  .cell.locked .lockLabel .emoji{font-size:16px;}
+  .cell.selectableEmpty{outline:2px dashed var(--accent2);outline-offset:-2px;}
+  .cell.selected{outline:2px solid var(--accent2);outline-offset:-2px;box-shadow:0 0 14px #22d3ee88;}
+
+  .tile{
+    position:absolute;inset:2px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    box-shadow:inset 0 0 10px rgba(255,255,255,.15), 0 2px 6px rgba(0,0,0,.4);
+    transition:transform .12s ease;touch-action:none;
+  }
+  .tile .emoji{font-size:22px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5));}
+  .tile .tierNum{position:absolute;bottom:2px;right:4px;font-size:8px;font-weight:700;color:rgba(255,255,255,.65);}
+  .tile.dragging{opacity:0;}
+  .tile.merging{animation:mergePop .28s ease;}
+  @keyframes mergePop{0%{transform:scale(1)}45%{transform:scale(1.35)}100%{transform:scale(1)}}
+  .tile.spawnIn{animation:spawnIn .25s ease;}
+  @keyframes spawnIn{0%{transform:scale(0)}100%{transform:scale(1)}}
+
+  .cdRing{position:absolute;inset:-2px;border-radius:12px;pointer-events:none;
+    background:conic-gradient(rgba(0,0,0,.55) calc(var(--p,0)*360deg), transparent 0deg);
+    -webkit-mask:radial-gradient(circle,transparent 55%,#000 56%);mask:radial-gradient(circle,transparent 55%,#000 56%);
+  }
+
+  .ghostTile{position:fixed;z-index:50;pointer-events:none;width:56px;height:56px;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.5);
+    transform:translate(-50%,-50%) scale(1.1);}
+  .ghostTile .emoji{font-size:26px;}
+
+  .particle{position:absolute;width:6px;height:6px;border-radius:50%;background:#fff;pointer-events:none;
+    animation:particleFly .5s ease-out forwards;}
+  @keyframes particleFly{
+    0%{opacity:1;transform:translate(0,0) scale(1);}
+    100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.3);}
+  }
+
+  .toastContainer{position:fixed;left:0;right:0;bottom:calc(var(--safe-bottom) + 14px);display:flex;flex-direction:column;
+    align-items:center;gap:6px;z-index:60;pointer-events:none;}
+  .toast{background:#1c1740ee;border:1px solid #3a3070;padding:8px 14px;border-radius:20px;font-size:13px;
+    box-shadow:0 4px 14px rgba(0,0,0,.4);animation:toastIn .18s ease, toastOut .3s ease 1.7s forwards;max-width:80vw;text-align:center;}
+  @keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes toastOut{to{opacity:0;transform:translateY(-6px)}}
+
+  .tutOverlay{position:fixed;inset:0;background:rgba(3,2,10,.82);z-index:100;display:flex;align-items:flex-end;
+    justify-content:center;padding:16px calc(16px + var(--safe-bottom)) calc(24px + var(--safe-bottom));}
+  .tutOverlay.hidden{display:none;}
+  .tutCard{background:var(--bg-panel);border:1px solid #3a3070;border-radius:16px;padding:16px;max-width:420px;width:100%;
+    box-shadow:0 10px 40px rgba(0,0,0,.5);}
+  .tutCard h3{margin:0 0 6px;font-size:16px;color:var(--accent2);}
+  .tutCard p{margin:0 0 14px;font-size:13px;line-height:1.5;color:var(--text-dim);}
+  .tutCard .tutBtns{display:flex;justify-content:space-between;gap:8px;}
+  .tutStep{font-size:11px;color:var(--text-dim);margin-bottom:4px;}
+
+  .tutorial-highlight{outline:3px solid var(--accent2)!important;outline-offset:2px;box-shadow:0 0 22px #22d3eecc!important;
+    position:relative;z-index:101;animation:pulseHi 1s ease-in-out infinite;}
+  @keyframes pulseHi{0%,100%{outline-color:#22d3ee}50%{outline-color:#8b5cf6}}
+
+  .fullMsg{position:fixed;top:calc(var(--safe-top) + 54px);left:50%;transform:translateX(-50%);
+    background:#3a1030dd;border:1px solid #f8717188;color:#fecaca;font-size:12px;padding:6px 12px;border-radius:10px;
+    z-index:40;pointer-events:none;}
+</style>
+</head>
+<body>
+<div id="starsBg"></div>
+<div class="app">
+  <div class="topbar">
+    <div class="currency stardust">
+      <span class="icon">✨</span>
+      <span class="value" id="stardustValue">0</span>
+      <span class="rate" id="stardustRate">+0/s</span>
+    </div>
+    <div class="currency gems">
+      <span class="icon">💎</span>
+      <span class="value" id="gemsValue">0</span>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <button class="btn primary" id="invokeBtn">
+      <span>Invoquer</span><span class="cost" id="invokeCost">15</span>✨
+    </button>
+    <div class="hint" id="selectionHint"></div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+</div>
+
+<div class="toastContainer" id="toastContainer"></div>
+
+<div class="tutOverlay hidden" id="tutOverlay">
+  <div class="tutCard">
+    <div class="tutStep" id="tutStep">Étape 1 / 3</div>
+    <h3 id="tutTitle">Bienvenue !</h3>
+    <p id="tutText">...</p>
+    <div class="tutBtns">
+      <button class="btn" id="tutSkip">Passer</button>
+      <button class="btn primary" id="tutNext">Suivant</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+// ---------- CONFIG ----------
+const COLS = 6, ROWS = 5, TOTAL = COLS*ROWS;
+const SAVE_KEY = "nebulaMerge_save_v1";
+const SAVE_VERSION = 1;
+const AUTOSAVE_MS = 10000;
+const AUTO_SPAWN_MS = 8000;
+const TAP_COOLDOWN_MS = 1000;
+const DRAG_THRESHOLD = 10;
+
+const TIERS = [
+  {n:1, name:"Météorite", emoji:"☄️", from:"#8a8a8a", to:"#2b2b2b"},
+  {n:2, name:"Lune", emoji:"🌙", from:"#e8e8f2", to:"#8a8aa0"},
+  {n:3, name:"Planète naine", emoji:"🪨", from:"#d3ac7a", to:"#7a5c3a"},
+  {n:4, name:"Planète", emoji:"🌍", from:"#63c4ff", to:"#1e5f8c"},
+  {n:5, name:"Géante gazeuse", emoji:"🪐", from:"#f6d365", to:"#b8722e"},
+  {n:6, name:"Étoile", emoji:"⭐", from:"#fff9c4", to:"#ff9800"},
+  {n:7, name:"Étoile à neutrons", emoji:"💫", from:"#e0f7ff", to:"#00b8d4"},
+  {n:8, name:"Trou noir", emoji:"🕳️", from:"#6a2bb8", to:"#000000"},
+  {n:9, name:"Galaxie", emoji:"🌌", from:"#ff7ce8", to:"#4a00e0"},
+  {n:10, name:"Univers", emoji:"✨", from:"#ffffff", to:"#ffd54f"},
+];
+const INITIAL_UNLOCKED = [7,8,9,10,11, 13,14,15,16,17];
+
+function tierProd(tier){ return 0.5 * Math.pow(2, tier-1); }
+function unlockCost(n){ return Math.round(50 * Math.pow(1.5, n)); }
+function invokeCost(k){ return Math.round(15 * Math.pow(1.12, k)); }
+
+// ---------- STATE ----------
+function defaultState(){
+  const unlocked = new Array(TOTAL).fill(false);
+  INITIAL_UNLOCKED.forEach(i=>unlocked[i]=true);
+  const grid = new Array(TOTAL).fill(null);
+  // seed two adjacent meteorites for the tutorial demo
+  grid[8] = {tier:1};
+  grid[9] = {tier:1};
+  return {
+    version: SAVE_VERSION,
+    stardust: 0,
+    gems: 0,
+    grid,
+    unlocked,
+    extraUnlockedCount: 0,
+    manualSpawnCount: 0,
+    tutorialSeen: false,
+    lastSaveTime: Date.now(),
+  };
+}
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(!raw) return defaultState();
+    const data = JSON.parse(raw);
+    if(!data || data.version !== SAVE_VERSION) return defaultState();
+    return data;
+  }catch(e){
+    console.warn("Save corrompue, nouvelle partie.", e);
+    return defaultState();
+  }
+}
+
+let state = loadState();
+let displayedStardust = state.stardust;
+
+function saveState(){
+  state.lastSaveTime = Date.now();
+  try{ localStorage.setItem(SAVE_KEY, JSON.stringify(state)); }catch(e){ console.warn("Sauvegarde impossible", e); }
+}
+
+// ---------- AUDIO ----------
+let audioCtx = null;
+function ensureAudio(){ if(!audioCtx){ try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } return audioCtx; }
+function beep(freq, dur, type, vol){
+  const ctx = ensureAudio(); if(!ctx) return;
+  const osc = ctx.createOscillator(); const gain = ctx.createGain();
+  osc.type = type || "sine"; osc.frequency.value = freq;
+  gain.gain.setValueAtTime(vol||0.08, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + (dur||0.2));
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.start(); osc.stop(ctx.currentTime + (dur||0.2));
+}
+function sfxMerge(newTier){ beep(300 + newTier*40, 0.22, "triangle", 0.09); }
+function sfxTap(){ beep(700, 0.08, "square", 0.04); }
+function sfxSpawn(){ beep(500, 0.12, "sine", 0.05); }
+function sfxError(){ beep(140, 0.18, "sawtooth", 0.05); }
+function sfxUnlock(){ beep(880, 0.25, "sine", 0.07); }
+
+// ---------- UTIL ----------
+function formatNumber(n){
+  if(n < 1000) return Math.floor(n).toString();
+  const units = ["K","M","B","T","Qa","Qi","Sx","Sp","Oc","No","De"];
+  let u = -1, num = n;
+  while(num >= 1000 && u < units.length-1){ num/=1000; u++; }
+  const digits = num<10?2:(num<100?1:0);
+  return num.toFixed(digits) + units[u];
+}
+function rowOf(i){ return Math.floor(i/COLS); }
+function colOf(i){ return i % COLS; }
+function areAdjacent(a,b){
+  const ra=rowOf(a),ca=colOf(a),rb=rowOf(b),cb=colOf(b);
+  return (ra===rb && Math.abs(ca-cb)===1) || (ca===cb && Math.abs(ra-rb)===1);
+}
+function totalProduction(){
+  let p = 0;
+  for(let i=0;i<TOTAL;i++){ const t = state.grid[i]; if(t) p += tierProd(t.tier); }
+  return p;
+}
+function emptyUnlockedIndices(){
+  const out = [];
+  for(let i=0;i<TOTAL;i++){ if(state.unlocked[i] && !state.grid[i]) out.push(i); }
+  return out;
+}
+
+// ---------- TOASTS ----------
+const toastContainer = document.getElementById("toastContainer");
+function toast(msg){
+  const el = document.createElement("div");
+  el.className = "toast"; el.textContent = msg;
+  toastContainer.appendChild(el);
+  setTimeout(()=> el.remove(), 2000);
+}
+
+// ---------- RENDER ----------
+const gridEl = document.getElementById("grid");
+const stardustValueEl = document.getElementById("stardustValue");
+const stardustRateEl = document.getElementById("stardustRate");
+const gemsValueEl = document.getElementById("gemsValue");
+const invokeBtn = document.getElementById("invokeBtn");
+const invokeCostEl = document.getElementById("invokeCost");
+const selectionHintEl = document.getElementById("selectionHint");
+
+let cellEls = [];
+let selectedIdx = null;
+let cooldownUntil = new Array(TOTAL).fill(0);
+
+function buildGridDom(){
+  gridEl.innerHTML = "";
+  cellEls = [];
+  for(let i=0;i<TOTAL;i++){
+    const cell = document.createElement("div");
+    cell.className = "cell";
+    cell.dataset.idx = i;
+    gridEl.appendChild(cell);
+    cellEls.push(cell);
+  }
+}
+buildGridDom();
+
+function tierStyle(tier){
+  const t = TIERS[tier-1];
+  return `background:radial-gradient(circle at 35% 30%, ${t.from}, ${t.to});`;
+}
+
+function renderCell(i, opts){
+  opts = opts || {};
+  const cell = cellEls[i];
+  const locked = !state.unlocked[i];
+  const tileData = state.grid[i];
+  cell.className = "cell";
+  cell.innerHTML = "";
+
+  if(locked){
+    cell.classList.add("locked");
+    const label = document.createElement("div");
+    label.className = "lockLabel";
+    const n = state.extraUnlockedCount;
+    label.innerHTML = `<span class="emoji">🔒</span><span>${formatNumber(unlockCost(n))}✨</span>`;
+    cell.appendChild(label);
+    return;
+  }
+
+  if(!tileData){
+    cell.classList.add("empty");
+    if(selectedIdx === i) cell.classList.add("selectableEmpty");
+    return;
+  }
+
+  cell.classList.add("filled");
+  if(selectedIdx === i) cell.classList.add("selected");
+
+  const tile = document.createElement("div");
+  tile.className = "tile";
+  if(opts.merged) tile.classList.add("merging");
+  if(opts.spawned) tile.classList.add("spawnIn");
+  tile.style.cssText += tierStyle(tileData.tier);
+  const emoji = document.createElement("div");
+  emoji.className = "emoji";
+  emoji.textContent = TIERS[tileData.tier-1].emoji;
+  const num = document.createElement("div");
+  num.className = "tierNum";
+  num.textContent = tileData.tier;
+  tile.appendChild(emoji); tile.appendChild(num);
+  cell.appendChild(tile);
+
+  const now = performance.now();
+  if(cooldownUntil[i] > now){
+    const ring = document.createElement("div");
+    ring.className = "cdRing";
+    const p = 1 - (cooldownUntil[i]-now)/TAP_COOLDOWN_MS;
+    ring.style.setProperty("--p", p.toFixed(3));
+    cell.appendChild(ring);
+  }
+}
+
+function renderAll(){
+  for(let i=0;i<TOTAL;i++) renderCell(i);
+  updateHeader();
+}
+
+let lastHeaderRender = {stardust:null, rate:null, gems:null, cost:null, disabled:null, hint:null};
+function updateHeader(){
+  const stardustStr = formatNumber(displayedStardust);
+  if(stardustStr !== lastHeaderRender.stardust){
+    stardustValueEl.textContent = stardustStr;
+    lastHeaderRender.stardust = stardustStr;
+  }
+  const rateStr = "+" + formatNumber(totalProduction()) + "/s";
+  if(rateStr !== lastHeaderRender.rate){
+    stardustRateEl.textContent = rateStr;
+    lastHeaderRender.rate = rateStr;
+  }
+  const gemsStr = formatNumber(state.gems);
+  if(gemsStr !== lastHeaderRender.gems){
+    gemsValueEl.textContent = gemsStr;
+    lastHeaderRender.gems = gemsStr;
+  }
+  const cost = invokeCost(state.manualSpawnCount);
+  const costStr = formatNumber(cost);
+  if(costStr !== lastHeaderRender.cost){
+    invokeCostEl.textContent = costStr;
+    lastHeaderRender.cost = costStr;
+  }
+  const disabled = state.stardust < cost;
+  if(disabled !== lastHeaderRender.disabled){
+    invokeBtn.classList.toggle("disabled", disabled);
+    lastHeaderRender.disabled = disabled;
+  }
+  let hint = "";
+  if(selectedIdx !== null){
+    hint = state.grid[selectedIdx] ? "Sélectionné : glissez/tapez une case adjacente identique" : "Case choisie pour la prochaine invocation";
+  }
+  if(hint !== lastHeaderRender.hint){
+    selectionHintEl.textContent = hint;
+    lastHeaderRender.hint = hint;
+  }
+}
+
+// ---------- PARTICLES ----------
+function spawnParticles(idx){
+  const cell = cellEls[idx];
+  for(let k=0;k<7;k++){
+    const p = document.createElement("div");
+    p.className = "particle";
+    const angle = Math.random()*Math.PI*2;
+    const dist = 20 + Math.random()*18;
+    p.style.setProperty("--dx", (Math.cos(angle)*dist)+"px");
+    p.style.setProperty("--dy", (Math.sin(angle)*dist)+"px");
+    p.style.left = "50%"; p.style.top = "50%";
+    cell.appendChild(p);
+    setTimeout(()=> p.remove(), 520);
+  }
+}
+
+// ---------- ACTIONS ----------
+function placeTile(idx, tier, spawned){
+  state.grid[idx] = {tier};
+  renderCell(idx, {spawned});
+  updateHeader();
+}
+
+function doMerge(fromIdx, toIdx){
+  const a = state.grid[fromIdx], b = state.grid[toIdx];
+  if(!a || !b || a.tier !== b.tier) return false;
+  if(a.tier >= 10){ toast("L'Univers ne peut pas fusionner davantage."); sfxError(); return false; }
+  const newTier = a.tier + 1;
+  state.grid[fromIdx] = null;
+  state.grid[toIdx] = {tier:newTier};
+  renderCell(fromIdx);
+  renderCell(toIdx, {merged:true});
+  spawnParticles(toIdx);
+  sfxMerge(newTier);
+  if(newTier === TIERS.length){
+    toast("Univers créé ! ✨ (Big Bang à venir dans une prochaine étape)");
+  }else{
+    toast(TIERS[newTier-1].name + " " + TIERS[newTier-1].emoji + " !");
+  }
+  updateHeader();
+  saveState();
+  return true;
+}
+
+function grantTapBonus(idx){
+  const now = performance.now();
+  if(cooldownUntil[idx] > now) return false;
+  const tile = state.grid[idx];
+  if(!tile) return false;
+  const bonus = 5 * tierProd(tile.tier);
+  state.stardust += bonus;
+  cooldownUntil[idx] = now + TAP_COOLDOWN_MS;
+  sfxTap();
+  renderCell(idx);
+  updateHeader();
+  return true;
+}
+
+function tryUnlock(idx){
+  if(state.unlocked[idx]) return;
+  const cost = unlockCost(state.extraUnlockedCount);
+  if(state.stardust < cost){
+    toast("Pas assez de Stardust (" + formatNumber(cost) + "✨ requis)");
+    sfxError();
+    return;
+  }
+  state.stardust -= cost;
+  state.unlocked[idx] = true;
+  state.extraUnlockedCount += 1;
+  sfxUnlock();
+  toast("Case débloquée !");
+  renderCell(idx);
+  updateHeader();
+  saveState();
+}
+
+function doInvoke(){
+  const cost = invokeCost(state.manualSpawnCount);
+  if(state.stardust < cost){
+    toast("Pas assez de Stardust pour invoquer.");
+    sfxError();
+    return;
+  }
+  let target = (selectedIdx !== null && state.unlocked[selectedIdx] && !state.grid[selectedIdx]) ? selectedIdx : null;
+  if(target === null){
+    const empties = emptyUnlockedIndices();
+    if(empties.length === 0){
+      toast("La grille est pleine !");
+      sfxError();
+      return;
+    }
+    target = empties[Math.floor(Math.random()*empties.length)];
+  }
+  state.stardust -= cost;
+  state.manualSpawnCount += 1;
+  placeTile(target, 1, true);
+  sfxSpawn();
+  clearSelection();
+  updateHeader();
+  saveState();
+}
+
+function clearSelection(){
+  const prev = selectedIdx;
+  selectedIdx = null;
+  if(prev !== null) renderCell(prev);
+  updateHeader();
+}
+
+function selectCell(idx){
+  const prev = selectedIdx;
+  selectedIdx = idx;
+  if(prev !== null && prev !== idx) renderCell(prev);
+  renderCell(idx);
+  updateHeader();
+}
+
+// ---------- TAP / DRAG INPUT ----------
+let pointerState = null; // {idx, startX, startY, dragging, ghostEl}
+
+function localPos(e){
+  if(e.touches && e.touches[0]) return {x:e.touches[0].clientX, y:e.touches[0].clientY};
+  return {x:e.clientX, y:e.clientY};
+}
+
+function cellIdxAtPoint(x,y){
+  const el = document.elementFromPoint(x,y);
+  if(!el) return null;
+  const cellEl = el.closest(".cell");
+  if(!cellEl) return null;
+  return parseInt(cellEl.dataset.idx, 10);
+}
+
+function createGhost(tier, x, y){
+  const g = document.createElement("div");
+  g.className = "ghostTile";
+  g.style.cssText += tierStyle(tier);
+  g.innerHTML = `<span class="emoji">${TIERS[tier-1].emoji}</span>`;
+  g.style.left = x+"px"; g.style.top = y+"px";
+  document.body.appendChild(g);
+  return g;
+}
+
+function onPointerDown(e){
+  const pos = localPos(e);
+  const idx = cellIdxAtPoint(pos.x, pos.y);
+  if(idx === null) return;
+  e.preventDefault();
+  ensureAudio();
+
+  if(!state.unlocked[idx]){
+    tryUnlock(idx);
+    return;
+  }
+
+  pointerState = {idx, startX:pos.x, startY:pos.y, dragging:false, ghostEl:null};
+
+  window.addEventListener("pointermove", onPointerMove);
+  window.addEventListener("pointerup", onPointerUp);
+  window.addEventListener("touchmove", onPointerMove, {passive:false});
+  window.addEventListener("touchend", onPointerUp);
+}
+
+function onPointerMove(e){
+  if(!pointerState) return;
+  const pos = localPos(e);
+  const dx = pos.x - pointerState.startX, dy = pos.y - pointerState.startY;
+  if(!pointerState.dragging && Math.hypot(dx,dy) > DRAG_THRESHOLD){
+    const tileData = state.grid[pointerState.idx];
+    if(!tileData) return; // can't drag an empty cell
+    pointerState.dragging = true;
+    cellEls[pointerState.idx].querySelector(".tile")?.classList.add("dragging");
+    pointerState.ghostEl = createGhost(tileData.tier, pos.x, pos.y);
+  }
+  if(pointerState.dragging && pointerState.ghostEl){
+    e.preventDefault && e.preventDefault();
+    pointerState.ghostEl.style.left = pos.x+"px";
+    pointerState.ghostEl.style.top = pos.y+"px";
+  }
+}
+
+function onPointerUp(e){
+  if(!pointerState) return;
+  window.removeEventListener("pointermove", onPointerMove);
+  window.removeEventListener("pointerup", onPointerUp);
+  window.removeEventListener("touchmove", onPointerMove);
+  window.removeEventListener("touchend", onPointerUp);
+
+  const pos = (e.changedTouches && e.changedTouches[0]) ?
+    {x:e.changedTouches[0].clientX, y:e.changedTouches[0].clientY} : localPos(e);
+  const { idx, dragging, ghostEl } = pointerState;
+  pointerState = null;
+
+  if(ghostEl) ghostEl.remove();
+  cellEls[idx].querySelector(".tile")?.classList.remove("dragging");
+
+  if(dragging){
+    const targetIdx = cellIdxAtPoint(pos.x, pos.y);
+    if(targetIdx !== null && targetIdx !== idx && state.unlocked[targetIdx] && state.grid[targetIdx] && areAdjacent(idx, targetIdx)){
+      doMerge(idx, targetIdx);
+    } else {
+      renderCell(idx);
+    }
+    clearSelection();
+    return;
+  }
+
+  // plain tap (no significant movement)
+  handleTap(idx);
+}
+
+function handleTap(idx){
+  const tileHere = state.grid[idx];
+
+  if(selectedIdx !== null && selectedIdx !== idx){
+    const selTile = state.grid[selectedIdx];
+    if(selTile && tileHere && areAdjacent(idx, selectedIdx) && selTile.tier === tileHere.tier){
+      doMerge(selectedIdx, idx);
+      clearSelection();
+      return;
+    }
+  }
+
+  if(selectedIdx === idx){
+    clearSelection();
+    if(tileHere) grantTapBonus(idx);
+    return;
+  }
+
+  selectCell(idx);
+  if(tileHere) grantTapBonus(idx);
+}
+
+document.addEventListener("pointerdown", onPointerDown, {passive:false});
+document.addEventListener("touchstart", onPointerDown, {passive:false});
+
+invokeBtn.addEventListener("click", (e)=>{ e.stopPropagation(); ensureAudio(); doInvoke(); });
+
+// ---------- AUTO SPAWN ----------
+let lastAutoSpawn = performance.now();
+function tickAutoSpawn(now){
+  if(now - lastAutoSpawn >= AUTO_SPAWN_MS){
+    lastAutoSpawn = now;
+    const empties = emptyUnlockedIndices();
+    if(empties.length > 0){
+      const idx = empties[Math.floor(Math.random()*empties.length)];
+      placeTile(idx, 1, true);
+      saveState();
+    }
+  }
+}
+
+// ---------- MAIN LOOP ----------
+let lastFrame = performance.now();
+function frame(now){
+  const dt = Math.min((now-lastFrame)/1000, 0.25);
+  lastFrame = now;
+
+  state.stardust += totalProduction() * dt;
+  displayedStardust += (state.stardust - displayedStardust) * Math.min(1, dt*8);
+  if(Math.abs(state.stardust - displayedStardust) < 0.05) displayedStardust = state.stardust;
+
+  tickAutoSpawn(now);
+
+  // refresh cooldown rings only while active
+  for(let i=0;i<TOTAL;i++){
+    if(cooldownUntil[i] > now && state.grid[i]) renderCell(i);
+  }
+
+  updateHeader();
+  requestAnimationFrame(frame);
+}
+
+// ---------- STARFIELD ----------
+function buildStars(){
+  const bg = document.getElementById("starsBg");
+  const count = 50;
+  for(let i=0;i<count;i++){
+    const s = document.createElement("div");
+    s.className = "star";
+    const size = Math.random()*2 + 1;
+    s.style.width = size+"px"; s.style.height = size+"px";
+    s.style.left = (Math.random()*100)+"%";
+    s.style.top = (Math.random()*100)+"%";
+    s.style.animationDelay = (Math.random()*3)+"s";
+    bg.appendChild(s);
+  }
+}
+
+// ---------- TUTORIAL ----------
+const TUT_STEPS = [
+  {title:"Invoquer", text:"Appuie sur « Invoquer » pour faire apparaître un Météorite ☄️ sur une case vide de la grille.", target:()=>invokeBtn},
+  {title:"Fusionner", text:"Glisse un astéroïde sur une case adjacente identique (ou tape les deux l'une après l'autre) pour les fusionner en une Lune 🌙.", target:()=>cellEls[8]},
+  {title:"Progresser", text:"Continue à fusionner pour atteindre Planète 🌍, Étoile ⭐, Trou noir 🕳️... jusqu'à l'Univers ✨ !", target:()=>gridEl},
+];
+let tutIndex = 0;
+const tutOverlay = document.getElementById("tutOverlay");
+const tutTitle = document.getElementById("tutTitle");
+const tutText = document.getElementById("tutText");
+const tutStepEl = document.getElementById("tutStep");
+const tutNext = document.getElementById("tutNext");
+const tutSkip = document.getElementById("tutSkip");
+let currentHighlight = null;
+
+function showTutStep(i){
+  if(currentHighlight) currentHighlight.classList.remove("tutorial-highlight");
+  const step = TUT_STEPS[i];
+  tutStepEl.textContent = `Étape ${i+1} / ${TUT_STEPS.length}`;
+  tutTitle.textContent = step.title;
+  tutText.textContent = step.text;
+  tutNext.textContent = (i === TUT_STEPS.length-1) ? "C'est parti !" : "Suivant";
+  currentHighlight = step.target();
+  if(currentHighlight) currentHighlight.classList.add("tutorial-highlight");
+}
+function endTutorial(){
+  if(currentHighlight) currentHighlight.classList.remove("tutorial-highlight");
+  tutOverlay.classList.add("hidden");
+  state.tutorialSeen = true;
+  saveState();
+}
+tutNext.addEventListener("click", (e)=>{
+  e.stopPropagation();
+  tutIndex++;
+  if(tutIndex >= TUT_STEPS.length){ endTutorial(); return; }
+  showTutStep(tutIndex);
+});
+tutSkip.addEventListener("click", (e)=>{ e.stopPropagation(); endTutorial(); });
+
+// ---------- AUTOSAVE ----------
+setInterval(saveState, AUTOSAVE_MS);
+window.addEventListener("pagehide", saveState);
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="hidden") saveState(); });
+
+// ---------- INIT ----------
+buildStars();
+renderAll();
+if(!state.tutorialSeen){
+  tutOverlay.classList.remove("hidden");
+  showTutStep(0);
+}
+requestAnimationFrame(frame);
+
+})();
+</script>
+</body>
+</html>
