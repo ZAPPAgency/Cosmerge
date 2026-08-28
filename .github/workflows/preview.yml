@@ -5,7 +5,10 @@ on:
   pull_request:
     types: [opened, reopened, synchronize, closed]
 
-concurrency: preview-${{ github.ref }}
+# Groupe partagé avec deploy.yml et branch-preview.yml (push sur gh-pages).
+concurrency:
+  group: gh-pages-deploy
+  cancel-in-progress: false
 
 permissions:
   contents: write

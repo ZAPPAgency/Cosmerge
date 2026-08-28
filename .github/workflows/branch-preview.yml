@@ -1,0 +1,85 @@
+name: Deploy branch previews
+
+# Publie une preview par branche sous gh-pages/branch-preview/<slug>, pour que
+# n'importe qui puisse tester une branche sans ouvrir de PR :
+#   https://zappagency.github.io/cosmerge/branch-preview/<slug>/
+# Les previews de PR (pr-preview/pr-N) restent gérées par preview.yml.
+
+on:
+  push:
+    branches-ignore: [main, gh-pages]
+  delete:
+
+# Groupe partagé avec deploy.yml et preview.yml : tous ces workflows poussent
+# sur gh-pages, il faut les sérialiser sinon les push se marchent dessus.
+concurrency:
+  group: gh-pages-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Slug de la branche
+        id: slug
+        run: |
+          slug=$(echo "$GITHUB_REF_NAME" \
+            | tr '[:upper:]' '[:lower:]' \
+            | sed 's|[^a-z0-9][^a-z0-9]*|-|g; s|^-*||; s|-*$||')
+          if [ -z "$slug" ]; then
+            echo "Nom de branche sans caractere utilisable : $GITHUB_REF_NAME" >&2
+            exit 1
+          fi
+          echo "value=$slug" >> "$GITHUB_OUTPUT"
+
+      - uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: www
+          branch: gh-pages
+          target-folder: branch-preview/${{ steps.slug.outputs.value }}
+          commit-message: "preview: ${{ github.ref_name }} (${{ github.sha }})"
+
+      - name: Lien de la preview
+        run: |
+          url="https://zappagency.github.io/cosmerge/branch-preview/${{ steps.slug.outputs.value }}/"
+          echo "### Preview de \`$GITHUB_REF_NAME\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "$url" >> "$GITHUB_STEP_SUMMARY"
+
+  cleanup:
+    if: github.event_name == 'delete' && github.event.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+
+      - name: Supprimer la preview de la branche effacée
+        env:
+          DELETED_BRANCH: ${{ github.event.ref }}
+        run: |
+          slug=$(echo "$DELETED_BRANCH" \
+            | tr '[:upper:]' '[:lower:]' \
+            | sed 's|[^a-z0-9][^a-z0-9]*|-|g; s|^-*||; s|-*$||')
+          # Un slug vide ferait un `git rm -r branch-preview/` : on s'arrete.
+          if [ -z "$slug" ]; then
+            echo "Slug vide pour $DELETED_BRANCH, rien a supprimer."
+            exit 0
+          fi
+          dir="branch-preview/$slug"
+          if [ ! -d "$dir" ]; then
+            echo "Pas de preview pour $DELETED_BRANCH, rien à faire."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git rm -r --quiet "$dir"
+          git commit -m "preview: suppression de $DELETED_BRANCH"
+          git push origin gh-pages
