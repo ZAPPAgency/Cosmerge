@@ -1,10 +1,9 @@
 name: Deploy branch previews
 
-# Publie une preview par branche sous gh-pages/branch-preview/<slug> :
+# Publie une preview par branche sous gh-pages/branch-preview/<slug>, pour que
+# n'importe qui puisse tester une branche sans ouvrir de PR :
 #   https://zappagency.github.io/cosmerge/branch-preview/<slug>/
-# Les branches ayant une PR ouverte sont ignorées ici : preview.yml s'en occupe
-# déjà (pr-preview/pr-N) et deux déploiements concurrents sur gh-pages pour la
-# même branche ne servent à rien.
+# Les previews de PR (pr-preview/pr-N) restent gérées par preview.yml.
 
 on:
   push:
