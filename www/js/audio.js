@@ -95,15 +95,58 @@ function sweep(freqFrom, freqTo, dur, type, vol) {
   osc.start(); osc.stop(ctx.currentTime + dur);
 }
 
+// Short burst of filtered white noise - the raw material for anything that
+// needs to sound physical/textured rather than tonal (impacts, explosions,
+// rocky crackle), which pure oscillators (beep/sweep) can't produce.
+function noiseBurst(dur, filterType, freqFrom, freqTo, vol) {
+  if (!Game.settings.sound) return;
+  const ctx = ensureAudio();
+  if (!ctx) return;
+  const bufferSize = Math.max(1, Math.floor(ctx.sampleRate * dur));
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+  const noise = ctx.createBufferSource();
+  noise.buffer = buffer;
+  const filter = ctx.createBiquadFilter();
+  filter.type = filterType || "lowpass";
+  filter.frequency.setValueAtTime(freqFrom, ctx.currentTime);
+  filter.frequency.exponentialRampToValueAtTime(Math.max(freqTo, 20), ctx.currentTime + dur);
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(vol, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+  noise.connect(filter); filter.connect(gain); gain.connect(masterOutGain);
+  noise.start(); noise.stop(ctx.currentTime + dur);
+}
+
 const Sfx = {
   click() { beep(920, 0.05, "sine", 0.035); },
   // A quick rising whoosh (two tiles converging) followed by a bright two-note
   // chime (the pop of becoming one) - deliberately distinct from tap/click,
   // and scales up a little with tier so late-game fusions feel more powerful.
+  // No longer wired to the default merge (see meteorImpact below), kept
+  // around as a candidate for a future "classic"/alternate merge-style
+  // option once several visual effects can be picked between.
   merge(newTier) {
     const base = 220 + newTier * 18;
     sweep(base * 0.55, base * 1.7, 0.15, "sine", 0.085);
     setTimeout(() => chime([base * 1.7, base * 2.5], 55, "triangle", 0.08), 140);
+  },
+  // Meteor-strike merge sound (paired with playMeteorMerge() in ui.js): an
+  // air-rushing whoosh as it falls, a low boom + explosion noise on impact,
+  // a touch of rocky crackle, then a quiet high sparkle - the stardust the
+  // impact releases. The 400ms delay before the boom MUST stay in sync with
+  // METEOR_FALL_MS in ui.js and the meteorFall CSS animation in style.css.
+  meteorImpact(newTier) {
+    noiseBurst(0.22, "bandpass", 3400, 650, 0.05);
+    sweep(1400, 500, 0.22, "sine", 0.02);
+    setTimeout(() => {
+      const base = 70 + Math.min(newTier, 10) * 2.5;
+      sweep(base * 2.3, base * 0.55, 0.22, "sine", 0.15);
+      noiseBurst(0.35, "lowpass", 2200, 110, 0.13);
+      noiseBurst(0.12, "highpass", 1600, 2600, 0.03);
+      setTimeout(() => chime([1320, 1760], 60, "triangle", 0.05), 110);
+    }, 400);
   },
   tap() { beep(700, 0.08, "square", 0.04); },
   spawn() { beep(500, 0.12, "sine", 0.05); },

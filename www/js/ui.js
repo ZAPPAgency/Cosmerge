@@ -211,6 +211,75 @@ function updateQuestNotifDot() {
   }
 }
 
+// Duration (ms) the falling-meteor sprite takes to reach the cell - MUST stay
+// in sync with the .42s->.4s `meteorFall` CSS animation (style.css) AND with
+// the setTimeout in Sfx.meteorImpact() (audio.js) that fires the boom, so the
+// visual landing and the impact sound line up.
+const METEOR_FALL_MS = 400;
+
+// Renders a stand-in tile of a specific tier at `idx` WITHOUT touching
+// state.grid - used to keep showing the pre-merge tile while the meteor is
+// still falling (state.grid[idx] already holds the merged/upgraded tile by
+// this point, see performMerge()). The real tile is revealed on impact via
+// the normal renderCell(idx, {merged:true}).
+function renderMergeStandIn(idx, tier) {
+  const cell = cellEls[idx];
+  cell.className = "cell filled";
+  cell.innerHTML = "";
+  const tile = document.createElement("div");
+  tile.className = "tile";
+  tile.style.cssText += tierStyle(tier);
+  const emoji = document.createElement("div");
+  emoji.className = "emoji";
+  emoji.textContent = tierEmoji(tier);
+  const num = document.createElement("div");
+  num.className = "tierNum";
+  num.textContent = tier;
+  tile.appendChild(emoji); tile.appendChild(num);
+  cell.appendChild(tile);
+}
+
+// Merge impact effect: a meteor falls onto the destination cell, then on
+// landing triggers a flash, an expanding shockwave ring, a small cell shake
+// and a burst of rocky debris - `onImpact` is called at the exact landing
+// moment so the caller can reveal the upgraded tile right as the meteor hits.
+function playMeteorMerge(idx, onImpact) {
+  const cell = cellEls[idx];
+  const meteor = document.createElement("div");
+  meteor.className = "meteor";
+  cell.appendChild(meteor);
+  setTimeout(() => {
+    meteor.remove();
+    onImpact();
+    cell.classList.add("impactShake");
+    setTimeout(() => cell.classList.remove("impactShake"), 340);
+    const flash = document.createElement("div");
+    flash.className = "impactFlash";
+    cell.appendChild(flash);
+    setTimeout(() => flash.remove(), 340);
+    const ring = document.createElement("div");
+    ring.className = "impactRing";
+    cell.appendChild(ring);
+    setTimeout(() => ring.remove(), 470);
+    spawnImpactDebris(idx);
+  }, METEOR_FALL_MS);
+}
+
+function spawnImpactDebris(idx) {
+  const cell = cellEls[idx];
+  for (let k = 0; k < 9; k++) {
+    const p = document.createElement("div");
+    p.className = "debrisChip";
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 22 + Math.random() * 26;
+    p.style.setProperty("--dx", (Math.cos(angle) * dist) + "px");
+    p.style.setProperty("--dy", (Math.sin(angle) * dist) + "px");
+    p.style.setProperty("--rot", (Math.random() * 360 - 180) + "deg");
+    cell.appendChild(p);
+    setTimeout(() => p.remove(), 560);
+  }
+}
+
 function spawnParticles(idx) {
   const cell = cellEls[idx];
   for (let k = 0; k < 7; k++) {

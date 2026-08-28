@@ -165,17 +165,22 @@ function attemptMerge(fromIdx, toIdx) {
   const result = performMerge(state, fromIdx, toIdx);
   if (!result) return;
   renderCell(fromIdx);
-  renderCell(toIdx, { merged: true });
-  spawnParticles(toIdx);
-  Sfx.merge(result.newTier);
-  HapticService.impact(result.newTier >= 8 ? "heavy" : "medium");
-  if (result.gemBonus) toast("+1 💎 Gem bonus !");
-  if (result.newTier === TIERS.length) toast("Univers créé ! 💥");
-  else toast(tierName(result.newTier) + " " + tierEmoji(result.newTier) + " !");
+  // Keep showing the pre-merge tile at toIdx while the meteor falls, and
+  // hold every reward/reveal cue (tile swap, toast, haptic, god-ritual
+  // popup) until the impact fires so nothing spoils or overlaps the fall.
+  renderMergeStandIn(toIdx, before.tier);
+  playMeteorMerge(toIdx, () => {
+    renderCell(toIdx, { merged: true });
+    HapticService.impact(result.newTier >= 8 ? "heavy" : "medium");
+    if (result.gemBonus) toast("+1 💎 Gem bonus !");
+    if (result.newTier === TIERS.length) toast("Univers créé ! 💥");
+    else toast(tierName(result.newTier) + " " + tierEmoji(result.newTier) + " !");
+    maybeOpenGodRitual();
+  });
+  Sfx.meteorImpact(result.newTier);
   updateHeader();
   updateFabs();
   saveState(state);
-  maybeOpenGodRitual();
   maybeOpenBigBangPrompt();
 }
 
