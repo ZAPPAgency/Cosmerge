@@ -158,16 +158,26 @@ function handleLockedTap(idx) {
   tryUnlock(idx);
 }
 
+// Merges landing within this window of each other count as a "streak" -
+// scales the impact effect and raises the reward chime's pitch a step each
+// time (see Sfx.meteorImpact in audio.js), so fast merge chains feel
+// increasingly rewarding. Resets the moment the player pauses.
+const MERGE_STREAK_WINDOW_MS = 900;
+
 function attemptMerge(fromIdx, toIdx) {
   const state = Game.state;
   const before = state.grid[fromIdx];
   if (before && before.tier >= TIERS.length) { Sfx.error(); toast("L'Univers ne peut pas fusionner davantage."); return; }
   const result = performMerge(state, fromIdx, toIdx);
   if (!result) return;
+  const now = performance.now();
+  Game.mergeStreak = (now - Game.lastMergeAt < MERGE_STREAK_WINDOW_MS) ? Game.mergeStreak + 1 : 0;
+  Game.lastMergeAt = now;
   renderCell(fromIdx);
-  // Keep showing the pre-merge tile at toIdx while the meteor falls, and
+  // Keep showing the pre-merge tile at toIdx while the spark flicks in, and
   // hold every reward/reveal cue (tile swap, toast, haptic, god-ritual
-  // popup) until the impact fires so nothing spoils or overlaps the fall.
+  // popup) until the impact fires - it's ~110ms later, so this is still
+  // effectively instant, just synced to the visual/audio landing.
   renderMergeStandIn(toIdx, before.tier);
   playMeteorMerge(toIdx, () => {
     renderCell(toIdx, { merged: true });
@@ -176,8 +186,8 @@ function attemptMerge(fromIdx, toIdx) {
     if (result.newTier === TIERS.length) toast("Univers créé ! 💥");
     else toast(tierName(result.newTier) + " " + tierEmoji(result.newTier) + " !");
     maybeOpenGodRitual();
-  });
-  Sfx.meteorImpact(result.newTier);
+  }, Game.mergeStreak);
+  Sfx.meteorImpact(result.newTier, Game.mergeStreak);
   updateHeader();
   updateFabs();
   saveState(state);

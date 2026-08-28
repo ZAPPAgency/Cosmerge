@@ -119,6 +119,11 @@ function noiseBurst(dur, filterType, freqFrom, freqTo, vol) {
   noise.start(); noise.stop(ctx.currentTime + dur);
 }
 
+// Ascending run used for the merge-streak reward chime in Sfx.meteorImpact -
+// a pleasant major-key climb (no dissonant steps) so it stays satisfying
+// even at the top of a long combo instead of turning shrill/random.
+const COMBO_NOTES = [523.25, 587.33, 659.25, 739.99, 830.61, 932.33, 1046.5, 1174.66];
+
 const Sfx = {
   click() { beep(920, 0.05, "sine", 0.035); },
   // A quick rising whoosh (two tiles converging) followed by a bright two-note
@@ -132,21 +137,29 @@ const Sfx = {
     sweep(base * 0.55, base * 1.7, 0.15, "sine", 0.085);
     setTimeout(() => chime([base * 1.7, base * 2.5], 55, "triangle", 0.08), 140);
   },
-  // Meteor-strike merge sound (paired with playMeteorMerge() in ui.js): an
-  // air-rushing whoosh as it falls, a low boom + explosion noise on impact,
-  // a touch of rocky crackle, then a quiet high sparkle - the stardust the
-  // impact releases. The 400ms delay before the boom MUST stay in sync with
-  // METEOR_FALL_MS in ui.js and the meteorFall CSS animation in style.css.
-  meteorImpact(newTier) {
-    noiseBurst(0.22, "bandpass", 3400, 650, 0.05);
-    sweep(1400, 500, 0.22, "sine", 0.02);
+  // Merge impact sound (paired with playMeteorMerge() in ui.js): a very
+  // short whoosh-in, then a punchy pitched "pop" + a brief crack of rocky
+  // texture on landing, then a bright rising note. Kept SHORT and snappy on
+  // purpose - this fires on every merge, often several per second, so it
+  // has to feel like an instant reaction to the tap, never a delay. The
+  // 110ms wait before the pop MUST stay in sync with METEOR_FALL_MS in
+  // ui.js and the meteorFall CSS animation in style.css.
+  //
+  // `streak` (0+, see MERGE_STREAK_WINDOW_MS in input.js) walks the reward
+  // note up COMBO_NOTES each time merges land back to back, the same trick
+  // Candy Crush/Two Dots-style combo chimes use - chaining merges quickly
+  // is what should feel the most addictive, so it's the one thing that
+  // audibly escalates instead of repeating identically every time.
+  meteorImpact(newTier, streak) {
+    noiseBurst(0.05, "bandpass", 2800, 1000, 0.045);
     setTimeout(() => {
-      const base = 70 + Math.min(newTier, 10) * 2.5;
-      sweep(base * 2.3, base * 0.55, 0.22, "sine", 0.15);
-      noiseBurst(0.35, "lowpass", 2200, 110, 0.13);
-      noiseBurst(0.12, "highpass", 1600, 2600, 0.03);
-      setTimeout(() => chime([1320, 1760], 60, "triangle", 0.05), 110);
-    }, 400);
+      const t = Math.min(newTier, 10);
+      sweep(520 + t * 9, 200 + t * 6, 0.09, "triangle", 0.12);
+      noiseBurst(0.07, "lowpass", 1800, 280, 0.07);
+      noiseBurst(0.05, "highpass", 2200, 3200, 0.02);
+      const note = COMBO_NOTES[Math.min(streak || 0, COMBO_NOTES.length - 1)];
+      setTimeout(() => chime([note, note * 1.19], 45, "triangle", 0.065), 40);
+    }, 110);
   },
   tap() { beep(700, 0.08, "square", 0.04); },
   spawn() { beep(500, 0.12, "sine", 0.05); },

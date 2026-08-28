@@ -88,8 +88,14 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .tile .emoji{font-size:22px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5));}
 .tile .tierNum{position:absolute;bottom:2px;right:4px;font-size:8px;font-weight:700;color:rgba(255,255,255,.65);}
 .tile.dragging{opacity:0;}
-.tile.merging{animation:mergePop .28s ease;}
-@keyframes mergePop{0%{transform:scale(1)}45%{transform:scale(1.35)}100%{transform:scale(1)}}
+.tile.merging{animation:mergePop .34s cubic-bezier(.22,1,.36,1);}
+@keyframes mergePop{
+  0%{transform:scale(.35) rotate(-6deg);}
+  42%{transform:scale(1.32) rotate(3deg);}
+  62%{transform:scale(.9) rotate(-2deg);}
+  82%{transform:scale(1.08) rotate(1deg);}
+  100%{transform:scale(1) rotate(0deg);}
+}
 .tile.spawnIn{animation:spawnIn .25s ease;}
 @keyframes spawnIn{0%{transform:scale(0)}100%{transform:scale(1)}}
 
@@ -108,46 +114,58 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 @keyframes floatUp{0%{opacity:0;transform:translate(-50%,6px) scale(.8);}20%{opacity:1;transform:translate(-50%,0) scale(1.05);}
   100%{opacity:0;transform:translate(-50%,-26px) scale(1);}}
 
-/* Merge impact effect (meteor strike) - see playMeteorMerge() in ui.js.
-   A rock falls in from off-cell, "lands" on the tile being merged into,
-   and the impact triggers a flash/shockwave/shake/debris burst timed to
-   land exactly when the upgraded tile is revealed underneath it. */
-.meteor{position:absolute;top:50%;left:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;
-  background:radial-gradient(circle at 35% 30%,#ffe3ae,var(--stardust) 55%,#7c3e0f 100%);
-  box-shadow:0 0 8px 2px rgba(251,191,36,.8),0 0 18px 6px rgba(251,146,36,.4);
-  animation:meteorFall .4s cubic-bezier(.6,0,.85,.35) forwards;z-index:6;pointer-events:none;}
+/* Merge impact effect - see playMeteorMerge() in ui.js. A fast bright spark
+   flicks in from off-cell (barely a "fall", more a jolt of energy arriving)
+   and lands almost instantly - the payoff (tile pop, flash, starburst,
+   ring, shake, sparks) has to feel INSTANT since this fires on every single
+   merge, often several per second. Nothing here should read as "waiting". */
+.meteor{position:absolute;top:50%;left:50%;width:15px;height:15px;margin:-7.5px 0 0 -7.5px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff6e0,var(--stardust) 50%,#c2622a 100%);
+  box-shadow:0 0 10px 3px rgba(251,191,36,.9),0 0 20px 7px rgba(251,146,36,.45);
+  animation:meteorFall .11s cubic-bezier(.5,0,.85,.4) forwards;z-index:6;pointer-events:none;}
 .meteor::before{content:"";position:absolute;right:100%;top:50%;transform:translateY(-50%);
-  width:30px;height:4px;border-radius:2px;
-  background:linear-gradient(90deg,transparent,rgba(251,191,36,.6) 55%,rgba(255,230,180,.9));filter:blur(.5px);}
+  width:38px;height:5px;border-radius:2px;
+  background:linear-gradient(90deg,transparent,rgba(251,191,36,.65) 50%,rgba(255,246,224,.95));filter:blur(.5px);}
 @keyframes meteorFall{
-  0%{transform:translate(-70px,-112px) rotate(-38deg) scale(.55);opacity:0;}
-  14%{opacity:1;}
-  78%{opacity:1;}
-  100%{transform:translate(0,0) rotate(-38deg) scale(1.1);opacity:0;}
+  0%{transform:translate(-40px,-58px) rotate(-38deg) scale(.6);opacity:0;}
+  20%{opacity:1;}
+  100%{transform:translate(0,0) rotate(-38deg) scale(1.05);opacity:.9;}
 }
+
+/* Bright starburst rays behind the ring/flash - the classic "satisfying pop"
+   accent (same trick as most match/merge games' candy/gem pops). */
+.impactBurst{position:absolute;inset:-35%;border-radius:50%;pointer-events:none;z-index:3;
+  background:repeating-conic-gradient(from 0deg,rgba(255,225,160,.6) 0deg 6deg,transparent 6deg 24deg);
+  animation:impactBurst .26s ease-out forwards;}
+@keyframes impactBurst{0%{opacity:0;transform:scale(.15) rotate(0deg);}30%{opacity:.95;}100%{opacity:0;transform:scale(1.7) rotate(22deg);}}
 
 .impactFlash{position:absolute;inset:0;border-radius:12px;pointer-events:none;z-index:4;
-  background:radial-gradient(circle,rgba(255,236,196,.9),rgba(251,146,36,.35) 45%,transparent 72%);
-  animation:impactFlash .32s ease-out forwards;}
-@keyframes impactFlash{0%{opacity:0;transform:scale(.4);}25%{opacity:1;}100%{opacity:0;transform:scale(1.15);}}
+  background:radial-gradient(circle,rgba(255,242,214,.95),rgba(251,146,36,.4) 45%,transparent 72%);
+  animation:impactFlash .22s ease-out forwards;}
+@keyframes impactFlash{0%{opacity:0;transform:scale(.3);}22%{opacity:1;}100%{opacity:0;transform:scale(1.25);}}
 
 .impactRing{position:absolute;left:50%;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;
-  border-radius:50%;border:2px solid rgba(251,191,36,.85);pointer-events:none;z-index:4;
-  animation:impactRing .45s ease-out forwards;}
-@keyframes impactRing{0%{transform:scale(.3);opacity:.9;}100%{transform:scale(5.5);opacity:0;}}
+  border-radius:50%;border:2px solid rgba(251,191,36,.9);pointer-events:none;z-index:4;
+  animation:impactRing .32s ease-out forwards;}
+@keyframes impactRing{0%{transform:scale(.3);opacity:1;}100%{transform:scale(6.5);opacity:0;}}
 
-.cell.impactShake{animation:impactShake .32s ease;}
+.cell.impactShake{animation:impactShake .2s ease;}
 @keyframes impactShake{
-  0%{transform:translate(0,0);}15%{transform:translate(-3px,2px);}30%{transform:translate(3px,-2px);}
-  45%{transform:translate(-2px,1px);}60%{transform:translate(2px,-1px);}75%{transform:translate(-1px,1px);}
-  100%{transform:translate(0,0);}
+  0%{transform:translate(0,0) scale(1);}20%{transform:translate(-4px,3px) scale(1.03);}
+  45%{transform:translate(3px,-2px) scale(1.01);}70%{transform:translate(-2px,1px);}
+  100%{transform:translate(0,0) scale(1);}
 }
 
+/* Mixed rock chips + bright star sparkles - reads as "the impact released
+   stardust", not just a plain rock explosion. */
 .debrisChip{position:absolute;left:50%;top:50%;width:5px;height:5px;border-radius:1px;pointer-events:none;
   background:linear-gradient(135deg,#ffcf85,#7c3e0f);
-  animation:debrisFly .5s ease-out forwards;}
+  animation:debrisFly .46s cubic-bezier(.2,.7,.4,1) forwards;}
+.debrisChip.spark{width:4px;height:4px;border-radius:50%;background:radial-gradient(circle,#fff9e6,var(--stardust));
+  box-shadow:0 0 4px 1px rgba(251,191,36,.7);}
 @keyframes debrisFly{0%{opacity:1;transform:translate(0,0) rotate(0deg) scale(1);}
-  100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--rot)) scale(.4);}}
+  60%{opacity:1;}
+  100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--rot)) scale(.35);}}
 
 .quickActions{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
 .fab{flex:0 0 auto;appearance:none;display:flex;align-items:center;gap:7px;padding:8px 13px;border-radius:12px;

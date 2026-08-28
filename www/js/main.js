@@ -49,6 +49,12 @@ function requestStorageAccessBestEffort() {
     skipCellArmed: false,
     swapArmed: false,
     swapFirstIdx: null,
+    // How many merges have landed within MERGE_STREAK_WINDOW_MS of each
+    // other (see attemptMerge in input.js) - scales the impact effect and
+    // raises the reward chime's pitch a step each time, so chaining merges
+    // fast feels increasingly rewarding rather than just repetitive.
+    mergeStreak: 0,
+    lastMergeAt: 0,
     pendingOfflineGain: null,
     bigBangPromptShown: hasUniverseTile(state), // don't re-prompt on reload if a Universe tile already existed last save
   });
