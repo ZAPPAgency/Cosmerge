@@ -1,7 +1,13 @@
 name: Deploy to Pages
+
+# Publie le contenu de www/ (le jeu) sur la branche gh-pages, pas la racine du
+# repo : à la racine il n'y a pas d'index.html, donc GitHub Pages retombait sur
+# le README. www/ doit rester à sa place pour le build Vite/Capacitor iOS
+# (voir vite.config.js), d'où la publication via une branche gh-pages.
 on:
   push:
-    branches: [master]
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -13,6 +19,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: . # ou ./dist si tu as un build
+          folder: www
           branch: gh-pages
           clean-exclude: pr-preview
