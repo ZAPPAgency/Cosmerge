@@ -1,0 +1,18 @@
+name: Deploy to Pages
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: . # ou ./dist si tu as un build
+          branch: gh-pages
+          clean-exclude: pr-preview
