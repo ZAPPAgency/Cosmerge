@@ -1,4 +1,6 @@
+# .github/workflows/preview.yml
 name: Deploy PR previews
+
 on:
   pull_request:
     types: [opened, reopened, synchronize, closed]
@@ -15,14 +17,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build
-        if: github.event.action != 'closed'
-        run: |
-          npm ci
-          npm run build
-
       - uses: rossjrw/pr-preview-action@v1
         with:
-          source-dir: ./dist
+          source-dir: .
           preview-branch: gh-pages
+          umbrella-dir: pr-preview
+          qr-code: true
           wait-for-pages-deployment: true
