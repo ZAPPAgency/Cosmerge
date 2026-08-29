@@ -186,7 +186,7 @@ function attemptMerge(fromIdx, toIdx) {
     if (result.newTier === TIERS.length) toast("Univers créé ! 💥");
     else toast(tierName(result.newTier) + " " + tierEmoji(result.newTier) + " !");
     maybeOpenGodRitual();
-  }, Game.mergeStreak);
+  }, Game.mergeStreak, result.newTier);
   Sfx.meteorImpact(result.newTier, Game.mergeStreak);
   updateHeader();
   updateFabs();
