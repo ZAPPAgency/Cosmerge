@@ -270,7 +270,10 @@ function restartAnim(el, cls) {
 // tier feel like a bigger deal than a routine tier-1 merge.
 function playMeteorMerge(idx, onImpact, streak, newTier) {
   streak = streak || 0;
-  const power = Math.min(1 + streak * 0.12 + Math.min(newTier || 1, 10) * 0.03, 2.1);
+  // Base bumped to 1.2 (was 1) so even a first, non-streak tier-1 merge -
+  // by far the most common case - reads as a bit more of an event, not
+  // just the streak/tier bonus on top of a modest baseline.
+  const power = Math.min(1.2 + streak * 0.14 + Math.min(newTier || 1, 10) * 0.035, 2.3);
   const cell = cellEls[idx];
   const glow = document.createElement("div");
   glow.className = "chargeGlow";
@@ -334,7 +337,7 @@ function spawnBurstRays(cell, power) {
 
 function spawnImpactDebris(idx, streak, power) {
   const cell = cellEls[idx];
-  const count = 12 + Math.min(streak || 0, 4) * 2;
+  const count = 14 + Math.min(streak || 0, 4) * 2;
   for (let k = 0; k < count; k++) {
     const p = document.createElement("div");
     p.className = "debrisChip" + (k % 3 !== 1 ? " spark" : "");
