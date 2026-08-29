@@ -148,8 +148,8 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
    version for genuinely big moments is what makes it register as one. */
 .screenFlash{position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:80;pointer-events:none;
   background:radial-gradient(circle at var(--fx,50%) var(--fy,45%),
-    rgba(255,247,227,calc(.5 * var(--fpower,1))),
-    rgba(251,191,36,calc(.2 * var(--fpower,1))) calc(6% + 7% * var(--fpower,1)),
+    rgba(255,247,227,calc(.7 * var(--fpower,1))),
+    rgba(251,191,36,calc(.3 * var(--fpower,1))) calc(6% + 7% * var(--fpower,1)),
     transparent calc(14% + 20% * var(--fpower,1)));
   animation:screenFlash .38s ease-out forwards;}
 @keyframes screenFlash{0%{opacity:0;}10%{opacity:1;}100%{opacity:0;}}

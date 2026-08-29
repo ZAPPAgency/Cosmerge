@@ -152,7 +152,7 @@ function updateHeader() {
   if (Game.skipCellArmed) hint = "Choisis une case verrouillée à débloquer avec des Gems";
   else if (Game.swapArmed) hint = Game.swapFirstIdx === null ? "Échange : choisis la première case" : "Échange : choisis la seconde case";
   else if (Game.selectedIdx !== null) {
-    hint = state.grid[Game.selectedIdx] ? "Sélectionné : glissez/tapez une case adjacente identique" : "Case choisie pour la prochaine invocation";
+    hint = "Case choisie pour la prochaine invocation";
   }
   if (hint !== lastHeaderRender.hint) { dom.selectionHint.textContent = hint; lastHeaderRender.hint = hint; }
 }
@@ -943,7 +943,7 @@ function renderSettingsPanel() {
 // ---------------- Tutorial ----------------
 const TUT_STEPS = [
   { title: "Invoquer", text: "Appuie sur « Invoquer » pour faire apparaître un Météorite ☄️ sur une case vide de la grille.", target: () => dom.invokeBtn },
-  { title: "Fusionner", text: "Glisse un astéroïde sur une case adjacente identique (ou tape les deux l'une après l'autre) pour les fusionner en une Lune 🌙.", target: () => cellEls[8] },
+  { title: "Fusionner", text: "Glisse un astéroïde sur une case adjacente identique pour les fusionner en une Lune 🌙.", target: () => cellEls[8] },
   { title: "Progresser", text: "Continue à fusionner pour atteindre Planète 🌍, Étoile ⭐, Trou noir 🕳️... jusqu'à l'Univers ✨, puis déclenche un Big Bang pour recommencer plus fort !", target: () => dom.grid },
 ];
 let tutIndex = 0;
