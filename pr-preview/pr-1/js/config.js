@@ -7,7 +7,12 @@ const SAVE_VERSION = 2;
 const AUTOSAVE_MS = 5000;
 const BASE_AUTO_SPAWN_MS = 8000;
 const MIN_AUTO_SPAWN_MS = 3000;
-const TAP_COOLDOWN_MS = 1000;
+// Per-cell cooldown between tap-bonus taps (grantTapBonus in input.js).
+// Was 1000ms - way too slow to feel like a "clicker" when tapping the same
+// tile repeatedly (which is exactly what the mechanic is for, see the
+// spawnFloatingBonus "+N ✨" popup); short enough now to chain taps freely
+// while still being a real cooldown, not literally unlimited.
+const TAP_COOLDOWN_MS = 150;
 const DRAG_THRESHOLD = 10;
 const BASE_OFFLINE_CAP_H = 8;
 const MAX_OFFLINE_CAP_H = 24;
