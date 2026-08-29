@@ -241,16 +241,35 @@ function renderMergeStandIn(idx, tier) {
   cell.appendChild(tile);
 }
 
-// Merge impact effect: a fast spark flicks onto the destination cell, then
-// on landing triggers a squash-bounce tile pop, a starburst, a flash, an
-// expanding shockwave ring, a snappy cell shake and a burst of debris/star
-// sparks - `onImpact` is called at the exact landing moment so the caller
-// can reveal the upgraded tile right as the impact lands. `streak` (0+,
-// how many merges have landed in quick succession - see attemptMerge in
-// input.js) scales the burst up a little so chaining merges fast feels
-// increasingly rewarding, not just repetitive.
-function playMeteorMerge(idx, onImpact, streak) {
+// Removes then re-adds a CSS class on the next frame to force the browser
+// to restart a class-driven animation even if the class was never removed
+// in between two calls (classList.add on an already-present class is a
+// no-op otherwise) - needed for the grid shake, which lives on one shared
+// element that can be re-triggered by merges landing back to back during a
+// streak, unlike every other effect here which spawns a fresh element.
+function restartAnim(el, cls) {
+  el.classList.remove(cls);
+  void el.offsetWidth; // force reflow
+  el.classList.add(cls);
+}
+
+// Merge impact effect - the whole point is to make landing a merge feel
+// like a real event, not a UI state change:
+//  - the tile itself bursts up well past the cell's bounds (elevated
+//    z-index so it isn't clipped by neighboring cells) before settling
+//    back into place (see .impactHero / mergePop in style.css)
+//  - the ENTIRE grid shakes, not just the one cell
+//  - a flash sweeps out from the impact point across the whole screen
+//  - a starburst + shockwave ring(s) + a spray of rock/star debris play
+//    out locally around the cell
+// `onImpact` fires at the exact landing moment so the caller can reveal
+// the upgraded tile right as it lands. `streak` (0+, merges landing within
+// MERGE_STREAK_WINDOW_MS of each other - see input.js) and `newTier` both
+// scale the intensity up, so both chaining merges fast AND reaching a big
+// tier feel like a bigger deal than a routine tier-1 merge.
+function playMeteorMerge(idx, onImpact, streak, newTier) {
   streak = streak || 0;
+  const power = Math.min(1 + streak * 0.12 + Math.min(newTier || 1, 10) * 0.03, 2.1);
   const cell = cellEls[idx];
   const meteor = document.createElement("div");
   meteor.className = "meteor";
@@ -258,38 +277,62 @@ function playMeteorMerge(idx, onImpact, streak) {
   setTimeout(() => {
     meteor.remove();
     onImpact();
-    cell.classList.add("impactShake");
-    setTimeout(() => cell.classList.remove("impactShake"), 220);
+
+    cell.classList.add("impactHero");
+    setTimeout(() => cell.classList.remove("impactHero"), 520);
+
+    restartAnim(dom.grid, "gridShake");
+    dom.grid.style.setProperty("--shakePower", power.toFixed(2));
+    setTimeout(() => dom.grid.classList.remove("gridShake"), 380);
+
+    const rect = cell.getBoundingClientRect();
+    const flash = document.createElement("div");
+    flash.className = "screenFlash";
+    flash.style.setProperty("--fx", (rect.left + rect.width / 2) + "px");
+    flash.style.setProperty("--fy", (rect.top + rect.height / 2) + "px");
+    flash.style.setProperty("--fpower", power.toFixed(2));
+    document.body.appendChild(flash);
+    setTimeout(() => flash.remove(), 420);
+
     const burst = document.createElement("div");
     burst.className = "impactBurst";
+    burst.style.setProperty("--burstPower", power.toFixed(2));
     cell.appendChild(burst);
-    setTimeout(() => burst.remove(), 280);
-    const flash = document.createElement("div");
-    flash.className = "impactFlash";
-    cell.appendChild(flash);
-    setTimeout(() => flash.remove(), 240);
-    const ring = document.createElement("div");
-    ring.className = "impactRing";
-    ring.style.transform = `scale(${1 + Math.min(streak, 4) * 0.08})`;
-    cell.appendChild(ring);
-    setTimeout(() => ring.remove(), 340);
-    spawnImpactDebris(idx, streak);
+    setTimeout(() => burst.remove(), 300);
+
+    const localFlash = document.createElement("div");
+    localFlash.className = "impactFlash";
+    cell.appendChild(localFlash);
+    setTimeout(() => localFlash.remove(), 260);
+
+    [0, 90].forEach((delay) => {
+      setTimeout(() => {
+        const ring = document.createElement("div");
+        ring.className = "impactRing";
+        ring.style.setProperty("--ringPower", power.toFixed(2));
+        cell.appendChild(ring);
+        setTimeout(() => ring.remove(), 420);
+      }, delay);
+    });
+
+    spawnImpactDebris(idx, streak, power);
   }, METEOR_FALL_MS);
 }
 
-function spawnImpactDebris(idx, streak) {
+function spawnImpactDebris(idx, streak, power) {
   const cell = cellEls[idx];
-  const count = 9 + Math.min(streak || 0, 4);
+  const count = 12 + Math.min(streak || 0, 4) * 2;
   for (let k = 0; k < count; k++) {
     const p = document.createElement("div");
-    p.className = "debrisChip" + (k % 3 === 0 ? " spark" : "");
+    p.className = "debrisChip" + (k % 3 !== 1 ? " spark" : "");
     const angle = Math.random() * Math.PI * 2;
-    const dist = 22 + Math.random() * 28;
+    const dist = (30 + Math.random() * 34) * power;
     p.style.setProperty("--dx", (Math.cos(angle) * dist) + "px");
     p.style.setProperty("--dy", (Math.sin(angle) * dist) + "px");
     p.style.setProperty("--rot", (Math.random() * 360 - 180) + "deg");
+    p.style.setProperty("--chipScale", (0.7 + Math.random() * 0.8).toFixed(2));
     cell.appendChild(p);
-    setTimeout(() => p.remove(), 500);
+    setTimeout(() => p.remove(), 560);
   }
 }
 

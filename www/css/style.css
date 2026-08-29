@@ -84,18 +84,28 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .cell.selected{outline:2px solid var(--accent2);outline-offset:-2px;box-shadow:0 0 14px #22d3ee88;}
 
 .tile{position:absolute;inset:2px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  box-shadow:inset 0 0 10px rgba(255,255,255,.15), 0 2px 6px rgba(0,0,0,.4);transition:transform .12s ease;touch-action:none;}
+  box-shadow:inset 0 0 10px rgba(255,255,255,.15), 0 2px 6px rgba(0,0,0,.4);transition:transform .12s ease;touch-action:none;
+  z-index:5;/* sits above the flash/burst glow (so it pops "out of" the light) but below the ring/debris flying past it */}
 .tile .emoji{font-size:22px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5));}
 .tile .tierNum{position:absolute;bottom:2px;right:4px;font-size:8px;font-weight:700;color:rgba(255,255,255,.65);}
 .tile.dragging{opacity:0;}
-.tile.merging{animation:mergePop .34s cubic-bezier(.22,1,.36,1);}
+/* Merging tile: elevated above neighboring cells (see .cell.impactHero
+   below) and given a big overshoot bounce so it visibly bursts out past
+   its own cell before settling back into place - the "hero" moment of
+   the merge, not just a bigger version of the idle tile. */
+.tile.merging{animation:mergePop .5s cubic-bezier(.2,1.4,.4,1);}
 @keyframes mergePop{
-  0%{transform:scale(.35) rotate(-6deg);}
-  42%{transform:scale(1.32) rotate(3deg);}
-  62%{transform:scale(.9) rotate(-2deg);}
-  82%{transform:scale(1.08) rotate(1deg);}
-  100%{transform:scale(1) rotate(0deg);}
+  0%{transform:scale(.3) rotate(-10deg);filter:brightness(1) drop-shadow(0 0 0 rgba(251,191,36,0));}
+  28%{transform:scale(2.05) rotate(6deg);filter:brightness(1.7) drop-shadow(0 0 20px rgba(251,191,36,.9));}
+  48%{transform:scale(1.55) rotate(-4deg);filter:brightness(1.35) drop-shadow(0 0 12px rgba(251,191,36,.65));}
+  68%{transform:scale(1.85) rotate(3deg);filter:brightness(1.45) drop-shadow(0 0 16px rgba(251,191,36,.75));}
+  85%{transform:scale(1.1) rotate(-1deg);filter:brightness(1.08);}
+  100%{transform:scale(1) rotate(0deg);filter:brightness(1) drop-shadow(0 0 0 rgba(251,191,36,0));}
 }
+/* Lifts the whole cell above its neighbors while its tile is mid-bounce
+   (see mergePop above) so the oversized tile isn't clipped/hidden behind
+   the next cells in DOM order - .cell already has overflow:visible. */
+.cell.impactHero{z-index:20;}
 .tile.spawnIn{animation:spawnIn .25s ease;}
 @keyframes spawnIn{0%{transform:scale(0)}100%{transform:scale(1)}}
 
@@ -132,40 +142,69 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
   100%{transform:translate(0,0) rotate(-38deg) scale(1.05);opacity:.9;}
 }
 
+/* A flash that sweeps out from the impact point across the ENTIRE screen
+   (position:fixed, not confined to the cell) - the single biggest lever
+   for a merge to actually register as an event rather than a UI tween.
+   --fx/--fy (viewport px, set by playMeteorMerge in ui.js) place the glow
+   at the exact cell that merged; --fpower scales it up for streaks/high
+   tiers. */
+.screenFlash{position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:80;pointer-events:none;
+  background:radial-gradient(circle at var(--fx,50%) var(--fy,45%),
+    rgba(255,247,227,calc(.6 * var(--fpower,1))),
+    rgba(251,191,36,calc(.22 * var(--fpower,1))) 32%,
+    transparent 62%);
+  animation:screenFlash .42s ease-out forwards;}
+@keyframes screenFlash{0%{opacity:0;}10%{opacity:1;}100%{opacity:0;}}
+
 /* Bright starburst rays behind the ring/flash - the classic "satisfying pop"
-   accent (same trick as most match/merge games' candy/gem pops). */
-.impactBurst{position:absolute;inset:-35%;border-radius:50%;pointer-events:none;z-index:3;
-  background:repeating-conic-gradient(from 0deg,rgba(255,225,160,.6) 0deg 6deg,transparent 6deg 24deg);
-  animation:impactBurst .26s ease-out forwards;}
-@keyframes impactBurst{0%{opacity:0;transform:scale(.15) rotate(0deg);}30%{opacity:.95;}100%{opacity:0;transform:scale(1.7) rotate(22deg);}}
-
-.impactFlash{position:absolute;inset:0;border-radius:12px;pointer-events:none;z-index:4;
-  background:radial-gradient(circle,rgba(255,242,214,.95),rgba(251,146,36,.4) 45%,transparent 72%);
-  animation:impactFlash .22s ease-out forwards;}
-@keyframes impactFlash{0%{opacity:0;transform:scale(.3);}22%{opacity:1;}100%{opacity:0;transform:scale(1.25);}}
-
-.impactRing{position:absolute;left:50%;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;
-  border-radius:50%;border:2px solid rgba(251,191,36,.9);pointer-events:none;z-index:4;
-  animation:impactRing .32s ease-out forwards;}
-@keyframes impactRing{0%{transform:scale(.3);opacity:1;}100%{transform:scale(6.5);opacity:0;}}
-
-.cell.impactShake{animation:impactShake .2s ease;}
-@keyframes impactShake{
-  0%{transform:translate(0,0) scale(1);}20%{transform:translate(-4px,3px) scale(1.03);}
-  45%{transform:translate(3px,-2px) scale(1.01);}70%{transform:translate(-2px,1px);}
-  100%{transform:translate(0,0) scale(1);}
+   accent (same trick as most match/merge games' candy/gem pops), scaled by
+   --burstPower (streak/tier). */
+.impactBurst{position:absolute;inset:-45%;border-radius:50%;pointer-events:none;z-index:2;
+  background:repeating-conic-gradient(from 0deg,rgba(255,232,175,.7) 0deg 6deg,transparent 6deg 24deg);
+  animation:impactBurst .32s ease-out forwards;}
+@keyframes impactBurst{
+  0%{opacity:0;transform:scale(calc(.15 * var(--burstPower,1))) rotate(0deg);}
+  30%{opacity:1;}
+  100%{opacity:0;transform:scale(calc(2.1 * var(--burstPower,1))) rotate(26deg);}
 }
 
-/* Mixed rock chips + bright star sparkles - reads as "the impact released
-   stardust", not just a plain rock explosion. */
-.debrisChip{position:absolute;left:50%;top:50%;width:5px;height:5px;border-radius:1px;pointer-events:none;
+.impactFlash{position:absolute;inset:0;border-radius:12px;pointer-events:none;z-index:3;
+  background:radial-gradient(circle,rgba(255,247,227,1),rgba(251,146,36,.45) 45%,transparent 72%);
+  animation:impactFlash .26s ease-out forwards;}
+@keyframes impactFlash{0%{opacity:0;transform:scale(.3);}20%{opacity:1;}100%{opacity:0;transform:scale(1.4);}}
+
+.impactRing{position:absolute;left:50%;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;
+  border-radius:50%;border:2.5px solid rgba(251,191,36,.95);pointer-events:none;z-index:8;
+  box-shadow:0 0 10px 1px rgba(251,191,36,.5);
+  animation:impactRing .42s ease-out forwards;}
+@keyframes impactRing{0%{transform:scale(.3);opacity:1;}100%{transform:scale(calc(9 * var(--ringPower,1)));opacity:0;}}
+
+/* Whole-grid shake (not just the one cell) - see .grid.gridShake toggled
+   via restartAnim() in ui.js. --shakePower scales the amplitude up for
+   streaks/high tiers so a big fusion visibly rattles the whole board. */
+.grid.gridShake{animation:gridImpactShake .38s ease;}
+@keyframes gridImpactShake{
+  0%{transform:translate(0,0) rotate(0deg);}
+  12%{transform:translate(calc(-7px * var(--shakePower,1)),calc(5px * var(--shakePower,1))) rotate(calc(-.5deg * var(--shakePower,1)));}
+  28%{transform:translate(calc(6px * var(--shakePower,1)),calc(-4px * var(--shakePower,1))) rotate(calc(.4deg * var(--shakePower,1)));}
+  46%{transform:translate(calc(-5px * var(--shakePower,1)),calc(3px * var(--shakePower,1)));}
+  64%{transform:translate(calc(4px * var(--shakePower,1)),calc(-2px * var(--shakePower,1)));}
+  82%{transform:translate(calc(-2px * var(--shakePower,1)),calc(1px * var(--shakePower,1)));}
+  100%{transform:translate(0,0) rotate(0deg);}
+}
+
+/* Mixed rock chips + bright star sparkles, sized per-chip via --chipScale -
+   reads as "the impact released stardust", not just a plain rock explosion. */
+.debrisChip{position:absolute;left:50%;top:50%;width:6px;height:6px;border-radius:1px;pointer-events:none;z-index:9;
   background:linear-gradient(135deg,#ffcf85,#7c3e0f);
-  animation:debrisFly .46s cubic-bezier(.2,.7,.4,1) forwards;}
-.debrisChip.spark{width:4px;height:4px;border-radius:50%;background:radial-gradient(circle,#fff9e6,var(--stardust));
-  box-shadow:0 0 4px 1px rgba(251,191,36,.7);}
-@keyframes debrisFly{0%{opacity:1;transform:translate(0,0) rotate(0deg) scale(1);}
-  60%{opacity:1;}
-  100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--rot)) scale(.35);}}
+  animation:debrisFly .52s cubic-bezier(.2,.7,.4,1) forwards;}
+.debrisChip.spark{width:5px;height:5px;border-radius:50%;background:radial-gradient(circle,#fff9e6,var(--stardust));
+  box-shadow:0 0 5px 1px rgba(251,191,36,.75);}
+@keyframes debrisFly{
+  0%{opacity:1;transform:translate(0,0) rotate(0deg) scale(var(--chipScale,1));}
+  55%{opacity:1;}
+  100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--rot)) scale(calc(.35 * var(--chipScale,1)));}
+}
 
 .quickActions{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
 .fab{flex:0 0 auto;appearance:none;display:flex;align-items:center;gap:7px;padding:8px 13px;border-radius:12px;
