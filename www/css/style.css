@@ -90,16 +90,15 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .tile .tierNum{position:absolute;bottom:2px;right:4px;font-size:8px;font-weight:700;color:rgba(255,255,255,.65);}
 .tile.dragging{opacity:0;}
 /* Merging tile: elevated above neighboring cells (see .cell.impactHero
-   below) and given a big overshoot bounce so it visibly bursts out past
-   its own cell before settling back into place - the "hero" moment of
-   the merge, not just a bigger version of the idle tile. */
-.tile.merging{animation:mergePop .5s cubic-bezier(.2,1.4,.4,1);}
+   below) and given ONE smooth overshoot bounce (single easing curve, no
+   back-and-forth rotation wobble) so it visibly bursts out past its own
+   cell before settling back into place - the "hero" moment of the merge.
+   cubic-bezier(.16,1,.3,1) is a standard "expo-out" curve - reads as a
+   fast, clean deceleration rather than a cartoonish multi-step bounce. */
+.tile.merging{animation:mergePop .42s cubic-bezier(.16,1,.3,1);}
 @keyframes mergePop{
-  0%{transform:scale(.3) rotate(-10deg);filter:brightness(1) drop-shadow(0 0 0 rgba(251,191,36,0));}
-  28%{transform:scale(2.05) rotate(6deg);filter:brightness(1.7) drop-shadow(0 0 20px rgba(251,191,36,.9));}
-  48%{transform:scale(1.55) rotate(-4deg);filter:brightness(1.35) drop-shadow(0 0 12px rgba(251,191,36,.65));}
-  68%{transform:scale(1.85) rotate(3deg);filter:brightness(1.45) drop-shadow(0 0 16px rgba(251,191,36,.75));}
-  85%{transform:scale(1.1) rotate(-1deg);filter:brightness(1.08);}
+  0%{transform:scale(.5) rotate(-5deg);filter:brightness(1) drop-shadow(0 0 0 rgba(251,191,36,0));}
+  55%{transform:scale(1.24) rotate(1.5deg);filter:brightness(1.55) drop-shadow(0 0 16px rgba(251,191,36,.85));}
   100%{transform:scale(1) rotate(0deg);filter:brightness(1) drop-shadow(0 0 0 rgba(251,191,36,0));}
 }
 /* Lifts the whole cell above its neighbors while its tile is mid-bounce
@@ -124,23 +123,19 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 @keyframes floatUp{0%{opacity:0;transform:translate(-50%,6px) scale(.8);}20%{opacity:1;transform:translate(-50%,0) scale(1.05);}
   100%{opacity:0;transform:translate(-50%,-26px) scale(1);}}
 
-/* Merge impact effect - see playMeteorMerge() in ui.js. A fast bright spark
-   flicks in from off-cell (barely a "fall", more a jolt of energy arriving)
-   and lands almost instantly - the payoff (tile pop, flash, starburst,
-   ring, shake, sparks) has to feel INSTANT since this fires on every single
-   merge, often several per second. Nothing here should read as "waiting". */
-.meteor{position:absolute;top:50%;left:50%;width:15px;height:15px;margin:-7.5px 0 0 -7.5px;border-radius:50%;
-  background:radial-gradient(circle at 35% 30%,#fff6e0,var(--stardust) 50%,#c2622a 100%);
-  box-shadow:0 0 10px 3px rgba(251,191,36,.9),0 0 20px 7px rgba(251,146,36,.45);
-  animation:meteorFall .11s cubic-bezier(.5,0,.85,.4) forwards;z-index:6;pointer-events:none;}
-.meteor::before{content:"";position:absolute;right:100%;top:50%;transform:translateY(-50%);
-  width:38px;height:5px;border-radius:2px;
-  background:linear-gradient(90deg,transparent,rgba(251,191,36,.65) 50%,rgba(255,246,224,.95));filter:blur(.5px);}
-@keyframes meteorFall{
-  0%{transform:translate(-40px,-58px) rotate(-38deg) scale(.6);opacity:0;}
-  20%{opacity:1;}
-  100%{transform:translate(0,0) rotate(-38deg) scale(1.05);opacity:.9;}
-}
+/* Merge impact effect - see playMeteorMerge() in ui.js. A soft, formless
+   glow swells in place on the destination cell (no traveling sprite - an
+   object visibly flying/sliding onto the cell read as an odd sticker/emoji
+   at this size and speed, not as an effect) and lands almost instantly -
+   the payoff (tile pop, flash, starburst, ring, shake, sparks) has to feel
+   INSTANT since this fires on every single merge, often several per
+   second. Nothing here should read as "waiting". Pure opacity+scale on a
+   blurred radial gradient - no shape/rotation to read as a "thing". */
+.chargeGlow{position:absolute;top:50%;left:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,247,227,.95),rgba(251,191,36,.55) 55%,transparent 75%);
+  filter:blur(1.5px);animation:chargeGlow .11s cubic-bezier(.4,0,.2,1) forwards;
+  z-index:6;pointer-events:none;}
+@keyframes chargeGlow{0%{transform:scale(.15);opacity:0;}100%{transform:scale(3.2);opacity:.95;}}
 
 /* A flash that sweeps out from the impact point across the ENTIRE screen
    (position:fixed, not confined to the cell) - the single biggest lever
@@ -182,15 +177,13 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 /* Whole-grid shake (not just the one cell) - see .grid.gridShake toggled
    via restartAnim() in ui.js. --shakePower scales the amplitude up for
    streaks/high tiers so a big fusion visibly rattles the whole board. */
-.grid.gridShake{animation:gridImpactShake .38s ease;}
+.grid.gridShake{animation:gridImpactShake .3s cubic-bezier(.36,.07,.19,.97);}
 @keyframes gridImpactShake{
-  0%{transform:translate(0,0) rotate(0deg);}
-  12%{transform:translate(calc(-7px * var(--shakePower,1)),calc(5px * var(--shakePower,1))) rotate(calc(-.5deg * var(--shakePower,1)));}
-  28%{transform:translate(calc(6px * var(--shakePower,1)),calc(-4px * var(--shakePower,1))) rotate(calc(.4deg * var(--shakePower,1)));}
-  46%{transform:translate(calc(-5px * var(--shakePower,1)),calc(3px * var(--shakePower,1)));}
-  64%{transform:translate(calc(4px * var(--shakePower,1)),calc(-2px * var(--shakePower,1)));}
-  82%{transform:translate(calc(-2px * var(--shakePower,1)),calc(1px * var(--shakePower,1)));}
-  100%{transform:translate(0,0) rotate(0deg);}
+  0%{transform:translate(0,0);}
+  25%{transform:translate(calc(-6px * var(--shakePower,1)),calc(4px * var(--shakePower,1)));}
+  50%{transform:translate(calc(4px * var(--shakePower,1)),calc(-3px * var(--shakePower,1)));}
+  75%{transform:translate(calc(-2px * var(--shakePower,1)),calc(1px * var(--shakePower,1)));}
+  100%{transform:translate(0,0);}
 }
 
 /* Mixed rock chips + bright star sparkles, sized per-chip via --chipScale -

@@ -211,17 +211,18 @@ function updateQuestNotifDot() {
   }
 }
 
-// Duration (ms) the incoming spark takes to reach the cell - MUST stay in
-// sync with the `meteorFall` CSS animation (style.css) AND the setTimeout in
-// Sfx.meteorImpact() (audio.js) that fires the impact sound, so the visual
-// landing and the sound line up. Deliberately short: this fires on every
-// single merge (often several per second), so the payoff has to feel
-// instant, not like a cutscene the player has to sit through.
+// Duration (ms) the charge-up glow (see .chargeGlow in style.css) plays
+// before the impact fires - MUST stay in sync with the `chargeGlow` CSS
+// animation AND the setTimeout in Sfx.meteorImpact() (audio.js) that fires
+// the impact sound, so the visual landing and the sound line up.
+// Deliberately short: this fires on every single merge (often several per
+// second), so the payoff has to feel instant, not like a cutscene the
+// player has to sit through.
 const METEOR_FALL_MS = 110;
 
 // Renders a stand-in tile of a specific tier at `idx` WITHOUT touching
-// state.grid - used to keep showing the pre-merge tile while the meteor is
-// still falling (state.grid[idx] already holds the merged/upgraded tile by
+// state.grid - used to keep showing the pre-merge tile while the charge-up
+// glow plays (state.grid[idx] already holds the merged/upgraded tile by
 // this point, see performMerge()). The real tile is revealed on impact via
 // the normal renderCell(idx, {merged:true}).
 function renderMergeStandIn(idx, tier) {
@@ -271,11 +272,11 @@ function playMeteorMerge(idx, onImpact, streak, newTier) {
   streak = streak || 0;
   const power = Math.min(1 + streak * 0.12 + Math.min(newTier || 1, 10) * 0.03, 2.1);
   const cell = cellEls[idx];
-  const meteor = document.createElement("div");
-  meteor.className = "meteor";
-  cell.appendChild(meteor);
+  const glow = document.createElement("div");
+  glow.className = "chargeGlow";
+  cell.appendChild(glow);
   setTimeout(() => {
-    meteor.remove();
+    glow.remove();
     onImpact();
 
     cell.classList.add("impactHero");
