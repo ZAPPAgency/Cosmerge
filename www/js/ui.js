@@ -295,11 +295,7 @@ function playMeteorMerge(idx, onImpact, streak, newTier) {
     document.body.appendChild(flash);
     setTimeout(() => flash.remove(), 420);
 
-    const burst = document.createElement("div");
-    burst.className = "impactBurst";
-    burst.style.setProperty("--burstPower", power.toFixed(2));
-    cell.appendChild(burst);
-    setTimeout(() => burst.remove(), 300);
+    spawnBurstRays(cell, power);
 
     const localFlash = document.createElement("div");
     localFlash.className = "impactFlash";
@@ -318,6 +314,22 @@ function playMeteorMerge(idx, onImpact, streak, newTier) {
 
     spawnImpactDebris(idx, streak, power);
   }, METEOR_FALL_MS);
+}
+
+// 8-point sparkle burst: individual thin gradient-faded rays (long/short
+// alternating) rotated around the cell center, rather than a single
+// repeating-conic-gradient pinwheel - see the comment on .burstRay in
+// style.css for why (that approach read as flat "light rectangles").
+function spawnBurstRays(cell, power) {
+  const RAY_COUNT = 8;
+  for (let i = 0; i < RAY_COUNT; i++) {
+    const ray = document.createElement("div");
+    ray.className = "burstRay" + (i % 2 === 1 ? " short" : "");
+    ray.style.setProperty("--ang", (i * (360 / RAY_COUNT)) + "deg");
+    ray.style.setProperty("--burstPower", power.toFixed(2));
+    cell.appendChild(ray);
+    setTimeout(() => ray.remove(), 320);
+  }
 }
 
 function spawnImpactDebris(idx, streak, power) {
