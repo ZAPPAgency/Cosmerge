@@ -96,10 +96,20 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
    cubic-bezier(.16,1,.3,1) is a standard "expo-out" curve - reads as a
    fast, clean deceleration rather than a cartoonish multi-step bounce. */
 .tile.merging{animation:mergePop .42s cubic-bezier(.16,1,.3,1);}
+/* box-shadow glow instead of filter:drop-shadow() - drop-shadow rasterizes
+   and blurs the whole element's alpha channel every frame (expensive,
+   noticeably so with several tiles/effects animating at once during a
+   streak); box-shadow is a much cheaper, well-optimized paint operation for
+   the same "glow ring" look here since the tile is already a plain
+   rounded rect. filter:brightness() alone (a simple color multiply) stays,
+   it's cheap. */
 @keyframes mergePop{
-  0%{transform:scale(.5) rotate(-5deg);filter:brightness(1) drop-shadow(0 0 0 rgba(251,191,36,0));}
-  55%{transform:scale(1.36) rotate(1.5deg);filter:brightness(1.7) drop-shadow(0 0 22px rgba(251,191,36,.9));}
-  100%{transform:scale(1) rotate(0deg);filter:brightness(1) drop-shadow(0 0 0 rgba(251,191,36,0));}
+  0%{transform:scale(.5) rotate(-5deg);filter:brightness(1);
+    box-shadow:inset 0 0 10px rgba(255,255,255,.15),0 2px 6px rgba(0,0,0,.4),0 0 0 rgba(251,191,36,0);}
+  55%{transform:scale(1.36) rotate(1.5deg);filter:brightness(1.7);
+    box-shadow:inset 0 0 10px rgba(255,255,255,.15),0 2px 6px rgba(0,0,0,.4),0 0 22px 6px rgba(251,191,36,.9);}
+  100%{transform:scale(1) rotate(0deg);filter:brightness(1);
+    box-shadow:inset 0 0 10px rgba(255,255,255,.15),0 2px 6px rgba(0,0,0,.4),0 0 0 rgba(251,191,36,0);}
 }
 /* Lifts the whole cell above its neighbors while its tile is mid-bounce
    (see mergePop above) so the oversized tile isn't clipped/hidden behind
@@ -117,8 +127,11 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
   animation:particleFly .5s ease-out forwards;}
 @keyframes particleFly{0%{opacity:1;transform:translate(0,0) scale(1);}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.3);}}
 
-.floatBonus{position:absolute;left:50%;top:40%;transform:translate(-50%,0);pointer-events:none;
-  font-size:12px;font-weight:800;color:var(--stardust);text-shadow:0 1px 3px rgba(0,0,0,.6);
+.floatBonus{position:absolute;left:50%;top:40%;transform:translate(-50%,0);pointer-events:none;z-index:10;
+  /* above .tile's z-index:5 (added for the merge effect's stacking order) -
+     without this the tap-bonus text renders BEHIND the tile and is
+     invisible, which is what made it look like the feature had disappeared. */
+  font-size:13px;font-weight:800;color:var(--stardust);text-shadow:0 1px 3px rgba(0,0,0,.6);
   animation:floatUp .75s ease-out forwards;white-space:nowrap;}
 @keyframes floatUp{0%{opacity:0;transform:translate(-50%,6px) scale(.8);}20%{opacity:1;transform:translate(-50%,0) scale(1.05);}
   100%{opacity:0;transform:translate(-50%,-26px) scale(1);}}
@@ -165,7 +178,7 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
    --ang is the ray's angle, --burstPower scales how far it reaches
    (streak/tier, see playMeteorMerge in ui.js). */
 .burstRay{position:absolute;left:50%;top:50%;width:3.5px;height:36px;margin:-36px -1.75px 0 -1.75px;
-  transform-origin:50% 100%;border-radius:2px;pointer-events:none;z-index:2;filter:blur(.3px);
+  transform-origin:50% 100%;border-radius:2px;pointer-events:none;z-index:2;
   background:linear-gradient(to top,rgba(255,213,120,1),rgba(255,236,190,.6) 45%,transparent 100%);
   animation:burstRay .32s cubic-bezier(.16,1,.3,1) forwards;}
 .burstRay.short{height:21px;margin-top:-21px;opacity:.8;}
