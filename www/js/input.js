@@ -126,21 +126,19 @@ function handleTap(idx) {
   const state = Game.state;
   const tileHere = state.grid[idx];
 
-  if (Game.selectedIdx !== null && Game.selectedIdx !== idx) {
-    const selTile = state.grid[Game.selectedIdx];
-    if (selTile && tileHere && areAdjacent(idx, Game.selectedIdx) && selTile.tier === tileHere.tier) {
-      attemptMerge(Game.selectedIdx, idx);
-      clearSelection();
-      return;
-    }
-  }
-  if (Game.selectedIdx === idx) {
-    clearSelection();
-    if (tileHere) grantTapBonus(idx);
+  if (tileHere) {
+    // Merging is drag-only now (see the `dragging` branch in onPointerUp) -
+    // tapping a filled tile no longer selects it as a merge target, it
+    // just grants the tap bonus every time (the "clicker" aspect). Under
+    // the old tap-to-tap-merge flow, a tap that happened to complete a
+    // merge skipped the bonus - now every tap on a tile is consistently
+    // rewarded.
+    grantTapBonus(idx);
     return;
   }
+  // Empty cell: tap selects/deselects it as the next invocation's target.
+  if (Game.selectedIdx === idx) { clearSelection(); return; }
   selectCell(idx);
-  if (tileHere) grantTapBonus(idx);
 }
 
 function handleLockedTap(idx) {
