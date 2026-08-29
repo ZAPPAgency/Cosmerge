@@ -242,15 +242,19 @@ function renderMergeStandIn(idx, tier) {
   cell.appendChild(tile);
 }
 
-// Removes then re-adds a CSS class on the next frame to force the browser
-// to restart a class-driven animation even if the class was never removed
-// in between two calls (classList.add on an already-present class is a
-// no-op otherwise) - needed for the grid shake, which lives on one shared
-// element that can be re-triggered by merges landing back to back during a
-// streak, unlike every other effect here which spawns a fresh element.
+// Removes then re-adds a CSS class to force the browser to restart a
+// class-driven animation even if the class was never removed in between two
+// calls (classList.add on an already-present class is a no-op otherwise) -
+// needed for the grid shake, which lives on one shared element that can be
+// re-triggered by merges landing back to back during a streak, unlike every
+// other effect here which spawns a fresh element. The forced reflow
+// (offsetWidth read) is itself not free, so it's skipped for the common
+// case - most merges aren't landing on top of an already-shaking grid.
 function restartAnim(el, cls) {
-  el.classList.remove(cls);
-  void el.offsetWidth; // force reflow
+  if (el.classList.contains(cls)) {
+    el.classList.remove(cls);
+    void el.offsetWidth; // force reflow, only when actually needed to restart
+  }
   el.classList.add(cls);
 }
 
@@ -279,6 +283,13 @@ function playMeteorMerge(idx, onImpact, streak, newTier) {
   glow.className = "chargeGlow";
   cell.appendChild(glow);
   setTimeout(() => {
+    // Measured BEFORE onImpact() touches the DOM below - reading layout
+    // (getBoundingClientRect) right after a mutation forces a synchronous
+    // reflow, which is one of the cheap wins for smoother merges (the cell
+    // doesn't move as a result of onImpact(), so there's no need to
+    // re-measure after it anyway).
+    const rect = cell.getBoundingClientRect();
+
     glow.remove();
     onImpact();
 
@@ -289,7 +300,6 @@ function playMeteorMerge(idx, onImpact, streak, newTier) {
     dom.grid.style.setProperty("--shakePower", power.toFixed(2));
     setTimeout(() => dom.grid.classList.remove("gridShake"), 380);
 
-    const rect = cell.getBoundingClientRect();
     const flash = document.createElement("div");
     flash.className = "screenFlash";
     flash.style.setProperty("--fx", (rect.left + rect.width / 2) + "px");
@@ -305,7 +315,11 @@ function playMeteorMerge(idx, onImpact, streak, newTier) {
     cell.appendChild(localFlash);
     setTimeout(() => localFlash.remove(), 260);
 
-    [0, 90].forEach((delay) => {
+    // A 2nd, slightly delayed ring reads as a nicer double-pulse shockwave,
+    // but it's extra DOM churn on every merge for a subtle detail - only
+    // worth it once a streak is actually building.
+    const ringDelays = streak > 0 ? [0, 90] : [0];
+    ringDelays.forEach((delay) => {
       setTimeout(() => {
         const ring = document.createElement("div");
         ring.className = "impactRing";
@@ -319,12 +333,14 @@ function playMeteorMerge(idx, onImpact, streak, newTier) {
   }, METEOR_FALL_MS);
 }
 
-// 8-point sparkle burst: individual thin gradient-faded rays (long/short
+// 6-point sparkle burst: individual thin gradient-faded rays (long/short
 // alternating) rotated around the cell center, rather than a single
 // repeating-conic-gradient pinwheel - see the comment on .burstRay in
-// style.css for why (that approach read as flat "light rectangles").
+// style.css for why (that approach read as flat "light rectangles"). 6
+// rather than 8 - one less element created/removed on every merge, for a
+// difference that's barely noticeable at this size.
 function spawnBurstRays(cell, power) {
-  const RAY_COUNT = 8;
+  const RAY_COUNT = 6;
   for (let i = 0; i < RAY_COUNT; i++) {
     const ray = document.createElement("div");
     ray.className = "burstRay" + (i % 2 === 1 ? " short" : "");
@@ -337,7 +353,10 @@ function spawnBurstRays(cell, power) {
 
 function spawnImpactDebris(idx, streak, power) {
   const cell = cellEls[idx];
-  const count = 14 + Math.min(streak || 0, 4) * 2;
+  // Kept modest on purpose - this is the single biggest DOM-churn source of
+  // the whole effect (a new element per chip, every merge), so it's the
+  // main lever for keeping streaks (several merges a second) smooth.
+  const count = 8 + Math.min(streak || 0, 4);
   for (let k = 0; k < count; k++) {
     const p = document.createElement("div");
     p.className = "debrisChip" + (k % 3 !== 1 ? " spark" : "");
