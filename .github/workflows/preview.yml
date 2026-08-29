@@ -1,13 +1,27 @@
+# .github/workflows/preview.yml
 name: Deploy PR previews
+
 on:
   pull_request:
     types: [opened, reopened, synchronize, closed]
 
-concurrency: preview-${{ github.ref }}
+# Groupe par PR : deux push rapprochés sur la même PR se remplacent, mais une
+# PR n'annule jamais la preview d'une autre branche. NE PAS partager ce groupe
+# avec les autres workflows gh-pages : un seul run peut être "pending" par
+# groupe, donc un run qui arrive annule celui qui attendait.
+concurrency:
+  group: pr-preview-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: write
   pull-requests: write
+  # Requis par wait-for-pages-deployment : l'action interroge
+  # GET /repos/{owner}/{repo}/pages/builds pour retrouver le build correspondant
+  # à son commit. Déclarer un bloc `permissions` met TOUS les autres scopes à
+  # `none` : sans cette ligne l'appel renvoie 403, aucun build n'est trouvé et
+  # l'action tourne 180 s avant d'échouer sur "Timed out waiting for build".
+  pages: read
 
 jobs:
   deploy-preview:
@@ -15,14 +29,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build
-        if: github.event.action != 'closed'
-        run: |
-          npm ci
-          npm run build
-
       - uses: rossjrw/pr-preview-action@v1
         with:
-          source-dir: ./dist
+          source-dir: www
           preview-branch: gh-pages
+          umbrella-dir: pr-preview
+          qr-code: true
           wait-for-pages-deployment: true
