@@ -137,18 +137,21 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
   z-index:6;pointer-events:none;}
 @keyframes chargeGlow{0%{transform:scale(.15);opacity:0;}100%{transform:scale(3.2);opacity:.95;}}
 
-/* A flash that sweeps out from the impact point across the ENTIRE screen
-   (position:fixed, not confined to the cell) - the single biggest lever
-   for a merge to actually register as an event rather than a UI tween.
-   --fx/--fy (viewport px, set by playMeteorMerge in ui.js) place the glow
-   at the exact cell that merged; --fpower scales it up for streaks/high
-   tiers. */
+/* A flash from the impact point (position:fixed so it isn't clipped by the
+   cell, --fx/--fy are viewport px set by playMeteorMerge in ui.js). Its
+   REACH now scales with --fpower (streak/tier) instead of always covering
+   the whole viewport: a routine merge (the vast majority - low power)
+   stays a small, soft glow near the tile, while only a big combo/high
+   tier actually blooms out to fill the screen. A full-screen flash on
+   EVERY merge (several a second during a streak) washed over unrelated UI
+   (header, buttons) and stopped reading as special - reserving the big
+   version for genuinely big moments is what makes it register as one. */
 .screenFlash{position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:80;pointer-events:none;
   background:radial-gradient(circle at var(--fx,50%) var(--fy,45%),
-    rgba(255,247,227,calc(.74 * var(--fpower,1))),
-    rgba(251,191,36,calc(.3 * var(--fpower,1))) 34%,
-    transparent 66%);
-  animation:screenFlash .42s ease-out forwards;}
+    rgba(255,247,227,calc(.5 * var(--fpower,1))),
+    rgba(251,191,36,calc(.2 * var(--fpower,1))) calc(6% + 7% * var(--fpower,1)),
+    transparent calc(14% + 20% * var(--fpower,1)));
+  animation:screenFlash .38s ease-out forwards;}
 @keyframes screenFlash{0%{opacity:0;}10%{opacity:1;}100%{opacity:0;}}
 
 /* Starburst rays behind the ring/flash - the classic "satisfying pop"
