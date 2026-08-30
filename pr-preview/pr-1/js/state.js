@@ -75,6 +75,13 @@ function defaultState() {
     skills: { prod: 0, swarm: 0, gravity: 0, echo: 0, luck: 0 },
     ownedSkins: ["classic"], // "classic" emoji set - the free starting cosmetic (the ambiance/color-skin slot was removed entirely)
     equippedEmojiSet: "classic",
+    // Independent of which set (classic/fruits/legumes) is equipped above -
+    // this picks whether that set's tiles show its custom illustrated
+    // artwork or the plain emoji glyph, see tierIconNode() in ui.js. A set
+    // with no artwork for a given tier yet (Fruits/Légumes, for now) just
+    // falls back to emoji regardless of this setting - no special-casing
+    // needed once the art exists later, it starts working automatically.
+    iconStyle: "illustrated", // "illustrated" | "emoji"
 
     dailyLogin: { lastClaimDay: null, streak: 0, cycleDay: 1, streakFreezeCharges: 0 },
     skinFragments: 0,

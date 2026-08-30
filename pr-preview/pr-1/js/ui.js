@@ -80,7 +80,10 @@ function tierIconNode(tier, setOverride) {
   const s = setOverride || equippedEmojiSetDef();
   const skinEntry = s.tierSkin && s.tierSkin[tier - 1];
   const src = skinEntry || TIERS[tier - 1];
-  if (src.icon) {
+  // Emoji/Illustré switch (Loris) - a set with no art for this tier yet
+  // (Fruits/Légumes today) just falls through to the emoji branch below
+  // regardless of iconStyle, same as before this switch existed.
+  if (src.icon && Game.state.iconStyle !== "emoji") {
     const img = document.createElement("img");
     img.className = "emoji tierIcon";
     img.src = "assets/tiles/" + src.icon;
@@ -648,12 +651,26 @@ function renderShopPanel() {
   dom.panelBody.appendChild(gemGrid);
 
   dom.panelBody.appendChild(el("h3", null, "🖼️ Sets d'icônes"));
+  // Emoji/Illustré switch (Loris): pick a category above (Cases classiques/
+  // Fruits/Légumes), then independently pick which STYLE that category
+  // renders in here - applies globally to whichever category ends up
+  // equipped, doesn't need buying twice. "Illustré" was "Artwork" in an
+  // earlier draft - renamed to something that actually reads as French.
+  const styleToggle = el("div", "iconStyleToggle");
+  const emojiStyleBtn = el("button", "btn" + (state.iconStyle === "emoji" ? " primary" : " ghost"), "😀 Emoji");
+  const artStyleBtn = el("button", "btn" + (state.iconStyle !== "emoji" ? " primary" : " ghost"), "🎨 Illustré");
+  emojiStyleBtn.addEventListener("click", () => onSetIconStyle("emoji"));
+  artStyleBtn.addEventListener("click", () => onSetIconStyle("illustrated"));
+  styleToggle.appendChild(emojiStyleBtn);
+  styleToggle.appendChild(artStyleBtn);
+  dom.panelBody.appendChild(styleToggle);
   dom.panelBody.appendChild(renderCosmeticGrid(EMOJI_SETS, state.equippedEmojiSet));
 
   dom.panelBody.appendChild(el("h3", null, "Offres Premium"));
-  // Reorg (Loris): the Pass goes first as a big hero card, then the 2 next
-  // most expensive offers get a smaller-but-still-featured treatment, then
-  // everything else as plain compact cards below - "1 -> 2 -> le reste".
+  // Order (Loris, curated - NOT price-sorted any more): Pass (hero) ->
+  // Suppression des pubs -> Multiplicateur Stardust -> everything else in
+  // catalog order. A price sort had been pulling the Gems packs into the
+  // #2/#3 featured slots instead, which wasn't the intent.
   const daysSinceFirst = daysBetween(state.firstPlayedDay, todayStr());
   const visibleProducts = IAP_CATALOG.filter(product => {
     if (product.startersOnly && daysSinceFirst > 2) return false;
@@ -662,11 +679,12 @@ function renderShopPanel() {
     if (product.skinId && state.iap.ownedSkinPacks.includes(product.skinId)) return false;
     return true;
   });
-  const parsePrice = (p) => parseFloat(p.replace(",", ".").replace(/[^0-9.]/g, "")) || 0;
-  const pass = visibleProducts.find(p => p.id === "vip_monthly");
-  const rest = visibleProducts.filter(p => p.id !== "vip_monthly").sort((a, b) => parsePrice(b.price) - parsePrice(a.price));
-  const featured = rest.slice(0, 2);
-  const plain = rest.slice(2);
+  const byId = (id) => visibleProducts.find(p => p.id === id);
+  const pass = byId("vip_monthly");
+  const featuredIds = ["remove_ads", "stardust_boost"];
+  const featured = featuredIds.map(byId).filter(Boolean);
+  const featuredSet = new Set(featured.map(p => p.id));
+  const plain = visibleProducts.filter(p => p.id !== "vip_monthly" && !featuredSet.has(p.id));
 
   const buyBtn = (product, cls) => {
     const btn = el("button", cls, product.type === "subscription" ? "S'abonner" : "Acheter");
@@ -674,8 +692,14 @@ function renderShopPanel() {
     return btn;
   };
 
+  // Every card in this section shares the Pass's premium chrome now (gold
+  // glow border + continuous pulse, .iapCard) - Loris liked the Pass card's
+  // look enough to want it applied everywhere, not just the top 3. Only the
+  // Pass keeps the perks-list layout (it's the only product with a `perks`
+  // array) and the "★ Meilleure offre" ribbon (badging every card with
+  // that would defeat the point).
   if (pass) {
-    const hero = el("div", "iapHero");
+    const hero = el("div", "card iapCard iapHero");
     hero.innerHTML = `<div class="iapHeroBadge">★ Meilleure offre</div>
       <div class="rowBetween"><h3>${pass.name}</h3><span class="iapPrice">${pass.price}</span></div>
       <p class="iapHeroTagline">${pass.desc}</p>`;
@@ -686,20 +710,8 @@ function renderShopPanel() {
     dom.panelBody.appendChild(hero);
   }
 
-  if (featured.length) {
-    const featGrid = el("div", "shopGrid2 iapFeaturedGrid");
-    featured.forEach(product => {
-      const card = el("div", "card compact iapFeatured");
-      card.innerHTML = `<div class="rowBetween"><h3>${product.name}</h3><span class="iapPrice">${product.price}</span></div>
-        ${product.desc ? `<p class="desc">${product.desc}</p>` : ""}`;
-      card.appendChild(buyBtn(product, "btn primary full"));
-      featGrid.appendChild(card);
-    });
-    dom.panelBody.appendChild(featGrid);
-  }
-
-  plain.forEach(product => {
-    const card = el("div", "card compact");
+  [...featured, ...plain].forEach(product => {
+    const card = el("div", "card iapCard");
     card.innerHTML = `<div class="rowBetween"><h3>${product.name}</h3><span class="iapPrice">${product.price}</span></div>
       ${product.desc ? `<p class="desc">${product.desc}</p>` : ""}`;
     card.appendChild(buyBtn(product, "btn primary full"));
