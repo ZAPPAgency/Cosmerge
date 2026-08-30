@@ -551,6 +551,10 @@ function renderShopPanel() {
   dom.panelBody.innerHTML = "";
 
   dom.panelBody.appendChild(el("h3", null, "Boosts publicitaires"));
+  // Side by side (2 cols) instead of stacked - Loris found the two ad cards
+  // taking a full row each felt like wasted space now that shopGrid2 (see
+  // "Cases & boosts" below) already proved the compact 2-column layout works.
+  const adGrid = el("div", "shopGrid2");
   const boostReady = Date.now() >= state.cooldowns.prodBoostUntil;
   const boostActive = state.cooldowns.prodBoostActiveUntil > Date.now();
   const boostCard = el("div", "card compact");
@@ -561,7 +565,7 @@ function renderShopPanel() {
   boostBtn.disabled = !boostReady || boostActive;
   boostBtn.addEventListener("click", onWatchProdBoostAd);
   boostCard.appendChild(boostBtn);
-  dom.panelBody.appendChild(boostCard);
+  adGrid.appendChild(boostCard);
 
   const gemsAdReady = Date.now() >= state.cooldowns.gemsAdUntil;
   const gemsAdCard = el("div", "card compact");
@@ -571,7 +575,8 @@ function renderShopPanel() {
   gemsAdBtn.disabled = !gemsAdReady;
   gemsAdBtn.addEventListener("click", onWatchGemsAd);
   gemsAdCard.appendChild(gemsAdBtn);
-  dom.panelBody.appendChild(gemsAdCard);
+  adGrid.appendChild(gemsAdCard);
+  dom.panelBody.appendChild(adGrid);
 
   dom.panelBody.appendChild(el("h3", null, "Cases & boosts (Gems)"));
   const gemGrid = el("div", "shopGrid2");
