@@ -83,6 +83,14 @@ function defaultState() {
     // needed once the art exists later, it starts working automatically.
     iconStyle: "illustrated", // "illustrated" | "emoji"
 
+    // One-time IAP soft-prompts triggered by real progress (fusion count),
+    // not a timer - see checkFusionPromo() in retention.js. Each flag
+    // guarantees its popup fires at most once ever, ever if the exact
+    // fusion count that would trigger it is somehow reached twice (it
+    // can't be, lifetime.fusions only grows, but the flag is the actual
+    // guarantee either way).
+    promptsShown: { starterPack: false, vipPass: false },
+
     dailyLogin: { lastClaimDay: null, streak: 0, cycleDay: 1, streakFreezeCharges: 0 },
     skinFragments: 0,
 

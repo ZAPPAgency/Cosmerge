@@ -168,10 +168,31 @@ function renderCell(i, opts) {
 // for `setId`, without touching state.equippedEmojiSet - see the "Aperçu"
 // button in renderCosmeticGrid(). Reuses the real .cell/.tile markup and
 // tierStyle() background so it looks exactly like the actual game grid.
+// Emoji/Illustré switch - shared between the skin manager popup and this
+// preview modal (Loris: it's a display preference, belongs in skin
+// management, not the shop - and the preview specifically should let you
+// see/pick between the two modes right there). `onChange` re-renders
+// whichever container the toggle lives in, so the effect is visible
+// immediately without closing anything.
+function renderIconStyleToggle(onChange) {
+  const state = Game.state;
+  const wrap = el("div", "iconStyleToggle");
+  const emojiBtn = el("button", "btn" + (state.iconStyle === "emoji" ? " primary" : " ghost"), "😀 Emoji");
+  const artBtn = el("button", "btn" + (state.iconStyle !== "emoji" ? " primary" : " ghost"), "🎨 Illustré");
+  emojiBtn.addEventListener("click", () => { onSetIconStyle("emoji"); onChange(); });
+  artBtn.addEventListener("click", () => { onSetIconStyle("illustrated"); onChange(); });
+  wrap.appendChild(emojiBtn);
+  wrap.appendChild(artBtn);
+  return wrap;
+}
+
 function openSkinPreviewModal(setId) {
   const set = EMOJI_SETS.find(s => s.id === setId);
   if (!set) return;
   $("skinPreviewTitle").textContent = set.name;
+  const toggleHost = $("skinPreviewToggle");
+  toggleHost.innerHTML = "";
+  toggleHost.appendChild(renderIconStyleToggle(() => openSkinPreviewModal(setId)));
   const grid = $("skinPreviewGrid");
   grid.innerHTML = "";
   for (let t = 1; t <= TIERS.length; t++) {
@@ -243,7 +264,15 @@ function updateFabs() {
   // switches to a "streak" readout (still opens the same modal, read-only).
   const claimedToday = !isDailyLoginAvailable(state);
   dom.fabDailyLogin.classList.remove("hidden"); // always visible now (see comment above) - the initial HTML still starts with "hidden" for the pre-JS flash, nothing else ever cleared it
-  dom.fabDailyLogin.querySelector(".fabIcon").textContent = claimedToday ? "🔥" : "🎁";
+  // Bug (Loris: "tu n'as pas ajouté le visuel cadeau" - it WAS added, but
+  // this line was clobbering it): .textContent on the .fabIcon wrapper
+  // wipes out ANY child, including the <img class="uiIcon"> custom artwork
+  // added there, replacing it with a plain emoji glyph on every single
+  // updateFabs() call (i.e. constantly). No custom art exists yet for the
+  // "claimed today" streak/fire state, so that one still falls back to a
+  // plain emoji - but the default gift state now stays as the real image.
+  const dailyIcon = dom.fabDailyLogin.querySelector(".fabIcon");
+  dailyIcon.innerHTML = claimedToday ? '<div class="emoji">🔥</div>' : '<img class="uiIcon" src="assets/ui/cadeau.png" alt="">';
   dom.fabDailyLogin.querySelector(".fabLabel").textContent = claimedToday ? `Série ${state.dailyLogin.streak}` : "Cadeau";
   ensureDailySpin(state);
   dom.fabWheel.classList.toggle("hidden", state.dailySpin.freeUsed && state.dailySpin.bonusUsed);
@@ -651,19 +680,9 @@ function renderShopPanel() {
   dom.panelBody.appendChild(gemGrid);
 
   dom.panelBody.appendChild(el("h3", null, "🖼️ Sets d'icônes"));
-  // Emoji/Illustré switch (Loris): pick a category above (Cases classiques/
-  // Fruits/Légumes), then independently pick which STYLE that category
-  // renders in here - applies globally to whichever category ends up
-  // equipped, doesn't need buying twice. "Illustré" was "Artwork" in an
-  // earlier draft - renamed to something that actually reads as French.
-  const styleToggle = el("div", "iconStyleToggle");
-  const emojiStyleBtn = el("button", "btn" + (state.iconStyle === "emoji" ? " primary" : " ghost"), "😀 Emoji");
-  const artStyleBtn = el("button", "btn" + (state.iconStyle !== "emoji" ? " primary" : " ghost"), "🎨 Illustré");
-  emojiStyleBtn.addEventListener("click", () => onSetIconStyle("emoji"));
-  artStyleBtn.addEventListener("click", () => onSetIconStyle("illustrated"));
-  styleToggle.appendChild(emojiStyleBtn);
-  styleToggle.appendChild(artStyleBtn);
-  dom.panelBody.appendChild(styleToggle);
+  // Emoji/Illustré switch moved to the skin MANAGER popup (openSkinManagerModal)
+  // per Loris - it's a display preference, not a shop purchase, it doesn't
+  // belong in the boutique. See renderIconStyleToggle() below.
   dom.panelBody.appendChild(renderCosmeticGrid(EMOJI_SETS, state.equippedEmojiSet));
 
   dom.panelBody.appendChild(el("h3", null, "Offres Premium"));
@@ -1277,6 +1296,8 @@ function openSkinManagerModal() {
   const list = $("skinManagerList");
   list.innerHTML = "";
   list.appendChild(el("h3", null, "🖼️ Set d'icônes"));
+  // Emoji/Illustré switch lives here (Loris), not in the shop.
+  list.appendChild(renderIconStyleToggle(openSkinManagerModal));
   list.appendChild(renderCosmeticGrid(EMOJI_SETS, state.equippedEmojiSet, openSkinManagerModal));
   $("skinManagerModal").classList.remove("hidden");
 }
@@ -1293,6 +1314,35 @@ function openRemoveAdsPromptModal() {
   $("removeAdsPromptModal").classList.remove("hidden");
 }
 function closeRemoveAdsPromptModal() { $("removeAdsPromptModal").classList.add("hidden"); }
+
+// Fusion-milestone soft-prompts (10 -> starter pack, 50 -> Pass Supernova),
+// see checkFusionPromo()/Game.pendingPromo in retention.js and
+// maybeOpenFusionPromo() in input.js. One shared modal, content picked by
+// `kind`.
+const FUSION_PROMOS = {
+  starterPack: {
+    title: "🎉 Bien joué !",
+    text: "Tu commences à prendre le rythme. Le Pack de démarrage te donne 500 Gems, 3 cases débloquées et un boost d'1h - un vrai coup de pouce pour la suite.",
+    productId: "starter_pack",
+  },
+  vipPass: {
+    title: "🌟 Tu es accroché !",
+    text: "50 fusions déjà - le Pass Supernova retire les pubs pour toujours, double ta production de Stardust et t'offre 50 Gems chaque jour. Pensé pour les joueurs comme toi.",
+    productId: "vip_monthly",
+  },
+};
+let fusionPromoProductId = null;
+function openFusionPromoModal(kind) {
+  const promo = FUSION_PROMOS[kind];
+  const product = promo && IAP_CATALOG.find(p => p.id === promo.productId);
+  if (!product) return; // defensive - e.g. the offer expired/was already bought between the trigger and this firing
+  fusionPromoProductId = product.id;
+  $("fusionPromoTitle").textContent = promo.title;
+  $("fusionPromoText").textContent = promo.text;
+  $("fusionPromoBuy").textContent = product.type === "subscription" ? `S'abonner — ${product.price}` : `${product.name} — ${product.price}`;
+  $("fusionPromoModal").classList.remove("hidden");
+}
+function closeFusionPromoModal() { $("fusionPromoModal").classList.add("hidden"); fusionPromoProductId = null; }
 
 // ---------------- Manual save backup modal ----------------
 function openSaveCodeModal(mode) {

@@ -235,6 +235,7 @@ function attemptMerge(fromIdx, toIdx) {
   updateFabs();
   saveState(state);
   maybeOpenBigBangPrompt();
+  maybeOpenFusionPromo();
 }
 
 // A toast alone was easy to miss - a player who reaches the Universe tile
@@ -252,6 +253,17 @@ function maybeOpenGodRitual() {
     Game.pendingGodRitual = false;
     openGodPickerModal();
   }
+}
+
+// Set by checkFusionPromo() (retention.js, via trackFusionEvent) the
+// instant a fusion crosses the 10 or 50 lifetime-fusions milestone. 700ms
+// delay to match maybeOpenBigBangPrompt above - lets the merge's own
+// visual/audio impact land first instead of the promo popup racing it.
+function maybeOpenFusionPromo() {
+  if (!Game.pendingPromo) return;
+  const kind = Game.pendingPromo;
+  Game.pendingPromo = null;
+  setTimeout(() => openFusionPromoModal(kind), 700);
 }
 
 function grantTapBonus(idx) {
@@ -868,5 +880,12 @@ function wireEvents() {
   $("removeAdsPromptBuy").addEventListener("click", async () => {
     closeRemoveAdsPromptModal();
     await onBuyIAP("remove_ads");
+  });
+
+  $("fusionPromoLater").addEventListener("click", closeFusionPromoModal);
+  $("fusionPromoBuy").addEventListener("click", async () => {
+    const id = fusionPromoProductId;
+    closeFusionPromoModal();
+    if (id) await onBuyIAP(id);
   });
 }
