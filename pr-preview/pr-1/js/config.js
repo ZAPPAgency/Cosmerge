@@ -50,14 +50,19 @@ const TIERS = [
   // from a pale grey tile to a dark indigo "night sky" for exactly this).
   { n: 1, name: "Météorite", emoji: "☄️", icon: "tier-1-meteorite.png", from: "#3a3550", to: "#0c0a18" },
   { n: 2, name: "Lune", emoji: "🌙", icon: "tier-2-lune.png", from: "#2d3561", to: "#080a1c" },
-  { n: 3, name: "Planète naine", emoji: "🪨", from: "#d3ac7a", to: "#7a5c3a" },
-  { n: 4, name: "Planète", emoji: "🌍", from: "#63c4ff", to: "#1e5f8c" },
-  { n: 5, name: "Géante gazeuse", emoji: "🪐", from: "#f6d365", to: "#b8722e" },
-  { n: 6, name: "Étoile", emoji: "⭐", from: "#fff9c4", to: "#ff9800" },
-  { n: 7, name: "Étoile à neutrons", emoji: "💫", from: "#e0f7ff", to: "#00b8d4" },
-  { n: 8, name: "Trou noir", emoji: "🕳️", from: "#6a2bb8", to: "#000000" },
-  { n: 9, name: "Galaxie", emoji: "🌌", from: "#ff7ce8", to: "#4a00e0" },
-  { n: 10, name: "Univers", emoji: "✨", from: "#ffffff", to: "#ffd54f" },
+  { n: 3, name: "Planète naine", emoji: "🪨", icon: "tier-3-planete-naine.png", from: "#d3ac7a", to: "#7a5c3a" },
+  { n: 4, name: "Planète", emoji: "🌍", icon: "tier-4-planete.png", from: "#63c4ff", to: "#1e5f8c" },
+  { n: 5, name: "Géante gazeuse", emoji: "🪐", icon: "tier-5-geante-gazeuse.png", from: "#f6d365", to: "#b8722e" },
+  { n: 6, name: "Étoile", emoji: "⭐", icon: "tier-6-etoile.png", from: "#fff9c4", to: "#ff9800" },
+  { n: 7, name: "Étoile à neutrons", emoji: "💫", icon: "tier-7-etoile-neutrons.png", from: "#e0f7ff", to: "#00b8d4" },
+  { n: 8, name: "Trou noir", emoji: "🕳️", icon: "tier-8-trou-noir.png", from: "#6a2bb8", to: "#000000" },
+  { n: 9, name: "Galaxie", emoji: "🌌", icon: "tier-9-galaxie.png", from: "#ff7ce8", to: "#4a00e0" },
+  // Was #ffffff/#ffd54f (white/gold) - the artwork's own bright white core
+  // washed out almost completely against a white tile background, same
+  // "pale subject on pale tile" problem as Lune's original background.
+  // Cool dark chosen over warm dark per Loris ("le froid sinon c'est
+  // vraiment pas joli").
+  { n: 10, name: "Univers", emoji: "✨", icon: "tier-10-univers.png", from: "#1e1a32", to: "#05040a" },
 ];
 
 const INITIAL_UNLOCKED = [7, 8, 9, 10, 11, 13, 14, 15, 16, 17];
