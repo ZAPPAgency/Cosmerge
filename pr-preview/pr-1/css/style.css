@@ -402,6 +402,10 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .modalCard p{margin:0 0 10px;font-size:13px;line-height:1.5;color:var(--text-dim);white-space:pre-line;}
 .modalCard .modalWarn{color:#fca5a5;font-size:11px;}
 .modalBtns{display:flex;gap:8px;margin-top:10px;}
+/* The wheel modal has a standalone "Fermer" button right after its
+   .modalBtns spin-buttons row - .modalCard isn't a flex/gap container, so
+   with no margin of its own it sat flush against the row above it. */
+#wheelClose{margin-top:10px;}
 .modalBtns .btn{flex:1;justify-content:center;}
 .saveCodeText{width:100%;box-sizing:border-box;background:#0c0920;border:1px solid #2a2450;border-radius:10px;
   color:var(--text);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;padding:10px;

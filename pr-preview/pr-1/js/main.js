@@ -123,13 +123,18 @@ function requestStorageAccessBestEffort() {
   // tick, which as a side effect silently discarded any longer time spent
   // away instead of crediting it. This computes the catch-up on resume too,
   // and resets lastFrame so the next tick doesn't also try to claim that gap.
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") {
-      saveState(Game.state);
-      MusicService.stop(); // stop scheduling further chords/sparkles
-      muteAllAudio(); // clean fade of EVERYTHING currently sounding (SFX included) instead of the OS abruptly cutting it mid-envelope (the "bizarre"/dull click on close)
-      return;
-    }
+  //
+  // Wired to BOTH visibilitychange AND focus/pageshow (not just
+  // visibilitychange alone): mobile Safari/WKWebView don't reliably fire
+  // visibilitychange on every "switched to another app, then back" cycle -
+  // this was reported as auto-spawns simply not resuming after a
+  // backgrounding that didn't fully close the app. saveState() at the end
+  // makes repeat calls safe (lastSaveTime is current by the time a second,
+  // redundant event fires, so it computes ~0 elapsed and no-ops).
+  let resuming = false;
+  function handleAppResume() {
+    if (resuming) return; // re-entrancy guard - visibilitychange+focus can fire back to back
+    resuming = true;
     unmuteAllAudio();
     if (Game.settings.music) MusicService.start();
     ensureDailyStats(Game.state);
@@ -139,5 +144,18 @@ function requestStorageAccessBestEffort() {
     if (spawned > 0) renderAll();
     if (info.gain >= 1) openOfflineModal(info, spawned);
     lastFrame = performance.now();
+    saveState(Game.state); // refreshes lastSaveTime so a redundant resume event is a no-op
+    resuming = false;
+  }
+  function handleAppHide() {
+    saveState(Game.state);
+    MusicService.stop(); // stop scheduling further chords/sparkles
+    muteAllAudio(); // clean fade of EVERYTHING currently sounding (SFX included) instead of the OS abruptly cutting it mid-envelope (the "bizarre"/dull click on close)
+  }
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") handleAppHide();
+    else handleAppResume();
   });
+  window.addEventListener("focus", handleAppResume);
+  window.addEventListener("pageshow", handleAppResume);
 })();
