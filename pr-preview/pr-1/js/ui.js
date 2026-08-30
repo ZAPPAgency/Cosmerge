@@ -11,7 +11,8 @@ const dom = {
   gemsValue: $("gemsValue"),
   energyValue: $("energyValue"),
   energyPill: $("energyPill"),
-  invokeBtn: $("invokeBtn"),
+  invokeBtnStardust: $("invokeBtnStardust"),
+  invokeBtnGems: $("invokeBtnGems"),
   invokeCost: $("invokeCost"),
   bigBangBtn: $("bigBangBtn"),
   selectionHint: $("selectionHint"),
@@ -178,7 +179,9 @@ function updateHeader() {
   if (costStr !== lastHeaderRender.cost) { dom.invokeCost.textContent = costStr; lastHeaderRender.cost = costStr; }
   if (!lastHeaderRender.gemsCostSet) { $("invokeCostGems").textContent = GEMS_INVOKE_COST; lastHeaderRender.gemsCostSet = true; }
   const disabled = state.stardust < cost;
-  if (disabled !== lastHeaderRender.disabled) { dom.invokeBtn.classList.toggle("disabled", disabled); lastHeaderRender.disabled = disabled; }
+  if (disabled !== lastHeaderRender.disabled) { dom.invokeBtnStardust.classList.toggle("disabled", disabled); lastHeaderRender.disabled = disabled; }
+  const gemsDisabled = state.gems < GEMS_INVOKE_COST;
+  if (gemsDisabled !== lastHeaderRender.gemsDisabled) { dom.invokeBtnGems.classList.toggle("disabled", gemsDisabled); lastHeaderRender.gemsDisabled = gemsDisabled; }
 
   const canBB = hasUniverseTile(state);
   if (canBB !== lastHeaderRender.canBB) { dom.bigBangBtn.classList.toggle("hidden", !canBB); lastHeaderRender.canBB = canBB; }
@@ -999,7 +1002,7 @@ function renderSettingsPanel() {
 // of the old plain emoji glyphs, which looked inconsistent once the grid
 // itself moved to custom art.
 const TUT_STEPS = [
-  { title: "Invoquer", text: () => `Appuie sur « Invoquer » pour faire apparaître un Météorite ${tierInlineIconHtml(1)} sur une case vide de la grille.`, target: () => dom.invokeBtn },
+  { title: "Invoquer", text: () => `Appuie sur « Invoquer » pour faire apparaître un Météorite ${tierInlineIconHtml(1)} sur une case vide de la grille.`, target: () => dom.invokeBtnStardust },
   { title: "Fusionner", text: () => `Glisse un astéroïde sur une case adjacente identique pour les fusionner en une Lune ${tierInlineIconHtml(2)}.`, target: () => cellEls[8] },
   { title: "Progresser", text: () => `Continue à fusionner pour atteindre Planète ${tierInlineIconHtml(4)}, Étoile ${tierInlineIconHtml(6)}, Trou noir ${tierInlineIconHtml(8)}... jusqu'à l'Univers ${tierInlineIconHtml(10)}, puis déclenche un Big Bang pour recommencer plus fort !`, target: () => dom.grid },
 ];
@@ -1057,6 +1060,7 @@ function openWheelModal() {
   ensureDailySpin(Game.state);
   $("wheelResult").textContent = "";
   $("wheelEl").style.transform = "rotate(0deg)";
+  wheelRotation = 0; // keep input.js's running spin total in sync with this visual reset
   refreshWheelButtons();
   $("wheelModal").classList.remove("hidden");
 }
@@ -1108,18 +1112,6 @@ function openStardustInfoModal() {
   $("stardustInfoModal").classList.remove("hidden");
 }
 function closeStardustInfoModal() { $("stardustInfoModal").classList.add("hidden"); }
-
-// ---------------- Invoke choice (tapping the main Invoquer button) ----------------
-function openInvokeChoiceModal() {
-  const state = Game.state;
-  const stardustCost = invokeCost(state.manualSpawnCount);
-  $("invokeChoiceStardustCost").textContent = formatNumber(stardustCost);
-  $("invokeChoiceStardust").disabled = state.stardust < stardustCost;
-  $("invokeChoiceGems").disabled = state.gems < GEMS_INVOKE_COST;
-  $("invokeChoiceGems").textContent = `💎 ${GEMS_INVOKE_COST} Gems`;
-  $("invokeChoiceModal").classList.remove("hidden");
-}
-function closeInvokeChoiceModal() { $("invokeChoiceModal").classList.add("hidden"); }
 
 // ---------------- Purchase confirmation (every IAP) ----------------
 // A toast alone was easy to miss, especially for VIP where the actual

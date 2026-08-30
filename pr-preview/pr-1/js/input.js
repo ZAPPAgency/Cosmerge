@@ -449,10 +449,21 @@ function scheduleWheelTicks(totalMs) {
   }
   tick();
 }
+// Bug: "la roue ne tourne pas [...] pas le meme effet visuel" when spinning
+// a second time (free spin, then immediately the ad-bonus spin) without
+// closing the modal in between. Root cause: this used to set an ABSOLUTE
+// target (`rotate(1440-1800deg)`) every time, but the wheel's rotation
+// persists across spins within the same modal session (only reset to 0deg
+// on openWheelModal) - so the 2nd spin's fixed 1440-1800 target could
+// easily be behind (or barely past) wherever the 1st spin left it, making
+// the wheel barely move. Now tracks a running total and always adds a
+// fresh 1440-1800deg turn ON TOP of the current rotation, so every spin
+// visibly spins forward regardless of how many happened before it.
+let wheelRotation = 0;
 function spinVisual(cb) {
   const wheel = $("wheelEl");
-  const extra = 1440 + Math.floor(Math.random() * 360);
-  wheel.style.transform = `rotate(${extra}deg)`;
+  wheelRotation += 1440 + Math.floor(Math.random() * 360);
+  wheel.style.transform = `rotate(${wheelRotation}deg)`;
   scheduleWheelTicks(WHEEL_SPIN_MS);
   setTimeout(cb, WHEEL_SPIN_MS);
 }
@@ -706,7 +717,7 @@ async function onBonusAdQuest() {
 // site. Buttons that already play their own distinct sound synchronously on
 // click (Invoquer, Big Bang confirm) either stop propagation or are excluded
 // by id below, so this never doubles up with them.
-const SILENT_CLICK_IDS = new Set(["bigBangConfirm", "invokeChoiceStardust", "invokeChoiceGems"]);
+const SILENT_CLICK_IDS = new Set(["bigBangConfirm", "invokeBtnStardust", "invokeBtnGems"]);
 function wireClickSound() {
   document.addEventListener("click", (e) => {
     const el = e.target.closest(".btn, .drawerItem, .iconBtn, .fab, .switch, .tabBtn");
@@ -732,10 +743,11 @@ function wireEvents() {
   document.addEventListener("pointerdown", onPointerDown, { passive: false });
   document.addEventListener("touchstart", onPointerDown, { passive: false });
 
-  dom.invokeBtn.addEventListener("click", () => { ensureAudio(); openInvokeChoiceModal(); });
-  $("invokeChoiceStardust").addEventListener("click", () => { doInvoke(); closeInvokeChoiceModal(); });
-  $("invokeChoiceGems").addEventListener("click", () => { doInvokeWithGems(); closeInvokeChoiceModal(); });
-  $("invokeChoiceClose").addEventListener("click", closeInvokeChoiceModal);
+  // Used to be one button that opened a choice modal (Stardust vs Gems) -
+  // Loris found the extra step frustrating, now each currency has its own
+  // direct-action button (see .invokeSection, index.html).
+  dom.invokeBtnStardust.addEventListener("click", () => { ensureAudio(); doInvoke(); });
+  dom.invokeBtnGems.addEventListener("click", () => { ensureAudio(); doInvokeWithGems(); });
   dom.bigBangBtn.addEventListener("click", () => openBigBangModal());
   dom.menuBtn.addEventListener("click", () => openDrawer());
   dom.drawerClose.addEventListener("click", closeDrawer);

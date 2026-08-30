@@ -61,9 +61,14 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .btn:active{transform:scale(.95);}
 .btn.primary{background:linear-gradient(135deg,var(--accent),#5b21b6);border-color:#a78bfa77;box-shadow:0 4px 14px #8b5cf655, inset 0 1px 0 rgba(255,255,255,.15);}
 .btn.primary .cost{color:#fde68a;}
-.btn.invokeBtn{flex-direction:column;gap:2px;padding:9px 16px;}
-.invokeCosts{font-size:11px;font-weight:600;color:#fde68a;display:flex;align-items:center;gap:4px;}
-.invokeCostsSep{font-size:9px;color:#e0d5ff;font-weight:400;}
+/* Two direct-action buttons (Stardust/Gems) instead of one button that
+   opened a choice modal - Loris: "frustrant d'avoir une seconde etape pour
+   invoquer [...] une section invoquer avec en dessous les deux choix". */
+.invokeSection{display:flex;flex-direction:column;gap:3px;}
+.invokeSectionLabel{font-size:10px;font-weight:700;color:var(--text-dim);
+  text-transform:uppercase;letter-spacing:.04em;padding-left:2px;}
+.invokeSectionRow{display:flex;gap:6px;}
+.invokeSectionRow .btn{padding:8px 12px;font-size:13px;}
 .btn.bigbang{background:linear-gradient(135deg,#f59e0b,#dc2626);border-color:#fbbf2477;box-shadow:0 4px 16px #f59e0b66;animation:bigBangPulse 1.4s ease-in-out infinite;}
 .btn.ghost{background:transparent;border:1px solid #3a3070;box-shadow:none;}
 .btn.danger{background:linear-gradient(135deg,#f87171,#7f1d1d);border-color:#fca5a577;}
