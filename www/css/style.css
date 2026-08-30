@@ -261,8 +261,15 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .bannerAd{height:50px;background:#1a1533;border:1px dashed #3a3070;border-radius:8px;display:flex;
   align-items:center;justify-content:center;font-size:11px;color:var(--text-dim);margin-top:6px;flex-shrink:0;}
 
+/* z-index 110 - ABOVE every overlay (drawer 90, panel 95, modal/tutorial
+   100), not just the header (80 put it BELOW all of them). A toast is
+   meant to always be visible regardless of what else is open - this was
+   silently hiding any toast fired while a full-screen panel was open
+   (e.g. buying Streak Freeze from the shop: the generic "Achat effectue !"
+   toast was rendering, just completely covered by the still-open shop
+   panel behind it - "ca ne fonctionne pas" was really "invisible"). */
 .toastContainer{position:fixed;left:0;right:0;bottom:calc(var(--safe-bottom) + 14px);display:flex;flex-direction:column;
-  align-items:center;gap:6px;z-index:80;pointer-events:none;}
+  align-items:center;gap:6px;z-index:110;pointer-events:none;}
 .toast{background:#1c1740ee;border:1px solid #3a3070;padding:8px 14px;border-radius:20px;font-size:13px;
   box-shadow:0 4px 14px rgba(0,0,0,.4);animation:toastIn .18s ease, toastOut .3s ease 1.7s forwards;max-width:80vw;text-align:center;}
 @keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}

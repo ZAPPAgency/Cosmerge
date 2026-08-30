@@ -127,7 +127,7 @@ function applyDailyReward(state, reward) {
     case "skinFragment": {
       state.skinFragments += 1;
       if (state.skinFragments >= SKIN_FRAGMENTS_REQUIRED) {
-        const next = [...AMBIANCES, ...EMOJI_SETS].find(s => s.cost > 0 && !state.ownedSkins.includes(s.id));
+        const next = EMOJI_SETS.find(s => s.cost > 0 && !state.ownedSkins.includes(s.id));
         if (next) { unlockCosmeticFree(state, next.id); state.skinFragments = 0; }
       }
       break;

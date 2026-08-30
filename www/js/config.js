@@ -76,31 +76,7 @@ const TIERS = [
 
 const INITIAL_UNLOCKED = [7, 8, 9, 10, 11, 13, 14, 15, 16, 17];
 
-// Ambiance (background gradient) and emoji set (tier icons/names) are two
-// independent equip slots - a player can mix e.g. "Nébuleuse rose" with
-// "Fruits du Cosmos", not a bundled all-or-nothing skin. See
-// state.equippedAmbiance/equippedEmojiSet and ui.js's tierStyle()/
-// tierEmoji()/tierName(), which each only look at their own slot.
-const AMBIANCES = [
-  { id: "default", name: "Nébuleuse par défaut", cost: 0, currency: "gems",
-    colors: ["#8a8a8a", "#2b2b2b"] },
-  { id: "violet", name: "Nébuleuse violette", cost: 150, currency: "gems",
-    colors: ["#c9a6ff", "#7c3aed"] },
-  { id: "green", name: "Aurore verte", cost: 150, currency: "gems",
-    colors: ["#a7f3c8", "#059669"] },
-  { id: "red", name: "Supernova rouge", cost: 150, currency: "gems",
-    colors: ["#ffb3a6", "#dc2626"] },
-  { id: "pink", name: "Nébuleuse rose", cost: 150, currency: "gems",
-    colors: ["#ffb3c6", "#c2185b"] },
-  { id: "emerald", name: "Nébuleuse émeraude", cost: 150, currency: "gems",
-    colors: ["#a7e8a0", "#2e7d32"] },
-];
-
 const EMOJI_SETS = [
-  // "classic", not "default" - AMBIANCES also has a "default" entry, and
-  // findCosmeticItem() (economy.js) checks AMBIANCES first, so a shared id
-  // meant equipping "the base icon set" silently re-equipped the base
-  // ambiance instead - the base icon set could never actually be selected.
   { id: "classic", name: "Cases classiques", cost: 0, currency: "gems" },
   // Tier 1 used to be Cerise/Petit Pois - both unrecognizable at tile size
   // (tiny red blob / tiny green blob), swapped for something unmistakable.
@@ -391,7 +367,7 @@ const BOX_DUPLICATE_GEMS = { commun: 10, rare: 20, epique: 40, legendaire: 80 };
 const IAP_CATALOG = [
   { id: "remove_ads", type: "nonconsumable", name: "Suppression des pubs", price: "3,99 $", desc: "Retire toutes les publicités définitivement, et débloque instantanément tous les bonus normalement obtenus en pub (boost, planète gratuite, quête bonus)." },
   { id: "vip_monthly", type: "subscription", name: "Pass Supernova", price: "6,99 $/mois",
-    desc: "✅ Aucune publicité, jamais\n✅ +100% de production de Stardust\n✅ Débloque tous les skins (ambiances et sets d'icônes)\n✅ Double la durée maximale de gains hors-ligne (jusqu'à 48h d'absence couverte au lieu de 24h)\n✅ 50 Gems offertes chaque jour" },
+    desc: "✅ Aucune publicité, jamais\n✅ +100% de production de Stardust\n✅ Débloque tous les sets d'icônes\n✅ Double la durée maximale de gains hors-ligne (jusqu'à 48h d'absence couverte au lieu de 24h)\n✅ 50 Gems offertes chaque jour" },
   { id: "stardust_boost", type: "nonconsumable", name: "Multiplicateur Stardust", price: "4,99 $", desc: "+50% de production de Stardust, en permanence, cumulable avec tous les autres bonus." },
   { id: "starter_pack", type: "nonconsumable", name: "Pack de démarrage", price: "1,99 $", desc: "500 Gems + 3 cases + boost 1h.", startersOnly: true },
   { id: "gems_small", type: "consumable", name: "100 Gems", price: "0,99 $", amount: 100 },
