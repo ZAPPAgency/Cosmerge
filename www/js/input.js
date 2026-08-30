@@ -661,6 +661,14 @@ function onCosmeticAction(id, owned) {
   refreshCurrentPanel();
   saveState(state);
 }
+function onSetIconStyle(style) {
+  const state = Game.state;
+  if (state.iconStyle === style) return;
+  state.iconStyle = style;
+  renderAll();
+  refreshCurrentPanel();
+  saveState(state);
+}
 async function onBuyIAP(productId) {
   const product = IAP_CATALOG.find(p => p.id === productId);
   const res = await IAPService.purchase(productId);

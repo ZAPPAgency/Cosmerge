@@ -397,14 +397,23 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .card.compact p.desc{font-size:11px;margin-bottom:6px;}
 .card h3{margin:0 0 4px;font-size:14px;}
 
-/* Premium shop hero (the Pass) + featured tier (the next 2 most expensive
-   offers) - Loris wanted the whole "Offres Premium" section to read as
-   more premium, not just reordered by price. Both get a slow, continuous
-   glow pulse (iapGlow) - the hero's is bigger/brighter, the featured
-   cards' is a subtler echo of the same animation so the whole top of the
-   section feels alive without competing with the hero for attention. */
-.iapHero{position:relative;background:linear-gradient(160deg,#2a2154,#181233 60%,#241a3a);
-  border:1px solid var(--stardust);border-radius:18px;padding:20px 18px 18px;margin-bottom:8px;
+/* Premium shop cards ("Offres Premium") - EVERY card in this section now
+   shares this gold-glow chrome + a continuous pulse (Loris liked the
+   Pass's look enough to want it applied to every service, not just the
+   top 3 - "le texte y est beaucoup plus clair... applique-le à tous les
+   services"). .iapHero (the Pass) layers a bigger/brighter variant with
+   its badge + perks list on top of this shared base - same two classes on
+   one element (see ui.js), .iapHero's rules win the shared properties
+   just by coming later in the cascade (equal specificity, source order). */
+.iapCard{position:relative;border-color:#f7b73377;
+  box-shadow:0 2px 8px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.05), 0 0 0 1px #f7b73322;
+  animation:iapGlowSmall 3.2s ease-in-out infinite;}
+@keyframes iapGlowSmall{
+  0%,100%{box-shadow:0 2px 8px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.05), 0 0 0 1px #f7b73322;}
+  50%{box-shadow:0 2px 8px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.05), 0 0 0 1px #f7b73366;}
+}
+.iapHero{background:linear-gradient(160deg,#2a2154,#181233 60%,#241a3a);
+  border-color:var(--stardust);border-radius:18px;padding:20px 18px 18px;margin-bottom:8px;
   box-shadow:0 0 0 1px #f7b73333 inset, 0 6px 24px #f7b73322;
   animation:iapGlow 3.2s ease-in-out infinite;}
 .iapHero h3{font-size:17px;}
@@ -420,12 +429,6 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
   0%,100%{box-shadow:0 0 0 1px #f7b73333 inset, 0 6px 24px #f7b73322;}
   50%{box-shadow:0 0 0 1px #f7b733aa inset, 0 6px 30px #f7b73355;}
 }
-.iapFeaturedGrid{margin-bottom:8px;}
-.iapFeatured{border-color:#f7b73377;animation:iapGlowSmall 3.2s ease-in-out infinite;}
-@keyframes iapGlowSmall{
-  0%,100%{box-shadow:0 2px 8px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.05), 0 0 0 1px #f7b73322;}
-  50%{box-shadow:0 2px 8px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.05), 0 0 0 1px #f7b73366;}
-}
 
 /* Two-per-row shop tiles (shop gem-services + the shared cosmetic grid) -
    was one full-width card each, which the button dominated far more than
@@ -437,6 +440,9 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .shopGrid2 .card .tag{font-size:9px;}
 .shopGrid2 .card .btn{padding:7px;font-size:11px;margin-top:8px;}
 
+/* Emoji/Illustré switch, above the Sets d'icônes grid (renderShopPanel) */
+.iconStyleToggle{display:flex;gap:8px;}
+.iconStyleToggle .btn{flex:1;justify-content:center;padding:8px;font-size:12.5px;}
 .cosmeticGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .cosmeticTile{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px;
   background:var(--bg-card);border:1px solid #2a2450;border-radius:14px;text-align:center;}

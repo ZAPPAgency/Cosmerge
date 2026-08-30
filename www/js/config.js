@@ -367,7 +367,10 @@ const BOX_DUPLICATE_GEMS = { commun: 10, rare: 20, epique: 40, legendaire: 80 };
 const IAP_CATALOG = [
   // "planète gratuite" removed from this description - that feature was
   // cut from the game entirely (see git log), this promise was stale.
-  { id: "remove_ads", type: "nonconsumable", name: "Suppression des pubs", price: "3,99 $", desc: "Retire toutes les publicités définitivement, et débloque instantanément tous les bonus normalement obtenus en pub (boost, quête bonus)." },
+  // Price swapped with stardust_boost below (Loris) - permanently removing
+  // every ad is worth more than a production multiplier, so it should cost
+  // more, not less.
+  { id: "remove_ads", type: "nonconsumable", name: "Suppression des pubs", price: "4,99 $", desc: "Retire toutes les publicités définitivement, et débloque instantanément tous les bonus normalement obtenus en pub (boost, quête bonus)." },
   // `perks` (structured, one line per benefit) replaces the old single
   // `desc` string of "✅ ..." lines joined by \n - Loris found that plain
   // checklist "pas très premium". Rendered as its own icon+text row list
@@ -382,7 +385,7 @@ const IAP_CATALOG = [
       "48h de gains hors-ligne couverts (au lieu de 24h)",
       "50 Gems offertes chaque jour",
     ] },
-  { id: "stardust_boost", type: "nonconsumable", name: "Multiplicateur Stardust", price: "4,99 $", desc: "+50% de production de Stardust, en permanence, cumulable avec tous les autres bonus." },
+  { id: "stardust_boost", type: "nonconsumable", name: "Multiplicateur Stardust", price: "3,99 $", desc: "+50% de production de Stardust, en permanence, cumulable avec tous les autres bonus." },
   { id: "starter_pack", type: "nonconsumable", name: "Pack de démarrage", price: "1,99 $", desc: "500 Gems + 3 cases + boost 1h.", startersOnly: true },
   { id: "gems_small", type: "consumable", name: "100 Gems", price: "0,99 $", amount: 100 },
   { id: "gems_medium", type: "consumable", name: "550 Gems (+10%)", price: "4,99 $", amount: 550 },
@@ -392,7 +395,12 @@ const IAP_CATALOG = [
 
 // ---- Formulas ----
 function tierProd(tier) { return 0.5 * Math.pow(2, tier - 1); }
-function unlockCost(n) { return Math.round(50 * Math.pow(1.5, n)); }
+// Growth bumped 1.5 -> 1.65 (Loris: "on arrive trop vite à la dernière
+// ligne") - barely changes the first few unlocks (n small), but compounds
+// into a much steeper wall by the last row: at n=19 (the 20th and final
+// manually-unlocked cell, TOTAL 30 minus the 10 INITIAL_UNLOCKED), cost
+// goes from ~111K Stardust to ~677K.
+function unlockCost(n) { return Math.round(50 * Math.pow(1.65, n)); }
 function invokeCost(k) { return Math.round(15 * Math.pow(1.12, k)); }
 
 function bigBangGain(stardustEarnedThisRun, maxTierReached) {
