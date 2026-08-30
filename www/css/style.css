@@ -380,7 +380,13 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .storyMark{position:absolute;top:10px;right:14px;font-size:34px;opacity:.12;pointer-events:none;}
 .card p.desc{margin:0 0 8px;font-size:12px;color:var(--text-dim);line-height:1.5;white-space:pre-line;}
 .card .rowBetween,.modalCard .rowBetween{display:flex;align-items:center;justify-content:space-between;gap:8px;}
-.tag{font-size:10px;padding:2px 7px;border-radius:8px;background:#2a2450;color:var(--text-dim);}
+.card .rowBetween h3{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* Price/status pill (e.g. "50 💎") - on narrow screens a long title (like
+   "Échanger deux cases") left too little room and the flex row shrank the
+   pill itself, wrapping the number and the emoji onto separate lines. The
+   title now truncates with an ellipsis first (see rule above) instead, and
+   the pill is pinned to never wrap or shrink below its own content. */
+.tag{font-size:10px;padding:2px 7px;border-radius:8px;background:#2a2450;color:var(--text-dim);white-space:nowrap;flex-shrink:0;}
 .tag.owned{background:#134e2c;color:var(--success);}
 .tag.equipped{background:#3730a3;color:#c7d2fe;}
 
