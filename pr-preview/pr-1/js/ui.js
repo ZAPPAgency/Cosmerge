@@ -63,6 +63,26 @@ function tierStyle(tier) {
 function tierEmoji(tier) { const s = equippedEmojiSetDef(); return (s.tierSkin && s.tierSkin[tier - 1]) ? s.tierSkin[tier - 1].emoji : TIERS[tier - 1].emoji; }
 function tierName(tier) { const s = equippedEmojiSetDef(); return (s.tierSkin && s.tierSkin[tier - 1]) ? s.tierSkin[tier - 1].name : TIERS[tier - 1].name; }
 
+// Builds the tile's icon element: custom artwork (TIERS[tier-1].icon) when
+// the classic skin is equipped and that tier has one, otherwise the plain
+// emoji glyph - covers both the Fruits/Légumes skins (their own tierSkin
+// emoji, no custom art for those) and any classic tier not illustrated yet.
+function tierIconNode(tier) {
+  const s = equippedEmojiSetDef();
+  const t = TIERS[tier - 1];
+  if (!s.tierSkin && t.icon) {
+    const img = document.createElement("img");
+    img.className = "emoji tierIcon";
+    img.src = "assets/tiles/" + t.icon;
+    img.alt = t.name;
+    return img;
+  }
+  const span = document.createElement("div");
+  span.className = "emoji";
+  span.textContent = tierEmoji(tier);
+  return span;
+}
+
 function renderCell(i, opts) {
   opts = opts || {};
   const state = Game.state;
@@ -101,9 +121,7 @@ function renderCell(i, opts) {
   if (opts.merged) tile.classList.add("merging");
   if (opts.spawned) tile.classList.add("spawnIn");
   tile.style.cssText += tierStyle(tileData.tier);
-  const emoji = document.createElement("div");
-  emoji.className = "emoji";
-  emoji.textContent = tierEmoji(tileData.tier);
+  const emoji = tierIconNode(tileData.tier);
   const num = document.createElement("div");
   num.className = "tierNum";
   num.textContent = tileData.tier;
@@ -232,9 +250,7 @@ function renderMergeStandIn(idx, tier) {
   const tile = document.createElement("div");
   tile.className = "tile";
   tile.style.cssText += tierStyle(tier);
-  const emoji = document.createElement("div");
-  emoji.className = "emoji";
-  emoji.textContent = tierEmoji(tier);
+  const emoji = tierIconNode(tier);
   const num = document.createElement("div");
   num.className = "tierNum";
   num.textContent = tier;

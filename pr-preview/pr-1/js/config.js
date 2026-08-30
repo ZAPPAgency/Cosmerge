@@ -41,8 +41,15 @@ const MOON_MERGES_TO_CHOOSE_GOD = 4;
 const GEMS_INVOKE_COST = 5;
 
 const TIERS = [
-  { n: 1, name: "Météorite", emoji: "☄️", from: "#8a8a8a", to: "#2b2b2b" },
-  { n: 2, name: "Lune", emoji: "🌙", from: "#e8e8f2", to: "#8a8aa0" },
+  // `icon` (optional): custom AI-generated artwork (Midjourney, background
+  // removed in Photoshop) replacing the plain emoji glyph - classic skin
+  // only, see tierIconNode() in ui.js. Fruits/Légumes skins keep their own
+  // emoji via tierSkin, unaffected. Background colors were re-picked to
+  // suit that art rather than just the tier's mood - a pale/glowing
+  // subject reads far better on a dark tile than a light one (Lune moved
+  // from a pale grey tile to a dark indigo "night sky" for exactly this).
+  { n: 1, name: "Météorite", emoji: "☄️", icon: "tier-1-meteorite.png", from: "#3a3550", to: "#0c0a18" },
+  { n: 2, name: "Lune", emoji: "🌙", icon: "tier-2-lune.png", from: "#2d3561", to: "#080a1c" },
   { n: 3, name: "Planète naine", emoji: "🪨", from: "#d3ac7a", to: "#7a5c3a" },
   { n: 4, name: "Planète", emoji: "🌍", from: "#63c4ff", to: "#1e5f8c" },
   { n: 5, name: "Géante gazeuse", emoji: "🪐", from: "#f6d365", to: "#b8722e" },

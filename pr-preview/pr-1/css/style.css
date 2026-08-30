@@ -87,6 +87,11 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
   box-shadow:inset 0 0 10px rgba(255,255,255,.15), 0 2px 6px rgba(0,0,0,.4);transition:transform .12s ease;touch-action:none;
   z-index:5;/* sits above the flash/burst glow (so it pops "out of" the light) but below the ring/debris flying past it */}
 .tile .emoji{font-size:22px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5));}
+/* Custom tier artwork (img.tierIcon, see tierIconNode() in ui.js) - the
+   image already carries its own shading/depth, so it skips the emoji
+   drop-shadow (would just double up) and is sized relative to the tile
+   instead of the font-size the plain emoji glyph uses. */
+.tile .emoji.tierIcon{width:68%;height:68%;object-fit:contain;filter:none;}
 .tile .tierNum{position:absolute;bottom:2px;right:4px;font-size:8px;font-weight:700;color:rgba(255,255,255,.65);}
 .tile.dragging{opacity:0;}
 /* Merging tile: elevated above neighboring cells (see .cell.impactHero
@@ -122,6 +127,7 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
   display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.5);
   transform:translate(-50%,-50%) scale(1.1);}
 .ghostTile .emoji{font-size:26px;}
+.ghostTile .emoji.tierIcon{width:70%;height:70%;object-fit:contain;filter:none;}
 
 .particle{position:absolute;width:6px;height:6px;border-radius:50%;background:#fff;pointer-events:none;
   animation:particleFly .5s ease-out forwards;}
