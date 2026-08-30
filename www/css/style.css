@@ -90,6 +90,20 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .cell.locked .lockLabel .emoji{font-size:16px;}
 .cell.selectableEmpty{outline:2px dashed var(--accent2);outline-offset:-2px;}
 .cell.selected{outline:2px solid var(--accent2);outline-offset:-2px;box-shadow:0 0 14px #22d3ee88;}
+/* Continuous idle animation for the max tier (Loris: "les cases de niveau
+   10... une animation agréable, jolie et continue"). box-shadow (not a
+   pseudo-element) so it can't fight with .tile's own paint order/z-index;
+   the icon's own gentle breathing scale is a separate animation on a
+   different element (.tile .emoji.tierIcon), so it coexists cleanly with
+   .tile.merging/.tile.spawnIn firing on top of it right after a fresh
+   merge into the max tier. */
+.cell.tierMax{animation:tierMaxGlow 2.6s ease-in-out infinite;}
+@keyframes tierMaxGlow{
+  0%,100%{box-shadow:0 0 8px 1px #8b5cf655;}
+  50%{box-shadow:0 0 20px 5px #a78bfa99;}
+}
+.cell.tierMax .tile .emoji.tierIcon{animation:tierMaxBreathe 3.4s ease-in-out infinite;}
+@keyframes tierMaxBreathe{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
 
 .tile{position:absolute;inset:2px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;
   box-shadow:inset 0 0 10px rgba(255,255,255,.15), 0 2px 6px rgba(0,0,0,.4);transition:transform .12s ease;touch-action:none;
@@ -337,6 +351,31 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 
 /* Full-screen panel */
 .panelOverlay{position:fixed;inset:0;background:var(--bg-deep);z-index:95;display:flex;justify-content:center;}
+/* Gods screen ambiance (Loris: "trop basique" - the panel used the exact
+   same flat background as every other panel). Toggled via openPanel()
+   (ui.js) only for the "gods" panel. Purple/gold nebula gradients + a
+   faint repeating star-dot texture (2-layer radial-gradient tiling trick,
+   no images) + a slow pulsing glow overlay for a "living" divine-space
+   feel, plus the section headers pick up the gold accent instead of the
+   app's usual cyan. Individual god portraits are a separate, later batch -
+   this is the decor half only. */
+.panelOverlay.godsTheme{
+  background:
+    radial-gradient(ellipse 120% 50% at 50% -5%, #6d3fa855 0%, transparent 60%),
+    radial-gradient(ellipse 90% 45% at 15% 100%, #b8860b33 0%, transparent 55%),
+    radial-gradient(ellipse 70% 40% at 90% 80%, #2a1a5e66 0%, transparent 55%),
+    radial-gradient(circle, #ffffff22 .5px, transparent .5px) 0 0/26px 26px,
+    radial-gradient(circle, #ffffff16 .5px, transparent .5px) 13px 13px/26px 26px,
+    var(--bg-deep);
+}
+.panelOverlay.godsTheme::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(circle at 50% 15%, #f7b73333 0%, transparent 45%);
+  animation:godsGlowPulse 5s ease-in-out infinite;
+}
+@keyframes godsGlowPulse{0%,100%{opacity:.45;}50%{opacity:1;}}
+.panelOverlay.godsTheme .panelHeader h2{color:var(--stardust);text-shadow:0 0 12px #f7b73355;}
+.panelOverlay.godsTheme .panelBody>h3{border-left-color:var(--stardust);}
 .panel{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column;box-sizing:border-box;
   padding:calc(var(--safe-top) + 8px) 18px calc(var(--safe-bottom) + 8px);}
 .panelHeader{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
@@ -357,7 +396,36 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .card.compact h3{font-size:13px;}
 .card.compact p.desc{font-size:11px;margin-bottom:6px;}
 .card h3{margin:0 0 4px;font-size:14px;}
-.vipCard{border-color:var(--stardust);box-shadow:0 0 0 1px var(--stardust) inset, 0 0 16px #f7b73333;}
+
+/* Premium shop hero (the Pass) + featured tier (the next 2 most expensive
+   offers) - Loris wanted the whole "Offres Premium" section to read as
+   more premium, not just reordered by price. Both get a slow, continuous
+   glow pulse (iapGlow) - the hero's is bigger/brighter, the featured
+   cards' is a subtler echo of the same animation so the whole top of the
+   section feels alive without competing with the hero for attention. */
+.iapHero{position:relative;background:linear-gradient(160deg,#2a2154,#181233 60%,#241a3a);
+  border:1px solid var(--stardust);border-radius:18px;padding:20px 18px 18px;margin-bottom:8px;
+  box-shadow:0 0 0 1px #f7b73333 inset, 0 6px 24px #f7b73322;
+  animation:iapGlow 3.2s ease-in-out infinite;}
+.iapHero h3{font-size:17px;}
+.iapHero .iapPrice{font-size:16px;}
+.iapHeroBadge{position:absolute;top:-11px;left:16px;background:linear-gradient(135deg,#fde68a,var(--stardust));
+  color:#2b1a02;font-size:11px;font-weight:800;padding:4px 12px;border-radius:20px;
+  box-shadow:0 3px 10px #f7b73355;letter-spacing:.01em;}
+.iapHeroTagline{margin:0 0 12px;font-size:12.5px;color:var(--accent2);font-weight:600;}
+.iapPerkList{list-style:none;margin:0 0 16px;padding:0;display:flex;flex-direction:column;gap:8px;}
+.iapPerkList li{position:relative;padding-left:24px;font-size:13px;color:var(--text);line-height:1.35;}
+.iapPerkList li::before{content:"✦";position:absolute;left:0;top:0;color:var(--stardust);font-size:13px;}
+@keyframes iapGlow{
+  0%,100%{box-shadow:0 0 0 1px #f7b73333 inset, 0 6px 24px #f7b73322;}
+  50%{box-shadow:0 0 0 1px #f7b733aa inset, 0 6px 30px #f7b73355;}
+}
+.iapFeaturedGrid{margin-bottom:8px;}
+.iapFeatured{border-color:#f7b73377;animation:iapGlowSmall 3.2s ease-in-out infinite;}
+@keyframes iapGlowSmall{
+  0%,100%{box-shadow:0 2px 8px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.05), 0 0 0 1px #f7b73322;}
+  50%{box-shadow:0 2px 8px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.05), 0 0 0 1px #f7b73366;}
+}
 
 /* Two-per-row shop tiles (shop gem-services + the shared cosmetic grid) -
    was one full-width card each, which the button dominated far more than
@@ -379,6 +447,20 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .cosmeticName{font-size:12px;font-weight:700;line-height:1.25;}
 .cosmeticTile .tag{margin:-2px 0 2px;}
 .cosmeticTile .btn{padding:7px 10px;font-size:11px;width:auto;min-width:70px;}
+.cosmeticPreviewBtn{padding:5px 10px;font-size:10.5px;width:auto;min-width:0;margin-top:2px;}
+
+/* Skin preview modal ("👁 Aperçu") - a static mini grid of all 10 tiers
+   with the previewed set's icons, each tile given a gentle staggered pulse
+   (--stagger, set per-cell in openSkinPreviewModal/ui.js) so the whole
+   grid reads as "alive" rather than a flat catalog image, without going
+   as far as simulating actual merges. */
+.skinPreviewCard{max-width:360px;}
+.skinPreviewGrid{display:grid;grid-template-columns:repeat(5, 1fr);gap:8px;margin:4px 0 16px;}
+.skinPreviewGrid .cell{animation:previewPulse 2.8s ease-in-out infinite;animation-delay:var(--stagger, 0s);}
+@keyframes previewPulse{
+  0%,100%{box-shadow:0 0 0 0 transparent;transform:scale(1);}
+  50%{box-shadow:0 0 10px 2px #8b5cf655;transform:scale(1.04);}
+}
 
 .purchaseCheckAnim{font-size:48px;line-height:1;margin:6px auto 10px;animation:cosmicBoxReveal .4s ease-out;}
 .cosmicBoxCard{text-align:center;}

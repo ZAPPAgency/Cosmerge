@@ -365,9 +365,23 @@ const BOX_DUPLICATE_GEMS = { commun: 10, rare: 20, epique: 40, legendaire: 80 };
 
 // ---- IAP catalog (simulated at this stage) ----
 const IAP_CATALOG = [
-  { id: "remove_ads", type: "nonconsumable", name: "Suppression des pubs", price: "3,99 $", desc: "Retire toutes les publicités définitivement, et débloque instantanément tous les bonus normalement obtenus en pub (boost, planète gratuite, quête bonus)." },
+  // "planète gratuite" removed from this description - that feature was
+  // cut from the game entirely (see git log), this promise was stale.
+  { id: "remove_ads", type: "nonconsumable", name: "Suppression des pubs", price: "3,99 $", desc: "Retire toutes les publicités définitivement, et débloque instantanément tous les bonus normalement obtenus en pub (boost, quête bonus)." },
+  // `perks` (structured, one line per benefit) replaces the old single
+  // `desc` string of "✅ ..." lines joined by \n - Loris found that plain
+  // checklist "pas très premium". Rendered as its own icon+text row list
+  // in the hero card (renderShopPanel/ui.js) instead of a wall of
+  // checkmarks; `desc` is now just the short tagline above it.
   { id: "vip_monthly", type: "subscription", name: "Pass Supernova", price: "6,99 $/mois",
-    desc: "✅ Aucune publicité, jamais\n✅ +100% de production de Stardust\n✅ Débloque tous les sets d'icônes\n✅ Double la durée maximale de gains hors-ligne (jusqu'à 48h d'absence couverte au lieu de 24h)\n✅ 50 Gems offertes chaque jour" },
+    desc: "L'expérience Godspark, sans limites.",
+    perks: [
+      "Aucune publicité, pour toujours",
+      "Production de Stardust doublée",
+      "Tous les sets d'icônes débloqués",
+      "48h de gains hors-ligne couverts (au lieu de 24h)",
+      "50 Gems offertes chaque jour",
+    ] },
   { id: "stardust_boost", type: "nonconsumable", name: "Multiplicateur Stardust", price: "4,99 $", desc: "+50% de production de Stardust, en permanence, cumulable avec tous les autres bonus." },
   { id: "starter_pack", type: "nonconsumable", name: "Pack de démarrage", price: "1,99 $", desc: "500 Gems + 3 cases + boost 1h.", startersOnly: true },
   { id: "gems_small", type: "consumable", name: "100 Gems", price: "0,99 $", amount: 100 },
