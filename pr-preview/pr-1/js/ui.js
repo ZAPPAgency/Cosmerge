@@ -63,18 +63,21 @@ function tierStyle(tier) {
 function tierEmoji(tier) { const s = equippedEmojiSetDef(); return (s.tierSkin && s.tierSkin[tier - 1]) ? s.tierSkin[tier - 1].emoji : TIERS[tier - 1].emoji; }
 function tierName(tier) { const s = equippedEmojiSetDef(); return (s.tierSkin && s.tierSkin[tier - 1]) ? s.tierSkin[tier - 1].name : TIERS[tier - 1].name; }
 
-// Builds the tile's icon element: custom artwork (TIERS[tier-1].icon) when
-// the classic skin is equipped and that tier has one, otherwise the plain
-// emoji glyph - covers both the Fruits/Légumes skins (their own tierSkin
-// emoji, no custom art for those) and any classic tier not illustrated yet.
+// Builds the tile's icon element: custom artwork when the active skin
+// (classic, or a tierSkin-based one like Fruits/Légumes) has an `icon` for
+// this tier, otherwise the plain emoji glyph. Classic reads icon/iconScale
+// straight off TIERS[tier-1]; a tierSkin-based skin reads them off its own
+// tierSkin[tier-1] entry instead, so Fruits/Légumes can get their own art
+// independently of (and without needing) the classic set's.
 function tierIconNode(tier) {
   const s = equippedEmojiSetDef();
-  const t = TIERS[tier - 1];
-  if (!s.tierSkin && t.icon) {
+  const skinEntry = s.tierSkin && s.tierSkin[tier - 1];
+  const src = skinEntry || TIERS[tier - 1];
+  if (src.icon) {
     const img = document.createElement("img");
     img.className = "emoji tierIcon";
-    img.src = "assets/tiles/" + t.icon;
-    img.alt = t.name;
+    img.src = "assets/tiles/" + src.icon;
+    img.alt = src.name;
     // Per-tier size correction (optional): some source art reads smaller
     // than others at the same box size - either because the image itself
     // is a non-square aspect ratio (object-fit:contain then sizes to the
@@ -82,8 +85,8 @@ function tierIconNode(tier) {
     // (e.g. a glow with thin rays reaching the edges) is smaller than its
     // full bounding box. Overrides the CSS .tierIcon default inline, since
     // inline beats the class rule.
-    if (t.iconScale) {
-      const pct = (68 * t.iconScale).toFixed(1) + "%";
+    if (src.iconScale) {
+      const pct = (68 * src.iconScale).toFixed(1) + "%";
       img.style.width = pct; img.style.height = pct;
     }
     return img;
