@@ -53,9 +53,19 @@ const TIERS = [
   { n: 3, name: "Planète naine", emoji: "🪨", icon: "tier-3-planete-naine.png", from: "#d3ac7a", to: "#7a5c3a" },
   { n: 4, name: "Planète", emoji: "🌍", icon: "tier-4-planete.png", from: "#63c4ff", to: "#1e5f8c" },
   { n: 5, name: "Géante gazeuse", emoji: "🪐", icon: "tier-5-geante-gazeuse.png", from: "#f6d365", to: "#b8722e" },
-  { n: 6, name: "Étoile", emoji: "⭐", icon: "tier-6-etoile.png", from: "#fff9c4", to: "#ff9800" },
-  { n: 7, name: "Étoile à neutrons", emoji: "💫", icon: "tier-7-etoile-neutrons.png", from: "#e0f7ff", to: "#00b8d4" },
-  { n: 8, name: "Trou noir", emoji: "🕳️", icon: "tier-8-trou-noir.png", from: "#6a2bb8", to: "#000000" },
+  // Darkened from the original bright #fff9c4/#ff9800 - same "pale/bright
+  // subject needs a darker tile to really pop" pattern as Lune/Univers.
+  { n: 6, name: "Étoile", emoji: "⭐", icon: "tier-6-etoile.png", from: "#4a3a12", to: "#1a1406" },
+  // Darkened from #e0f7ff/#00b8d4 for the same reason, kept in a teal-black
+  // (not purple/indigo like Météorite/Lune/Univers) to stay visually
+  // distinct from the other dark tiers. `iconScale` (see tierIconNode() in
+  // ui.js) bumps this one up - its thin light rays reach the edges of the
+  // image already, but the glowing core they radiate from reads small.
+  { n: 7, name: "Étoile à neutrons", emoji: "💫", icon: "tier-7-etoile-neutrons.png", from: "#0e3d45", to: "#020a0c", iconScale: 1.3 },
+  // iconScale bump: the source art is a wide/flat 420x295 image, and
+  // object-fit:contain sizes to the limiting dimension - a non-square image
+  // ends up looking smaller than a square one at the same box size.
+  { n: 8, name: "Trou noir", emoji: "🕳️", icon: "tier-8-trou-noir.png", from: "#6a2bb8", to: "#000000", iconScale: 1.15 },
   { n: 9, name: "Galaxie", emoji: "🌌", icon: "tier-9-galaxie.png", from: "#ff7ce8", to: "#4a00e0" },
   // Was #ffffff/#ffd54f (white/gold) - the artwork's own bright white core
   // washed out almost completely against a white tile background, same
