@@ -16,11 +16,10 @@ const TAP_COOLDOWN_MS = 150;
 const DRAG_THRESHOLD = 10;
 const BASE_OFFLINE_CAP_H = 8;
 const MAX_OFFLINE_CAP_H = 24;
-const FREE_PLANET_COOLDOWN_MS = 4 * 60 * 60 * 1000;
-// Shorter than the free planet's cooldown - a free cell unlock is worth less
-// (unlockCost grows 1.5x per cell, so late-run it can hit tens of thousands
-// of Stardust) but it's the specific relief valve for the "unlock costs feel
-// like a wall" complaint, so it should be more frequently available.
+// The specific relief valve for the "unlock costs feel like a wall"
+// complaint - a free cell unlock is worth less late-run than early (
+// unlockCost grows 1.5x per cell, so it can hit tens of thousands of
+// Stardust), so it's kept frequently available rather than a rarer treat.
 const UNLOCK_CELL_AD_COOLDOWN_MS = 2 * 60 * 60 * 1000;
 // Deliberately short and repeatable - this is the "grind toward a specific
 // purchase" ad, not a big one-off bonus like the others above.

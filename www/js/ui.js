@@ -18,7 +18,6 @@ const dom = {
   toastContainer: $("toastContainer"),
   fabDailyLogin: $("fabDailyLogin"),
   fabWheel: $("fabWheel"),
-  fabFreePlanet: $("fabFreePlanet"),
   bannerAd: $("bannerAd"),
   menuBtn: $("menuBtn"),
   drawerOverlay: $("drawerOverlay"),
@@ -62,6 +61,20 @@ function tierStyle(tier) {
 }
 function tierEmoji(tier) { const s = equippedEmojiSetDef(); return (s.tierSkin && s.tierSkin[tier - 1]) ? s.tierSkin[tier - 1].emoji : TIERS[tier - 1].emoji; }
 function tierName(tier) { const s = equippedEmojiSetDef(); return (s.tierSkin && s.tierSkin[tier - 1]) ? s.tierSkin[tier - 1].name : TIERS[tier - 1].name; }
+
+// Small inline <img> for tier references OUTSIDE the grid itself (the
+// tutorial, stat lines, the Big Bang summary...) so illustrated tiers read
+// consistently everywhere they're mentioned, not just on the board itself -
+// these spots were still hardcoding the plain emoji glyph even after a
+// tier got custom art. Always the classic set's own icon (these are
+// generic "tier N" references, not tied to whichever skin is equipped) -
+// falls back to the plain emoji for any tier without art yet.
+function tierInlineIconHtml(tier) {
+  const t = TIERS[tier - 1];
+  return t.icon
+    ? `<img class="inlineTierIcon" src="assets/tiles/${t.icon}" alt="${t.name}">`
+    : t.emoji;
+}
 
 // Builds the tile's icon element: custom artwork when the active skin
 // (classic, or a tierSkin-based one like Fruits/Légumes) has an `icon` for
@@ -200,9 +213,6 @@ function updateFabs() {
   dom.fabDailyLogin.querySelector(".fabLabel").textContent = claimedToday ? `Série ${state.dailyLogin.streak}` : "Cadeau";
   ensureDailySpin(state);
   dom.fabWheel.classList.toggle("hidden", state.dailySpin.freeUsed && state.dailySpin.bonusUsed);
-  const fpReady = Date.now() >= state.cooldowns.freePlanetUntil;
-  dom.fabFreePlanet.classList.toggle("ready", fpReady);
-  dom.fabFreePlanet.disabled = false;
   const allUnlocked = unlockedCount(state) >= TOTAL;
   $("fabUnlockCellAd").classList.toggle("hidden", allUnlocked);
   $("fabUnlockCellAd").classList.toggle("ready", !allUnlocked && Date.now() >= state.cooldowns.unlockCellAdUntil);
@@ -309,7 +319,14 @@ function restartAnim(el, cls) {
 // untouched - Loris explicitly liked that part.
 function playMeteorMerge(idx, onImpact, streak, newTier) {
   streak = streak || 0;
-  const power = Math.min(0.9 + Math.min(newTier || 1, 10) * 0.13 + Math.min(streak, 5) * 0.03, 2.3);
+  // Lowered again - Loris: "l'animation des premieres cases est encore
+  // trop intense ce qui fait qu'on voit pas bien la progression". Tier 1
+  // now starts around .6 (was 1.0), so it visibly ramps up over the tiers
+  // instead of already being most of the way to the tier-10 cap. The
+  // screen flash's reach (style.css .screenFlash) also had a fixed floor
+  // regardless of power - now fully proportional too, so a low-power merge
+  // genuinely stays small instead of still blooming out a fixed amount.
+  const power = Math.min(0.4 + Math.min(newTier || 1, 10) * 0.19 + Math.min(streak, 5) * 0.02, 2.3);
   const cell = cellEls[idx];
   const glow = document.createElement("div");
   glow.className = "chargeGlow";
@@ -782,7 +799,7 @@ function renderProgressionPanel() {
   const summary = el("div", "card progressCard");
   summary.innerHTML = `<h3>Ton voyage</h3>
     <p class="rowBetween"><span>Niveau Cosmique (Big Bang)</span><strong>${state.lifetime.bigBangCount}</strong></p>
-    <p class="rowBetween"><span>Palier le plus élevé atteint</span><strong>${TIERS[state.lifetime.maxTierEver - 1].name} ${TIERS[state.lifetime.maxTierEver - 1].emoji}</strong></p>
+    <p class="rowBetween"><span>Palier le plus élevé atteint</span><strong>${TIERS[state.lifetime.maxTierEver - 1].name} ${tierInlineIconHtml(state.lifetime.maxTierEver)}</strong></p>
     <p class="rowBetween"><span>Stardust généré à vie</span><strong>${formatNumber(state.lifetime.stardustEarned)}</strong></p>
     <p class="rowBetween"><span>Dieux éveillés</span><strong>${state.gods.unlockedIds.length} / ${GODS.length}</strong></p>`;
   dom.panelBody.appendChild(summary);
@@ -808,7 +825,7 @@ function renderProgressionPanel() {
   steps.push(godStep("helios"));
   steps.push(godStep("nyx"));
   steps.push(godStep("erebus"));
-  steps.push({ emoji: TIERS[TIERS.length - 1].emoji, done: state.lifetime.maxTierEver >= TIERS.length, text: "Atteindre l'Univers" });
+  steps.push({ emoji: tierInlineIconHtml(TIERS.length), done: state.lifetime.maxTierEver >= TIERS.length, text: "Atteindre l'Univers" });
   steps.push({ emoji: "💥", done: state.lifetime.bigBangCount >= 1, text: "Premier Big Bang" });
   steps.push(godStep("thanatos"));
   steps.push(godStep("chronos"));
@@ -992,10 +1009,14 @@ function renderSettingsPanel() {
 }
 
 // ---------------- Tutorial ----------------
+// Text is HTML (see showTutStep's innerHTML below), not plain text -
+// tierInlineIconHtml() needs that to show the real artwork inline instead
+// of the old plain emoji glyphs, which looked inconsistent once the grid
+// itself moved to custom art.
 const TUT_STEPS = [
-  { title: "Invoquer", text: "Appuie sur « Invoquer » pour faire apparaître un Météorite ☄️ sur une case vide de la grille.", target: () => dom.invokeBtn },
-  { title: "Fusionner", text: "Glisse un astéroïde sur une case adjacente identique pour les fusionner en une Lune 🌙.", target: () => cellEls[8] },
-  { title: "Progresser", text: "Continue à fusionner pour atteindre Planète 🌍, Étoile ⭐, Trou noir 🕳️... jusqu'à l'Univers ✨, puis déclenche un Big Bang pour recommencer plus fort !", target: () => dom.grid },
+  { title: "Invoquer", text: () => `Appuie sur « Invoquer » pour faire apparaître un Météorite ${tierInlineIconHtml(1)} sur une case vide de la grille.`, target: () => dom.invokeBtn },
+  { title: "Fusionner", text: () => `Glisse un astéroïde sur une case adjacente identique pour les fusionner en une Lune ${tierInlineIconHtml(2)}.`, target: () => cellEls[8] },
+  { title: "Progresser", text: () => `Continue à fusionner pour atteindre Planète ${tierInlineIconHtml(4)}, Étoile ${tierInlineIconHtml(6)}, Trou noir ${tierInlineIconHtml(8)}... jusqu'à l'Univers ${tierInlineIconHtml(10)}, puis déclenche un Big Bang pour recommencer plus fort !`, target: () => dom.grid },
 ];
 let tutIndex = 0;
 let currentHighlight = null;
@@ -1004,7 +1025,7 @@ function showTutStep(i) {
   const step = TUT_STEPS[i];
   $("tutStep").textContent = `Étape ${i + 1} / ${TUT_STEPS.length}`;
   $("tutTitle").textContent = step.title;
-  $("tutText").textContent = step.text;
+  $("tutText").innerHTML = step.text();
   $("tutNext").textContent = (i === TUT_STEPS.length - 1) ? "C'est parti !" : "Suivant";
   currentHighlight = step.target();
   if (currentHighlight) currentHighlight.classList.add("tutorial-highlight");
@@ -1078,7 +1099,7 @@ function closeBigBangModal() { $("bigBangModal").classList.add("hidden"); }
 function openBigBangSummaryModal({ stardustEarned, maxTier, gain }) {
   const state = Game.state;
   $("bbSummaryStardust").textContent = formatNumber(stardustEarned);
-  $("bbSummaryTier").textContent = `${TIERS[maxTier - 1].name} ${TIERS[maxTier - 1].emoji}`;
+  $("bbSummaryTier").innerHTML = `${TIERS[maxTier - 1].name} ${tierInlineIconHtml(maxTier)}`;
   $("bbSummaryEnergy").textContent = `+${formatNumber(gain)} ⚡`;
   $("bbSummaryHint").textContent = nextGodMilestoneHint(state)
     || "Tous les Dieux à objectif direct sont éveillés - tente ta chance à la Boîte Cosmique (Boutique) pour les derniers !";

@@ -166,16 +166,6 @@ function activateProdBoost(state) {
   state.cooldowns.prodBoostUntil = now + PROD_BOOST_COOLDOWN_MS;
 }
 
-const FREE_PLANET_TIER = 4; // matches TIERS[3] = "Planète" 🌍 - keep in sync with the fab's label/emoji
-function grantFreePlanet(state) {
-  const empties = emptyUnlockedIndices(state);
-  if (empties.length === 0) return { ok: false, reason: "full" };
-  const idx = empties[Math.floor(Math.random() * empties.length)];
-  state.grid[idx] = { tier: FREE_PLANET_TIER };
-  state.cooldowns.freePlanetUntil = Date.now() + FREE_PLANET_COOLDOWN_MS;
-  return { ok: true, idx };
-}
-
 // Ad-based Gems source, meant to be grindable toward a specific shop item
 // rather than a big one-off (see GEMS_AD_COOLDOWN_MS/GEMS_AD_REWARD).
 function grantGemsFromAd(state) {
