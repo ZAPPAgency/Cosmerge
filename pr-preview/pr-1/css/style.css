@@ -400,7 +400,18 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .storyMark{position:absolute;top:10px;right:14px;font-size:34px;opacity:.12;pointer-events:none;}
 .card p.desc{margin:0 0 8px;font-size:12px;color:var(--text-dim);line-height:1.5;white-space:pre-line;}
 .card .rowBetween,.modalCard .rowBetween{display:flex;align-items:center;justify-content:space-between;gap:8px;}
-.card .rowBetween h3{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* min-width:0 lets the title shrink/wrap inside the flex row instead of
+   forcing the row (and, without this, the whole grid card - see
+   .shopGrid2 .card below) wider than its column. Deliberately NOT
+   white-space:nowrap here any more - that was tried first (see git log)
+   but broke any card with a longer title and no .tag pill next to it
+   ("🚀 Boost x2 production (10 min)", "💎 Pub contre Gems (+10)": nothing
+   left could shrink, so the whole card pushed past the screen edge on
+   mobile). Letting the title wrap normally across 2 lines instead, while
+   pinning the .tag pill itself (below) so IT specifically never wraps,
+   fixes both the original "50 💎 on two lines" bug and this one at once. */
+.card .rowBetween h3{min-width:0;}
+.shopGrid2 .card{min-width:0;}
 /* Price/status pill (e.g. "50 💎") - on narrow screens a long title (like
    "Échanger deux cases") left too little room and the flex row shrank the
    pill itself, wrapping the number and the emoji onto separate lines. The
