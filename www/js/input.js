@@ -17,7 +17,7 @@ function createGhost(tier, x, y) {
   const g = document.createElement("div");
   g.className = "ghostTile";
   g.style.cssText += tierStyle(tier);
-  g.innerHTML = `<span class="emoji">${tierEmoji(tier)}</span>`;
+  g.appendChild(tierIconNode(tier));
   g.style.left = x + "px"; g.style.top = y + "px";
   document.body.appendChild(g);
   return g;
