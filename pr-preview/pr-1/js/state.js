@@ -73,8 +73,7 @@ function defaultState() {
     dailyStats: { date: null, stardustAtDayStart: 0 }, // see ensureDailyStats() - powers the Stardust info popup's "today" figure
 
     skills: { prod: 0, swarm: 0, gravity: 0, echo: 0, luck: 0 },
-    ownedSkins: ["default", "classic"], // "default" ambiance + "classic" emoji set - the two free starting cosmetics
-    equippedAmbiance: "default",
+    ownedSkins: ["classic"], // "classic" emoji set - the free starting cosmetic (the ambiance/color-skin slot was removed entirely)
     equippedEmojiSet: "classic",
 
     dailyLogin: { lastClaimDay: null, streak: 0, cycleDay: 1, streakFreezeCharges: 0 },

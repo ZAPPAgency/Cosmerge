@@ -41,21 +41,11 @@ function buildGridDom() {
   }
 }
 
-// Ambiance (background) and emoji set (icon/name) are independent equip
-// slots - see state.equippedAmbiance/equippedEmojiSet and config.js's
-// AMBIANCES/EMOJI_SETS. Ambient skins used to be applied as a CSS
-// hue-rotate() filter on top of each tier's own gradient, which shifted
-// every tile's ALREADY-different base hue by the same amount, landing on
-// a different resulting color per tier instead of the skin's actual color
-// ("some cells not in the color at all"). Non-default ambiances now just
-// paint their own fixed gradient directly, uniformly.
-function equippedAmbianceDef() { return AMBIANCES.find(a => a.id === Game.state.equippedAmbiance) || AMBIANCES[0]; }
+// The ambiance (background color skin) cosmetic slot was removed entirely
+// per Loris' request - only the emoji-set slot (Fruits/Légumes vs classic)
+// remains, so every tile always uses its own TIERS from/to gradient now.
 function equippedEmojiSetDef() { return EMOJI_SETS.find(e => e.id === Game.state.equippedEmojiSet) || EMOJI_SETS[0]; }
 function tierStyle(tier) {
-  const amb = equippedAmbianceDef();
-  if (amb.id !== "default" && amb.colors) {
-    return `background:radial-gradient(circle at 35% 30%, ${amb.colors[0]}, ${amb.colors[1]});`;
-  }
   const t = TIERS[tier - 1];
   return `background:radial-gradient(circle at 35% 30%, ${t.from}, ${t.to});`;
 }
@@ -537,9 +527,7 @@ function renderCosmeticGrid(list, equippedId, onAfterAction) {
     const equipped = equippedId === item.id;
     const tile = el("div", "cosmeticTile" + (equipped ? " equipped" : ""));
     const swatch = el("div", "skinSwatch big");
-    if (item.colors) swatch.style.background = `radial-gradient(circle at 35% 30%, ${item.colors[0]}, ${item.colors[1]})`;
-    if (item.tierSkin) swatch.textContent = item.tierSkin[5].emoji; // representative mid-tier icon as a quick preview
-    if (!item.colors && !item.tierSkin) swatch.textContent = "🚫"; // "Cases classiques" - no override, nothing to preview
+    swatch.textContent = item.tierSkin ? item.tierSkin[5].emoji : "🚫"; // representative mid-tier icon, or "no override" for "Cases classiques"
     const name = el("div", "cosmeticName", item.name);
     const status = equipped ? el("span", "tag equipped", "Équipé") : (owned ? el("span", "tag owned", "Possédé") : null);
     const btn = el("button", "btn" + (equipped ? "" : " primary"), equipped ? "Équipé" : (owned ? "Équiper" : `${item.cost} 💎`));
@@ -595,9 +583,6 @@ function renderShopPanel() {
     gemGrid.appendChild(card);
   });
   dom.panelBody.appendChild(gemGrid);
-
-  dom.panelBody.appendChild(el("h3", null, "🎨 Ambiances"));
-  dom.panelBody.appendChild(renderCosmeticGrid(AMBIANCES, state.equippedAmbiance));
 
   dom.panelBody.appendChild(el("h3", null, "🖼️ Sets d'icônes"));
   dom.panelBody.appendChild(renderCosmeticGrid(EMOJI_SETS, state.equippedEmojiSet));
@@ -1187,8 +1172,6 @@ function openSkinManagerModal() {
   const state = Game.state;
   const list = $("skinManagerList");
   list.innerHTML = "";
-  list.appendChild(el("h3", null, "🎨 Ambiance"));
-  list.appendChild(renderCosmeticGrid(AMBIANCES, state.equippedAmbiance, openSkinManagerModal));
   list.appendChild(el("h3", null, "🖼️ Set d'icônes"));
   list.appendChild(renderCosmeticGrid(EMOJI_SETS, state.equippedEmojiSet, openSkinManagerModal));
   $("skinManagerModal").classList.remove("hidden");
