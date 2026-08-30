@@ -37,7 +37,7 @@
     <meta name="apple-mobile-web-app-title" content="Godspark" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#0a0620" />
-    <link rel="stylesheet" href="css/style.css?v=45" />
+    <link rel="stylesheet" href="css/style.css?v=46" />
   </head>
   <body>
     <div id="starsBg"></div>
@@ -378,6 +378,17 @@
       </div>
     </div>
 
+    <!-- Skin preview: shows a mini grid with a given emoji set's tiles applied,
+     without actually equipping it - opened by the "👁 Aperçu" button on each
+     cosmetic tile (renderCosmeticGrid, ui.js). -->
+    <div class="modalOverlay hidden" id="skinPreviewModal">
+      <div class="modalCard skinPreviewCard">
+        <h3 id="skinPreviewTitle">Aperçu</h3>
+        <div class="skinPreviewGrid" id="skinPreviewGrid"></div>
+        <button class="btn primary full" id="skinPreviewClose">Fermer</button>
+      </div>
+    </div>
+
     <!-- Skin manager: compact popup reachable from the home screen, closable by tapping outside -->
     <div class="modalOverlay hidden" id="skinManagerModal">
       <div class="modalCard">
@@ -487,16 +498,16 @@
       </div>
     </div>
 
-    <script src="js/config.js?v=45"></script>
-    <script src="js/state.js?v=45"></script>
-    <script src="js/audio.js?v=45"></script>
-    <script src="js/services.js?v=45"></script>
-    <script src="js/economy.js?v=45"></script>
-    <script src="js/gods.js?v=45"></script>
-    <script src="js/retention.js?v=45"></script>
-    <script src="js/ui.js?v=45"></script>
-    <script src="js/input.js?v=45"></script>
-    <script src="js/main.js?v=45"></script>
+    <script src="js/config.js?v=46"></script>
+    <script src="js/state.js?v=46"></script>
+    <script src="js/audio.js?v=46"></script>
+    <script src="js/services.js?v=46"></script>
+    <script src="js/economy.js?v=46"></script>
+    <script src="js/gods.js?v=46"></script>
+    <script src="js/retention.js?v=46"></script>
+    <script src="js/ui.js?v=46"></script>
+    <script src="js/input.js?v=46"></script>
+    <script src="js/main.js?v=46"></script>
     <script type="module" src="js/native-bridge.js"></script>
   </body>
 </html>

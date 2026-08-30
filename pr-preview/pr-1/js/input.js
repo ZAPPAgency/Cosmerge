@@ -287,6 +287,14 @@ function tryUnlock(idx) {
   renderCell(idx);
   refreshLockedCellPrices(); // every other locked cell's price just changed too
   updateHeader();
+  // Loris: "Case gratuite" fab should disappear once the grid is fully
+  // unlocked. updateFabs() already has that check (see fabUnlockCellAd),
+  // but this - by far the most common way to unlock a cell, tapping it and
+  // paying Stardust - never called it, only updateHeader(). The ad-watching
+  // and Gems-shortcut unlock paths both already call updateFabs()
+  // (onUnlockCellAd directly, skipCell via renderAll()), so this was the
+  // one path where unlocking the very last cell left the fab visible.
+  updateFabs();
   saveState(state);
 }
 
@@ -813,6 +821,7 @@ function wireEvents() {
   $("fabGemsAd").addEventListener("click", onWatchGemsAd);
   $("fabSkins").addEventListener("click", openSkinManagerModal);
   $("skinManagerClose").addEventListener("click", closeSkinManagerModal);
+  $("skinPreviewClose").addEventListener("click", closeSkinPreviewModal);
   $("cosmicBoxClose").addEventListener("click", closeCosmicBoxModal);
   $("purchaseConfirmClose").addEventListener("click", closePurchaseConfirmModal);
 

@@ -73,8 +73,11 @@ function tierInlineIconHtml(tier) {
 // straight off TIERS[tier-1]; a tierSkin-based skin reads them off its own
 // tierSkin[tier-1] entry instead, so Fruits/Légumes can get their own art
 // independently of (and without needing) the classic set's.
-function tierIconNode(tier) {
-  const s = equippedEmojiSetDef();
+// `setOverride` (optional): render as if THIS set were equipped instead of
+// the real equipped one - used by the shop's skin preview modal (see
+// openSkinPreviewModal) to show a set's tiles without actually equipping it.
+function tierIconNode(tier, setOverride) {
+  const s = setOverride || equippedEmojiSetDef();
   const skinEntry = s.tierSkin && s.tierSkin[tier - 1];
   const src = skinEntry || TIERS[tier - 1];
   if (src.icon) {
@@ -97,7 +100,12 @@ function tierIconNode(tier) {
   }
   const span = document.createElement("div");
   span.className = "emoji";
-  span.textContent = tierEmoji(tier);
+  // `src` here is already resolved against `setOverride` (see above) - using
+  // tierEmoji(tier) instead would silently ignore setOverride and re-read
+  // the REAL equipped set, which is exactly the bug that made the skin
+  // preview modal (openSkinPreviewModal) show the classic set's emoji for
+  // every tier of a Fruits/Légumes preview instead of that set's own.
+  span.textContent = src.emoji;
   return span;
 }
 
@@ -133,6 +141,12 @@ function renderCell(i, opts) {
 
   cell.classList.add("filled");
   if (Game.selectedIdx === i) cell.classList.add("selected");
+  // Continuous idle animation on the max tier (Loris) - a slow glow pulse
+  // on the cell + a gentle breathing scale on the icon (see .cell.tierMax
+  // in style.css). On the .cell rather than .tile so it never fights with
+  // .tile.merging/.tile.spawnIn's own transform animations on a fresh max
+  // tier (different element = no property conflict either way).
+  if (tileData.tier === TIERS.length) cell.classList.add("tierMax");
 
   const tile = document.createElement("div");
   tile.className = "tile";
@@ -146,6 +160,30 @@ function renderCell(i, opts) {
   tile.appendChild(emoji); tile.appendChild(num);
   cell.appendChild(tile);
 }
+
+// Renders a static (but gently, continuously animated) 10-tile preview grid
+// for `setId`, without touching state.equippedEmojiSet - see the "Aperçu"
+// button in renderCosmeticGrid(). Reuses the real .cell/.tile markup and
+// tierStyle() background so it looks exactly like the actual game grid.
+function openSkinPreviewModal(setId) {
+  const set = EMOJI_SETS.find(s => s.id === setId);
+  if (!set) return;
+  $("skinPreviewTitle").textContent = set.name;
+  const grid = $("skinPreviewGrid");
+  grid.innerHTML = "";
+  for (let t = 1; t <= TIERS.length; t++) {
+    const cell = el("div", "cell filled previewCell");
+    cell.style.setProperty("--stagger", ((t - 1) * 0.18).toFixed(2) + "s");
+    const tile = el("div", "tile");
+    tile.style.cssText += tierStyle(t);
+    tile.appendChild(tierIconNode(t, set));
+    tile.appendChild(el("div", "tierNum", String(t)));
+    cell.appendChild(tile);
+    grid.appendChild(cell);
+  }
+  $("skinPreviewModal").classList.remove("hidden");
+}
+function closeSkinPreviewModal() { $("skinPreviewModal").classList.add("hidden"); }
 
 function refreshLockedCellPrices() {
   for (let i = 0; i < TOTAL; i++) {
@@ -512,6 +550,10 @@ function openPanel(name) {
   dom.panelTitle.textContent = def.title;
   def.render();
   dom.panelOverlay.classList.remove("hidden");
+  // Gods screen gets its own background ambiance (gradient/particles) - see
+  // .panelOverlay.godsTheme in style.css - toggled here rather than baked
+  // into .panel itself so every other panel keeps the plain background.
+  dom.panelOverlay.classList.toggle("godsTheme", name === "gods");
 }
 function refreshCurrentPanel() { if (currentPanel) PANEL_RENDERERS[currentPanel].render(); }
 function closePanel() { dom.panelOverlay.classList.add("hidden"); currentPanel = null; }
@@ -532,14 +574,24 @@ function renderCosmeticGrid(list, equippedId, onAfterAction) {
     const swatch = el("div", "skinSwatch big");
     swatch.textContent = item.tierSkin ? item.tierSkin[5].emoji : "🚫"; // representative mid-tier icon, or "no override" for "Cases classiques"
     const name = el("div", "cosmeticName", item.name);
-    const status = equipped ? el("span", "tag equipped", "Équipé") : (owned ? el("span", "tag owned", "Possédé") : null);
+    // Always render a status tag, even when not owned - Loris: the cards
+    // in this grid don't all have the same height (Légumes' card was
+    // shorter than Fruits'), because a not-owned card skipped the tag
+    // element entirely instead of just showing a different one.
+    const status = equipped ? el("span", "tag equipped", "Équipé")
+      : (owned ? el("span", "tag owned", "Possédé") : el("span", "tag", "Non possédé"));
     const btn = el("button", "btn" + (equipped ? "" : " primary"), equipped ? "Équipé" : (owned ? "Équiper" : `${item.cost} 💎`));
     btn.disabled = equipped || (!owned && state.gems < item.cost);
     btn.addEventListener("click", () => { onCosmeticAction(item.id, owned); if (onAfterAction) onAfterAction(); });
+    // "Aperçu" (Loris): a way to see a set's tiles on an actual mini grid
+    // before spending Gems on it or switching away from the one equipped.
+    const previewBtn = el("button", "btn ghost cosmeticPreviewBtn", "👁 Aperçu");
+    previewBtn.addEventListener("click", (e) => { e.stopPropagation(); openSkinPreviewModal(item.id); });
     tile.appendChild(swatch);
     tile.appendChild(name);
-    if (status) tile.appendChild(status);
+    tile.appendChild(status);
     tile.appendChild(btn);
+    tile.appendChild(previewBtn);
     grid.appendChild(tile);
   });
   return grid;
@@ -550,7 +602,10 @@ function renderShopPanel() {
   const state = Game.state;
   dom.panelBody.innerHTML = "";
 
-  dom.panelBody.appendChild(el("h3", null, "Boosts publicitaires"));
+  // Wording pass (Loris): "Boosts publicitaires" / "Cases & boosts (Gems)" /
+  // "Boutique premium (achats intégrés)" read as internal/technical labels
+  // rather than something a player would want to tap into.
+  dom.panelBody.appendChild(el("h3", null, "Bonus vidéo"));
   // Side by side (2 cols) instead of stacked - Loris found the two ad cards
   // taking a full row each felt like wasted space now that shopGrid2 (see
   // "Cases & boosts" below) already proved the compact 2-column layout works.
@@ -578,7 +633,7 @@ function renderShopPanel() {
   adGrid.appendChild(gemsAdCard);
   dom.panelBody.appendChild(adGrid);
 
-  dom.panelBody.appendChild(el("h3", null, "Cases & boosts (Gems)"));
+  dom.panelBody.appendChild(el("h3", null, "Boutique Gems"));
   const gemGrid = el("div", "shopGrid2");
   SHOP_GEM_ITEMS.forEach(item => {
     const card = el("div", "card compact");
@@ -595,19 +650,59 @@ function renderShopPanel() {
   dom.panelBody.appendChild(el("h3", null, "🖼️ Sets d'icônes"));
   dom.panelBody.appendChild(renderCosmeticGrid(EMOJI_SETS, state.equippedEmojiSet));
 
-  dom.panelBody.appendChild(el("h3", null, "Boutique premium (achats intégrés)"));
+  dom.panelBody.appendChild(el("h3", null, "Offres Premium"));
+  // Reorg (Loris): the Pass goes first as a big hero card, then the 2 next
+  // most expensive offers get a smaller-but-still-featured treatment, then
+  // everything else as plain compact cards below - "1 -> 2 -> le reste".
   const daysSinceFirst = daysBetween(state.firstPlayedDay, todayStr());
-  IAP_CATALOG.forEach(product => {
-    if (product.startersOnly && daysSinceFirst > 2) return;
-    if (product.id === "remove_ads" && state.iap.removeAds) return;
-    if (product.id === "stardust_boost" && state.iap.stardustBoost) return;
-    if (product.skinId && state.iap.ownedSkinPacks.includes(product.skinId)) return;
-    const card = el("div", "card compact" + (product.id === "vip_monthly" ? " vipCard" : ""));
+  const visibleProducts = IAP_CATALOG.filter(product => {
+    if (product.startersOnly && daysSinceFirst > 2) return false;
+    if (product.id === "remove_ads" && state.iap.removeAds) return false;
+    if (product.id === "stardust_boost" && state.iap.stardustBoost) return false;
+    if (product.skinId && state.iap.ownedSkinPacks.includes(product.skinId)) return false;
+    return true;
+  });
+  const parsePrice = (p) => parseFloat(p.replace(",", ".").replace(/[^0-9.]/g, "")) || 0;
+  const pass = visibleProducts.find(p => p.id === "vip_monthly");
+  const rest = visibleProducts.filter(p => p.id !== "vip_monthly").sort((a, b) => parsePrice(b.price) - parsePrice(a.price));
+  const featured = rest.slice(0, 2);
+  const plain = rest.slice(2);
+
+  const buyBtn = (product, cls) => {
+    const btn = el("button", cls, product.type === "subscription" ? "S'abonner" : "Acheter");
+    btn.addEventListener("click", () => onBuyIAP(product.id));
+    return btn;
+  };
+
+  if (pass) {
+    const hero = el("div", "iapHero");
+    hero.innerHTML = `<div class="iapHeroBadge">★ Meilleure offre</div>
+      <div class="rowBetween"><h3>${pass.name}</h3><span class="iapPrice">${pass.price}</span></div>
+      <p class="iapHeroTagline">${pass.desc}</p>`;
+    const perkList = el("ul", "iapPerkList");
+    (pass.perks || []).forEach(p => perkList.appendChild(el("li", null, p)));
+    hero.appendChild(perkList);
+    hero.appendChild(buyBtn(pass, "btn primary full"));
+    dom.panelBody.appendChild(hero);
+  }
+
+  if (featured.length) {
+    const featGrid = el("div", "shopGrid2 iapFeaturedGrid");
+    featured.forEach(product => {
+      const card = el("div", "card compact iapFeatured");
+      card.innerHTML = `<div class="rowBetween"><h3>${product.name}</h3><span class="iapPrice">${product.price}</span></div>
+        ${product.desc ? `<p class="desc">${product.desc}</p>` : ""}`;
+      card.appendChild(buyBtn(product, "btn primary full"));
+      featGrid.appendChild(card);
+    });
+    dom.panelBody.appendChild(featGrid);
+  }
+
+  plain.forEach(product => {
+    const card = el("div", "card compact");
     card.innerHTML = `<div class="rowBetween"><h3>${product.name}</h3><span class="iapPrice">${product.price}</span></div>
       ${product.desc ? `<p class="desc">${product.desc}</p>` : ""}`;
-    const btn = el("button", "btn primary full", product.type === "subscription" ? "S'abonner" : "Acheter");
-    btn.addEventListener("click", () => onBuyIAP(product.id));
-    card.appendChild(btn);
+    card.appendChild(buyBtn(product, "btn primary full"));
     dom.panelBody.appendChild(card);
   });
 

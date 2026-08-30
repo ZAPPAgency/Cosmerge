@@ -151,14 +151,25 @@ const Sfx = {
   // is what should feel the most addictive, so it's the one thing that
   // audibly escalates instead of repeating identically every time.
   meteorImpact(newTier, streak) {
-    noiseBurst(0.05, "bandpass", 2800, 1000, 0.045);
+    // Loris: the streak escalation (COMBO_NOTES pitch step) wasn't punchy
+    // enough between hit 1 and hit 2 - a whole-tone pitch bump on a single
+    // small chime is subtle, and everything ELSE about the sound (the pop,
+    // the crack, the whoosh) stayed byte-for-byte identical regardless of
+    // streak. `boost` now scales the volume - and, for the pop's sweep, the
+    // pitch swing too - of every layer, not just the reward chime, so hit 2
+    // is audibly bigger than hit 1, hit 3 bigger still, etc. Math.min caps
+    // keep it from clipping/distorting at a long streak.
+    const s = Math.min(streak || 0, 6);
+    const boost = 1 + s * 0.28; // up to ~2.7x at streak 6
+    noiseBurst(0.05, "bandpass", 2800, 1000, Math.min(0.045 * boost, 0.11));
     setTimeout(() => {
       const t = Math.min(newTier, 10);
-      sweep(520 + t * 9, 200 + t * 6, 0.09, "triangle", 0.12);
-      noiseBurst(0.07, "lowpass", 1800, 280, 0.07);
-      noiseBurst(0.05, "highpass", 2200, 3200, 0.02);
+      const swing = 1 + s * 0.1; // pitch drop widens a bit with streak too, not just louder
+      sweep(520 + t * 9, (200 + t * 6) / swing, 0.09, "triangle", Math.min(0.12 * boost, 0.28));
+      noiseBurst(0.07, "lowpass", 1800, 280, Math.min(0.07 * boost, 0.17));
+      noiseBurst(0.05, "highpass", 2200 * swing, 3200 * swing, Math.min(0.02 * boost, 0.05));
       const note = COMBO_NOTES[Math.min(streak || 0, COMBO_NOTES.length - 1)];
-      setTimeout(() => chime([note, note * 1.19], 45, "triangle", 0.065), 40);
+      setTimeout(() => chime([note, note * 1.19], 45, "triangle", Math.min(0.065 * boost, 0.15)), 40);
     }, 110);
   },
   tap() { beep(700, 0.08, "square", 0.04); },
