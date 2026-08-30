@@ -37,7 +37,7 @@
     <meta name="apple-mobile-web-app-title" content="Godspark" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#0a0620" />
-    <link rel="stylesheet" href="css/style.css?v=44" />
+    <link rel="stylesheet" href="css/style.css?v=45" />
   </head>
   <body>
     <div id="starsBg"></div>
@@ -73,28 +73,39 @@
           ><span class="fabLabel" id="fabGodName">-</span>
         </button>
         <button class="fab" id="fabShop">
-          <span class="fabIcon">🛒</span><span class="fabLabel">Boutique</span>
+          <span class="fabIcon"
+            ><img class="uiIcon" src="assets/ui/boutique.png" alt=""
+          /></span><span class="fabLabel">Boutique</span>
         </button>
         <button class="fab hidden" id="fabDailyLogin">
-          <span class="fabIcon">🎁</span><span class="fabLabel">Cadeau</span>
+          <span class="fabIcon"
+            ><img class="uiIcon" src="assets/ui/cadeau.png" alt=""
+          /></span><span class="fabLabel">Cadeau</span>
         </button>
         <button class="fab hidden" id="fabWheel">
-          <span class="fabIcon">🎡</span><span class="fabLabel">Roue</span>
+          <span class="fabIcon"
+            ><img class="uiIcon" src="assets/ui/roue.png" alt=""
+          /></span><span class="fabLabel">Roue</span>
         </button>
         <button class="fab" id="fabUnlockCellAd">
-          <span class="fabIcon">🔓</span
-          ><span class="fabLabel">Case gratuite</span>
+          <span class="fabIcon"
+            ><img class="uiIcon" src="assets/ui/case_gratuite.png" alt=""
+          /></span><span class="fabLabel">Case gratuite</span>
         </button>
         <button class="fab featured" id="fabBoost">
-          <span class="fabIcon">🚀</span
-          ><span class="fabLabel" id="fabBoostLabel">Boost x2</span>
+          <span class="fabIcon"
+            ><img class="uiIcon" src="assets/ui/boost.png" alt=""
+          /></span><span class="fabLabel" id="fabBoostLabel">Boost x2</span>
         </button>
         <button class="fab featured" id="fabGemsAd">
-          <span class="fabIcon">💎</span
-          ><span class="fabLabel" id="fabGemsAdLabel">Pub</span>
+          <span class="fabIcon"
+            ><img class="uiIcon" src="assets/ui/gems_ad.png" alt=""
+          /></span><span class="fabLabel" id="fabGemsAdLabel">Pub</span>
         </button>
         <button class="fab muted" id="fabSkins" aria-label="Gérer les skins">
-          <span class="fabIcon">🎨</span>
+          <span class="fabIcon"
+            ><img class="uiIcon" src="assets/ui/palette.png" alt=""
+          /></span>
         </button>
       </div>
 
@@ -137,29 +148,45 @@
           </div>
         </button>
         <button class="drawerItem" data-panel="progression">
-          <span class="drawerIcon">🗺️</span><span>Progression</span>
+          <span class="drawerIcon"
+            ><img class="uiIcon" src="assets/ui/progression.png" alt=""
+          /></span><span>Progression</span>
         </button>
         <button class="drawerItem" data-panel="quests">
-          <span class="drawerIcon">📜</span><span>Quêtes</span
+          <span class="drawerIcon"
+            ><img class="uiIcon" src="assets/ui/quetes.png" alt=""
+          /></span><span>Quêtes</span
           ><span class="notifDot hidden" id="questsNotifDot"></span>
         </button>
         <button class="drawerItem" data-panel="gods">
-          <span class="drawerIcon">🔱</span><span>Dieux du Cosmos</span>
+          <span class="drawerIcon"
+            ><img class="uiIcon" src="assets/ui/dieux.png" alt=""
+          /></span><span>Dieux du Cosmos</span>
         </button>
         <button class="drawerItem" data-panel="skills">
-          <span class="drawerIcon">⚡</span><span>Ascension</span>
+          <span class="drawerIcon"
+            ><img class="uiIcon" src="assets/ui/ascension.png" alt=""
+          /></span><span>Ascension</span>
         </button>
         <button class="drawerItem" data-panel="achievements">
-          <span class="drawerIcon">🏆</span><span>Succès</span>
+          <span class="drawerIcon"
+            ><img class="uiIcon" src="assets/ui/succes.png" alt=""
+          /></span><span>Succès</span>
         </button>
         <button class="drawerItem" data-panel="story">
-          <span class="drawerIcon">📖</span><span>Histoire</span>
+          <span class="drawerIcon"
+            ><img class="uiIcon" src="assets/ui/histoire.png" alt=""
+          /></span><span>Histoire</span>
         </button>
         <button class="drawerItem" data-panel="shop">
-          <span class="drawerIcon">🛒</span><span>Boutique</span>
+          <span class="drawerIcon"
+            ><img class="uiIcon" src="assets/ui/boutique.png" alt=""
+          /></span><span>Boutique</span>
         </button>
         <button class="drawerItem" data-panel="settings">
-          <span class="drawerIcon">⚙️</span><span>Réglages</span>
+          <span class="drawerIcon"
+            ><img class="uiIcon" src="assets/ui/reglages.png" alt=""
+          /></span><span>Réglages</span>
         </button>
         <button class="drawerItem close" id="drawerClose">
           <span class="drawerIcon">✕</span><span>Fermer</span>
@@ -460,16 +487,16 @@
       </div>
     </div>
 
-    <script src="js/config.js?v=44"></script>
-    <script src="js/state.js?v=44"></script>
-    <script src="js/audio.js?v=44"></script>
-    <script src="js/services.js?v=44"></script>
-    <script src="js/economy.js?v=44"></script>
-    <script src="js/gods.js?v=44"></script>
-    <script src="js/retention.js?v=44"></script>
-    <script src="js/ui.js?v=44"></script>
-    <script src="js/input.js?v=44"></script>
-    <script src="js/main.js?v=44"></script>
+    <script src="js/config.js?v=45"></script>
+    <script src="js/state.js?v=45"></script>
+    <script src="js/audio.js?v=45"></script>
+    <script src="js/services.js?v=45"></script>
+    <script src="js/economy.js?v=45"></script>
+    <script src="js/gods.js?v=45"></script>
+    <script src="js/retention.js?v=45"></script>
+    <script src="js/ui.js?v=45"></script>
+    <script src="js/input.js?v=45"></script>
+    <script src="js/main.js?v=45"></script>
     <script type="module" src="js/native-bridge.js"></script>
   </body>
 </html>
