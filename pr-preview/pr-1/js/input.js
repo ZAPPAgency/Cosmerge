@@ -24,9 +24,30 @@ function createGhost(tier, x, y) {
 }
 
 let pointerState = null;
+let pointerWatchdog = null;
 
+// Bug report (Loris' friend, screenshot): tapping very fast repeatedly left
+// one cell permanently stuck - invisible/unresponsive, "je n'arrive pas à
+// utiliser la case". Root cause: this listens to BOTH "pointerdown" AND
+// "touchstart" (see wireEvents below) so a single physical touch on a
+// touchscreen fires onPointerDown TWICE. Previously the 2nd call silently
+// overwrote the module-scope `pointerState` with a fresh session - if the
+// 1st call had already started a drag (ghost tile appended to <body>, the
+// tile given the .dragging class which sets opacity:0), that ghost/class
+// were orphaned forever: nothing held a reference to them any more, so
+// onPointerUp's cleanup could never reach them, and the real tile stayed
+// invisible under the leftover ghost until a full page reload. The same
+// leak could also happen from any dropped up/cancel event (more likely
+// inside an in-app browser like WhatsApp's, which is where the repro
+// screenshot was taken).
+// Fixed with: (1) ignoring a new pointerdown while a session is already in
+// flight instead of clobbering it, (2) handling pointercancel/touchcancel
+// so an interrupted gesture still cleans up, (3) a watchdog timeout as a
+// last-resort safety net in case a webview drops both the up and cancel
+// events outright.
 function onPointerDown(e) {
   if (!dom.panelOverlay.classList.contains("hidden") || !dom.drawerOverlay.classList.contains("hidden")) return;
+  if (pointerState) return; // a gesture is already being tracked - see note above
   const pos = localPos(e);
   const idx = cellIdxAtPoint(pos.x, pos.y);
   if (idx === null) return;
@@ -42,8 +63,35 @@ function onPointerDown(e) {
   pointerState = { idx, startX: pos.x, startY: pos.y, dragging: false, ghostEl: null };
   window.addEventListener("pointermove", onPointerMove);
   window.addEventListener("pointerup", onPointerUp);
+  window.addEventListener("pointercancel", onPointerCancel);
   window.addEventListener("touchmove", onPointerMove, { passive: false });
   window.addEventListener("touchend", onPointerUp);
+  window.addEventListener("touchcancel", onPointerCancel);
+  clearTimeout(pointerWatchdog);
+  pointerWatchdog = setTimeout(() => { if (pointerState) onPointerCancel(); }, 6000);
+}
+
+function endPointerListeners() {
+  window.removeEventListener("pointermove", onPointerMove);
+  window.removeEventListener("pointerup", onPointerUp);
+  window.removeEventListener("pointercancel", onPointerCancel);
+  window.removeEventListener("touchmove", onPointerMove);
+  window.removeEventListener("touchend", onPointerUp);
+  window.removeEventListener("touchcancel", onPointerCancel);
+  clearTimeout(pointerWatchdog);
+}
+
+// Gesture interrupted with no proper up event (OS takes over for a system
+// gesture, multi-touch confuses the browser, app loses focus mid-touch, or
+// - the watchdog case - the up/cancel event never arrives at all). Cleans up
+// exactly like onPointerUp's non-merge branch, without attempting a merge.
+function onPointerCancel() {
+  if (!pointerState) return;
+  const { idx, ghostEl } = pointerState;
+  endPointerListeners();
+  pointerState = null;
+  if (ghostEl) ghostEl.remove();
+  cellEls[idx].querySelector(".tile")?.classList.remove("dragging");
 }
 
 function onPointerMove(e) {
@@ -67,10 +115,7 @@ function onPointerMove(e) {
 
 function onPointerUp(e) {
   if (!pointerState) return;
-  window.removeEventListener("pointermove", onPointerMove);
-  window.removeEventListener("pointerup", onPointerUp);
-  window.removeEventListener("touchmove", onPointerMove);
-  window.removeEventListener("touchend", onPointerUp);
+  endPointerListeners();
 
   const pos = localPos(e);
   const { idx, dragging, ghostEl } = pointerState;
