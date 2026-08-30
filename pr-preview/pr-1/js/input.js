@@ -426,11 +426,35 @@ function onDailyClaim() {
 }
 
 // ---------------- Wheel actions ----------------
+const WHEEL_SPIN_MS = 3500; // MUST match .wheel's CSS transition duration (style.css)
+
+// A run of "tick" sounds (Sfx.wheelTick, audio.js) at a decelerating rate
+// over the spin, mimicking a real prize wheel clicking past its pegs -
+// approximates the CSS transition's cubic-bezier(.17,.67,.2,1) ease-out
+// (fast start, slow finish) with a geometrically growing interval between
+// ticks, since precisely inverting that easing curve for tick timing isn't
+// worth the complexity for a sound effect. Previously the wheel spun in
+// total silence.
+function scheduleWheelTicks(totalMs) {
+  let elapsed = 0;
+  let interval = 45;
+  const growth = 1.09;
+  const maxInterval = 260;
+  function tick() {
+    if (elapsed >= totalMs) return;
+    Sfx.wheelTick();
+    interval = Math.min(interval * growth, maxInterval);
+    elapsed += interval;
+    setTimeout(tick, interval);
+  }
+  tick();
+}
 function spinVisual(cb) {
   const wheel = $("wheelEl");
   const extra = 1440 + Math.floor(Math.random() * 360);
   wheel.style.transform = `rotate(${extra}deg)`;
-  setTimeout(cb, 3500);
+  scheduleWheelTicks(WHEEL_SPIN_MS);
+  setTimeout(cb, WHEEL_SPIN_MS);
 }
 function onWheelSpinFree() {
   $("wheelSpinFree").disabled = true; $("wheelSpinAd").disabled = true;
@@ -455,23 +479,6 @@ async function onWheelSpinAd() {
     updateHeader(); updateFabs();
     saveState(Game.state);
   });
-}
-
-// ---------------- Free planet fab ----------------
-async function onFreePlanet() {
-  const state = Game.state;
-  if (Date.now() < state.cooldowns.freePlanetUntil) {
-    toast("Disponible dans " + formatDuration(state.cooldowns.freePlanetUntil - Date.now()));
-    return;
-  }
-  if (!adsRemoved(state)) toast("📺 Chargement de la publicité...");
-  const ok = await watchRewardedAd(state, "free_planet");
-  if (!ok) return;
-  const result = grantFreePlanet(state);
-  if (result.ok) { renderCell(result.idx, { spawned: true }); Sfx.spawn(); toast("🪐 Planète gratuite reçue !"); }
-  else { toast("La grille est pleine !"); }
-  updateFabs();
-  saveState(state);
 }
 
 // ---------------- Unlock cell fab (rewarded ad) ----------------
@@ -742,7 +749,6 @@ function wireEvents() {
   $("fabShop").addEventListener("click", () => openPanel("shop"));
   dom.fabDailyLogin.addEventListener("click", openDailyModal);
   dom.fabWheel.addEventListener("click", openWheelModal);
-  dom.fabFreePlanet.addEventListener("click", onFreePlanet);
   $("fabBoost").addEventListener("click", onWatchProdBoostAd);
   $("fabUnlockCellAd").addEventListener("click", onUnlockCellAd);
   $("fabCurrentGod").addEventListener("click", () => openPanel("gods"));

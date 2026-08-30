@@ -168,8 +168,8 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .screenFlash{position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:80;pointer-events:none;
   background:radial-gradient(circle at var(--fx,50%) var(--fy,45%),
     rgba(255,247,227,calc(.7 * var(--fpower,1))),
-    rgba(251,191,36,calc(.3 * var(--fpower,1))) calc(6% + 7% * var(--fpower,1)),
-    transparent calc(14% + 20% * var(--fpower,1)));
+    rgba(251,191,36,calc(.3 * var(--fpower,1))) calc(13% * var(--fpower,1)),
+    transparent calc(34% * var(--fpower,1)));
   animation:screenFlash .38s ease-out forwards;}
 @keyframes screenFlash{0%{opacity:0;}10%{opacity:1;}100%{opacity:0;}}
 
@@ -401,6 +401,9 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .modalCard h3,.tutCard h3{margin:0 0 8px;font-size:17px;color:var(--accent2);}
 .modalCard p{margin:0 0 10px;font-size:13px;line-height:1.5;color:var(--text-dim);white-space:pre-line;}
 .modalCard .modalWarn{color:#fca5a5;font-size:11px;}
+/* Tier artwork mentioned inline in text (the tutorial, stat lines...) -
+   see tierInlineIconHtml() in ui.js. */
+.inlineTierIcon{width:18px;height:18px;object-fit:contain;vertical-align:-4px;margin:0 1px;}
 .modalBtns{display:flex;gap:8px;margin-top:10px;}
 /* The wheel modal has a standalone "Fermer" button right after its
    .modalBtns spin-buttons row - .modalCard isn't a flex/gap container, so
@@ -507,6 +510,7 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 /* dim only the glyph, not .roadIcon itself - opacity on the icon would also
    fade its solid background, letting the connecting line bleed through it */
 .roadNode.locked .roadIconGlyph{opacity:.45;filter:grayscale(1);}
+.roadIconGlyph .inlineTierIcon{width:26px;height:26px;vertical-align:middle;margin:0;}
 .roadLabel{font-size:13px;font-weight:700;}
 .roadNode.done .roadLabel{color:var(--text-dim);}
 .roadNode.locked .roadLabel{color:var(--text-dim);opacity:.7;}

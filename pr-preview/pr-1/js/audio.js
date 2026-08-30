@@ -168,6 +168,12 @@ const Sfx = {
   purchase() { chime([520, 780, 1040], 70, "sine", 0.06); },
   bigBang() { chime([80, 160, 320, 640, 960], 90, "sawtooth", 0.09); },
   chest() { chime([440, 660, 880], 90, "triangle", 0.07); },
+  // One "tick" of the prize wheel passing a peg - short and clicky (square
+  // wave reads as mechanical rather than musical), slight pitch jitter so a
+  // long run of them doesn't sound like a machine-gun. See scheduleWheelTicks
+  // in input.js, which calls this repeatedly at a decelerating rate for the
+  // whole spin - previously the wheel spun in total silence.
+  wheelTick() { beep(880 + Math.random() * 220, 0.035, "square", 0.045); },
   quest() { chime([660, 880], 90, "sine", 0.06); },
 };
 
