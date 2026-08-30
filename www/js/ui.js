@@ -75,6 +75,17 @@ function tierIconNode(tier) {
     img.className = "emoji tierIcon";
     img.src = "assets/tiles/" + t.icon;
     img.alt = t.name;
+    // Per-tier size correction (optional): some source art reads smaller
+    // than others at the same box size - either because the image itself
+    // is a non-square aspect ratio (object-fit:contain then sizes to the
+    // limiting dimension) or because the visible "mass" of the subject
+    // (e.g. a glow with thin rays reaching the edges) is smaller than its
+    // full bounding box. Overrides the CSS .tierIcon default inline, since
+    // inline beats the class rule.
+    if (t.iconScale) {
+      const pct = (68 * t.iconScale).toFixed(1) + "%";
+      img.style.width = pct; img.style.height = pct;
+    }
     return img;
   }
   const span = document.createElement("div");
