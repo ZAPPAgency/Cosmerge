@@ -460,6 +460,15 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
    (--stagger, set per-cell in openSkinPreviewModal/ui.js) so the whole
    grid reads as "alive" rather than a flat catalog image, without going
    as far as simulating actual merges. */
+/* Bug (Loris): opening "Aperçu" from the skin MANAGER popup
+   (openSkinManagerModal) - as opposed to from the shop panel - rendered
+   the preview BEHIND the still-open manager popup. Every .modalOverlay
+   shares z-index:100, so with both open at once, whichever comes later in
+   the DOM (skinManagerModal, declared after this one in index.html) just
+   painted on top regardless of open order. #skinPreviewModal is the only
+   modal that can currently be opened from within another modal, so it
+   gets a dedicated higher z-index instead of relying on DOM order at all. */
+#skinPreviewModal{z-index:101;}
 .skinPreviewCard{max-width:360px;}
 .skinPreviewGrid{display:grid;grid-template-columns:repeat(5, 1fr);gap:8px;margin:4px 0 16px;}
 .skinPreviewGrid .cell{animation:previewPulse 2.8s ease-in-out infinite;animation-delay:var(--stagger, 0s);}

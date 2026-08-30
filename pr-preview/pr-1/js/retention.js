@@ -31,6 +31,32 @@ function trackFusionEvent(state, newTier) {
   updateQuestProgress(state, "reachTier", newTier, true);
   checkAchievements(state);
   onFusionForGods(state, newTier); // moon-merge ritual, Erebus streak, Morgorath challenge - see gods.js (checks some achievements, so must run after checkAchievements above)
+  const promo = checkFusionPromo(state);
+  if (promo) Game.pendingPromo = promo; // consumed by maybeOpenFusionPromo() in input.js, same pattern as Game.pendingGodRitual (gods.js)
+}
+
+// ---- IAP soft-prompts on fusion milestones (Loris) ----
+// Timed to real progress rather than a session/day counter: a player who's
+// fused 10 times has proven they're actually playing (not just poking at
+// the tutorial), a fair moment to surface the starter pack; 50 fusions is
+// a stronger engagement signal, a better moment for the subscription
+// pitch. `state.lifetime.fusions` only ever increases, so the `=== N`
+// checks each fire at most once per save by construction - the
+// `promptsShown` flags exist so a promo whose OTHER condition wasn't met
+// at the exact milestone (offer expired / already owned) doesn't leave a
+// half-triggered state, and so this stays readable as "have we shown this
+// yet" rather than relying on the exact-equality trick alone.
+function checkFusionPromo(state) {
+  if (state.lifetime.fusions === 10 && !state.promptsShown.starterPack
+    && daysBetween(state.firstPlayedDay, todayStr()) <= 2) {
+    state.promptsShown.starterPack = true;
+    return "starterPack";
+  }
+  if (state.lifetime.fusions === 50 && !state.promptsShown.vipPass && !isVipActive(state)) {
+    state.promptsShown.vipPass = true;
+    return "vipPass";
+  }
+  return null;
 }
 
 // ---- Offline gains ----
