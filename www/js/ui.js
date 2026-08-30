@@ -298,16 +298,18 @@ function restartAnim(el, cls) {
 //  - a starburst + shockwave ring(s) + a spray of rock/star debris play
 //    out locally around the cell
 // `onImpact` fires at the exact landing moment so the caller can reveal
-// the upgraded tile right as it lands. `streak` (0+, merges landing within
-// MERGE_STREAK_WINDOW_MS of each other - see input.js) and `newTier` both
-// scale the intensity up, so both chaining merges fast AND reaching a big
-// tier feel like a bigger deal than a routine tier-1 merge.
+// the upgraded tile right as it lands. `newTier` is now the PRIMARY driver
+// of visual intensity (a tier-10 merge should feel like a real event, a
+// routine tier-1 merge shouldn't) - `streak` only nudges it a little.
+// Was the other way around (streak dominant) - Noah's feedback: "l'effet
+// quand tu merges est trop fort, il faut qu'il devienne de plus en plus
+// fort en fonction du niveau de merge que tu fais", i.e. progression
+// should track tier, not how fast the player happens to be tapping. The
+// streak-based reward chime pitch (Sfx.meteorImpact, audio.js) is
+// untouched - Loris explicitly liked that part.
 function playMeteorMerge(idx, onImpact, streak, newTier) {
   streak = streak || 0;
-  // Base bumped to 1.2 (was 1) so even a first, non-streak tier-1 merge -
-  // by far the most common case - reads as a bit more of an event, not
-  // just the streak/tier bonus on top of a modest baseline.
-  const power = Math.min(1.2 + streak * 0.14 + Math.min(newTier || 1, 10) * 0.035, 2.3);
+  const power = Math.min(0.9 + Math.min(newTier || 1, 10) * 0.13 + Math.min(streak, 5) * 0.03, 2.3);
   const cell = cellEls[idx];
   const glow = document.createElement("div");
   glow.className = "chargeGlow";

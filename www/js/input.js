@@ -560,6 +560,13 @@ function onBuyGemItem(itemId) {
   Sfx.purchase();
   if (itemId === "cosmicBox") {
     openCosmicBoxRevealModal(result.box);
+  } else if (itemId === "streakFreeze") {
+    // Buying this has no visible on-screen change (unlike skipCell
+    // unlocking a cell, or cosmicBox's reveal modal) - it just increments a
+    // hidden counter used much later, the next time a login day is missed.
+    // The generic "Achat effectue !" toast gave no sense anything had
+    // really happened; naming the effect and the new charge count instead.
+    toast("❄️ Gel de série ajouté ! (" + Game.state.dailyLogin.streakFreezeCharges + " en réserve)");
   } else {
     toast("Achat effectué !");
   }
