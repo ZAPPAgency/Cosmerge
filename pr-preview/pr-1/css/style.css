@@ -550,6 +550,12 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 /* Tier artwork mentioned inline in text (the tutorial, stat lines...) -
    see tierInlineIconHtml() in ui.js. */
 .inlineTierIcon{width:18px;height:18px;object-fit:contain;vertical-align:-4px;margin:0 1px;}
+/* Gems/Cosmic Energy currency glyph (currencyIconHtml, ui.js) - reuses the
+   gems_ad.png/ascension.png fab artwork as a small inline symbol wherever
+   those currencies are shown in text (header pills, shop prices, skill
+   costs...), not just on their own dedicated fab button. */
+.inlineCurrencyIcon{width:16px;height:16px;object-fit:contain;vertical-align:-3px;margin:0 1px;}
+.currency .icon .inlineCurrencyIcon{width:20px;height:20px;vertical-align:-5px;margin:0;}
 .modalBtns{display:flex;gap:8px;margin-top:10px;}
 /* The wheel modal has a standalone "Fermer" button right after its
    .modalBtns spin-buttons row - .modalCard isn't a flex/gap container, so

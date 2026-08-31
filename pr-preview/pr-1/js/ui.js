@@ -67,6 +67,19 @@ function tierInlineIconHtml(tier) {
     : t.emoji;
 }
 
+// Same idea for the Gems/Cosmic Energy currency glyphs (Loris: the fab
+// icon batch replaced 💎/⚡ on the "Pub contre Gems"/"Ascension" buttons
+// themselves, but every OTHER place those currencies are shown - header
+// pills, shop prices, the Gems menu title, skill costs - still used the
+// plain emoji). Reuses the same artwork (gems_ad.png/ascension.png) as
+// small inline glyphs rather than commissioning separate icons - at
+// 14-16px next to a number they read fine as the currency symbol.
+function currencyIconHtml(type) {
+  if (type === "gems") return `<img class="inlineCurrencyIcon" src="assets/ui/gems_ad.png" alt="Gems">`;
+  if (type === "energy") return `<img class="inlineCurrencyIcon" src="assets/ui/ascension.png" alt="Énergie Cosmique">`;
+  return "";
+}
+
 // Builds the tile's icon element: custom artwork when the active skin
 // (classic, or a tierSkin-based one like Fruits/Légumes) has an `icon` for
 // this tier, otherwise the plain emoji glyph. Classic reads icon/iconScale
@@ -127,7 +140,7 @@ function renderCell(i, opts) {
     const label = document.createElement("div");
     label.className = "lockLabel";
     if (Game.skipCellArmed) {
-      label.innerHTML = `<span class="emoji">💎</span><span>Sauter</span>`;
+      label.innerHTML = `<span class="emoji">${currencyIconHtml("gems")}</span><span>Sauter</span>`;
     } else {
       const n = state.extraUnlockedCount;
       label.innerHTML = `<span class="emoji">🔒</span><span>${formatNumber(unlockCost(n))}✨</span>`;
@@ -566,7 +579,7 @@ function closeDrawer() {
 const PANEL_RENDERERS = {
   shop: { title: "Boutique", render: renderShopPanel },
   gods: { title: "Dieux du Cosmos", render: renderGodsPanel },
-  skills: { title: "Ascension ⚡", render: renderSkillsPanel },
+  skills: { title: `Ascension ${currencyIconHtml("energy")}`, render: renderSkillsPanel },
   quests: { title: "Quêtes quotidiennes", render: renderQuestsPanel },
   achievements: { title: "Succès", render: renderAchievementsPanel },
   progression: { title: "Progression", render: renderProgressionPanel },
@@ -579,7 +592,7 @@ function openPanel(name) {
   const def = PANEL_RENDERERS[name];
   if (!def) return;
   currentPanel = name;
-  dom.panelTitle.textContent = def.title;
+  dom.panelTitle.innerHTML = def.title; // was textContent - "skills" title needs the inline energy icon (currencyIconHtml); every other title is a plain string so this is a no-op for them
   def.render();
   dom.panelOverlay.classList.remove("hidden");
   // Gods screen gets its own background ambiance (gradient/particles) - see
@@ -612,7 +625,7 @@ function renderCosmeticGrid(list, equippedId, onAfterAction) {
     // element entirely instead of just showing a different one.
     const status = equipped ? el("span", "tag equipped", "Équipé")
       : (owned ? el("span", "tag owned", "Possédé") : el("span", "tag", "Non possédé"));
-    const btn = el("button", "btn" + (equipped ? "" : " primary"), equipped ? "Équipé" : (owned ? "Équiper" : `${item.cost} 💎`));
+    const btn = el("button", "btn" + (equipped ? "" : " primary"), equipped ? "Équipé" : (owned ? "Équiper" : `${item.cost} ${currencyIconHtml("gems")}`));
     btn.disabled = equipped || (!owned && state.gems < item.cost);
     btn.addEventListener("click", () => { onCosmeticAction(item.id, owned); if (onAfterAction) onAfterAction(); });
     // "Aperçu" (Loris): a way to see a set's tiles on an actual mini grid
@@ -656,7 +669,7 @@ function renderShopPanel() {
 
   const gemsAdReady = Date.now() >= state.cooldowns.gemsAdUntil;
   const gemsAdCard = el("div", "card compact");
-  gemsAdCard.innerHTML = `<div class="rowBetween"><h3>💎 Pub contre Gems (+${GEMS_AD_REWARD})</h3></div>
+  gemsAdCard.innerHTML = `<div class="rowBetween"><h3>${currencyIconHtml("gems")} Pub contre Gems (+${GEMS_AD_REWARD})</h3></div>
     <p class="desc">${gemsAdReady ? "Disponible maintenant." : `Disponible dans ${formatDuration(state.cooldowns.gemsAdUntil - Date.now())}`}</p>`;
   const gemsAdBtn = el("button", "btn primary full", adsRemoved(state) ? "Recevoir" : "Regarder une pub");
   gemsAdBtn.disabled = !gemsAdReady;
@@ -669,7 +682,7 @@ function renderShopPanel() {
   const gemGrid = el("div", "shopGrid2");
   SHOP_GEM_ITEMS.forEach(item => {
     const card = el("div", "card compact");
-    card.innerHTML = `<div class="rowBetween"><h3>${item.name}</h3><span class="tag">${item.cost} 💎</span></div>
+    card.innerHTML = `<div class="rowBetween"><h3>${item.name}</h3><span class="tag">${item.cost} ${currencyIconHtml("gems")}</span></div>
       <p class="desc">${item.desc}</p>`;
     const btn = el("button", "btn primary full", "Acheter");
     btn.disabled = state.gems < item.cost;
@@ -746,7 +759,7 @@ function renderShopPanel() {
 function renderSkillsPanel() {
   const state = Game.state;
   dom.panelBody.innerHTML = "";
-  dom.panelBody.appendChild(el("p", "desc", `Dépense ton Énergie Cosmique (⚡ ${formatNumber(state.cosmicEnergy)}) gagnée à chaque Big Bang dans des bonus permanents.`));
+  dom.panelBody.appendChild(el("p", "desc", `Dépense ton Énergie Cosmique (${currencyIconHtml("energy")} ${formatNumber(state.cosmicEnergy)}) gagnée à chaque Big Bang dans des bonus permanents.`));
   Object.keys(SKILL_TREE).forEach(key => {
     const branch = SKILL_TREE[key];
     const level = state.skills[key];
@@ -756,7 +769,7 @@ function renderSkillsPanel() {
     card.innerHTML = `<div class="rowBetween"><h3>${branch.name}</h3><span class="skillLevel">Niv. ${level}/${branch.maxLevel}</span></div>
       <p class="desc">${branch.desc}</p>
       <div class="progressBar"><div class="fill" style="width:${(level / branch.maxLevel * 100).toFixed(1)}%"></div></div>`;
-    const btn = el("button", "btn primary full", maxed ? "Niveau maximum" : `Améliorer — ${cost} ⚡`);
+    const btn = el("button", "btn primary full", maxed ? "Niveau maximum" : `Améliorer — ${cost} ${currencyIconHtml("energy")}`);
     btn.disabled = maxed || state.cosmicEnergy < cost;
     if (!maxed) btn.addEventListener("click", () => onBuySkill(key));
     card.appendChild(btn);
@@ -772,7 +785,7 @@ function renderQuestsPanel() {
   state.quests.active.forEach(q => {
     const template = QUEST_POOL.find(t => t.id === q.id);
     const card = el("div", "card");
-    card.innerHTML = `<div class="rowBetween"><h3>${template.desc}</h3><span class="tag">${template.reward} 💎</span></div>
+    card.innerHTML = `<div class="rowBetween"><h3>${template.desc}</h3><span class="tag">${template.reward} ${currencyIconHtml("gems")}</span></div>
       <div class="progressBar"><div class="fill" style="width:${Math.min(100, q.progress / template.target * 100).toFixed(1)}%"></div></div>
       <p class="desc">${Math.min(q.progress, template.target)} / ${template.target}</p>`;
     const btn = el("button", "btn primary full", q.claimed ? "Réclamée" : (q.done ? "Réclamer" : "En cours"));
@@ -783,7 +796,7 @@ function renderQuestsPanel() {
   });
 
   const bonusCard = el("div", "card");
-  bonusCard.innerHTML = `<div class="rowBetween"><h3>${BONUS_AD_QUEST.desc} (bonus)</h3><span class="tag">${BONUS_AD_QUEST.reward} 💎</span></div>
+  bonusCard.innerHTML = `<div class="rowBetween"><h3>${BONUS_AD_QUEST.desc} (bonus)</h3><span class="tag">${BONUS_AD_QUEST.reward} ${currencyIconHtml("gems")}</span></div>
     <p class="desc">Quête bonus optionnelle, disponible chaque jour.</p>`;
   const bonusBtn = el("button", "btn primary full",
     state.quests.bonusAd.claimed ? "Réclamée" : (state.quests.bonusAd.done || adsRemoved(state) ? "Réclamer" : "Regarder une pub"));
@@ -803,7 +816,7 @@ function renderAchievementsPanel() {
     const card = el("div", "card achCard" + (unlocked ? "" : " locked"));
     card.innerHTML = `<div class="rowBetween">
         <div><span class="achBadge">${unlocked ? "🏆" : "🔒"}</span> <strong>${a.name}</strong></div>
-        <span class="tag">${a.reward} 💎</span>
+        <span class="tag">${a.reward} ${currencyIconHtml("gems")}</span>
       </div>
       <div class="progressBar"><div class="fill" style="width:${Math.min(100, value / a.target * 100).toFixed(1)}%"></div></div>
       <p class="desc">${Math.min(value, a.target)} / ${a.target}</p>`;
@@ -1022,7 +1035,7 @@ function openGodDetailModal(godId) {
       const progress = god.unlock.challengeId === "erebus" ? state.gods.erebusStreak : 0;
       info.textContent = `⚔️ ${god.unlock.label}` + (god.unlock.challengeId === "erebus" ? ` (${Math.min(progress, god.unlock.target)}/${god.unlock.target})` : "");
     } else if (god.unlock.type === "shop") {
-      info.textContent = `🔒 Boutique : ${god.unlock.cost} 💎 ${god.unlock.altLabel ? "(" + god.unlock.altLabel + ")" : ""}`;
+      info.innerHTML = `🔒 Boutique : ${god.unlock.cost} ${currencyIconHtml("gems")} ${god.unlock.altLabel ? "(" + god.unlock.altLabel + ")" : ""}`;
     } else if (god.unlock.type === "box") {
       info.textContent = "🔒 Uniquement via la Boîte Cosmique (Boutique) - pas d'autre moyen de l'éveiller";
     } else {
@@ -1030,7 +1043,7 @@ function openGodDetailModal(godId) {
     }
     card.appendChild(info);
     if (god.unlock.type === "shop") {
-      const btn = el("button", "btn primary full", `Débloquer — ${god.unlock.cost} 💎`);
+      const btn = el("button", "btn primary full", `Débloquer — ${god.unlock.cost} ${currencyIconHtml("gems")}`);
       btn.style.marginTop = "8px";
       btn.disabled = state.gems < god.unlock.cost;
       btn.addEventListener("click", () => { onBuyGod(god.id); openGodDetailModal(god.id); });
@@ -1054,7 +1067,7 @@ function openGodDetailModal(godId) {
     const power = el("div", "godPower");
     power.innerHTML = `<div class="rowBetween"><span class="godPowerLabel">Niveau de pouvoir</span><span class="skillLevel">${level}/${GOD_POWER_MAX_LEVEL}</span></div>
       <div class="progressBar"><div class="fill" style="width:${(level / GOD_POWER_MAX_LEVEL * 100).toFixed(1)}%"></div></div>`;
-    const btn = el("button", "btn primary full", maxed ? "Niveau maximum" : `Améliorer — ${cost} 💎`);
+    const btn = el("button", "btn primary full", maxed ? "Niveau maximum" : `Améliorer — ${cost} ${currencyIconHtml("gems")}`);
     btn.style.marginTop = "6px";
     btn.disabled = maxed || state.gems < cost;
     if (!maxed) btn.addEventListener("click", () => { onBuyGodPower(god.id); openGodDetailModal(god.id); });
@@ -1206,7 +1219,7 @@ function closeWheelModal() { $("wheelModal").classList.add("hidden"); }
 // ---------------- Big Bang modal ----------------
 function openBigBangModal() {
   const gain = previewBigBangGain(Game.state);
-  $("bigBangText").textContent = `Tu vas gagner ${gain} ⚡ Énergie Cosmique.`;
+  $("bigBangText").innerHTML = `Tu vas gagner ${gain} ${currencyIconHtml("energy")} Énergie Cosmique.`;
   $("bigBangModal").classList.remove("hidden");
 }
 function closeBigBangModal() { $("bigBangModal").classList.add("hidden"); }
@@ -1220,7 +1233,7 @@ function openBigBangSummaryModal({ stardustEarned, maxTier, gain }) {
   const state = Game.state;
   $("bbSummaryStardust").textContent = formatNumber(stardustEarned);
   $("bbSummaryTier").innerHTML = `${TIERS[maxTier - 1].name} ${tierInlineIconHtml(maxTier)}`;
-  $("bbSummaryEnergy").textContent = `+${formatNumber(gain)} ⚡`;
+  $("bbSummaryEnergy").innerHTML = `+${formatNumber(gain)} ${currencyIconHtml("energy")}`;
   $("bbSummaryHint").textContent = nextGodMilestoneHint(state)
     || "Tous les Dieux à objectif direct sont éveillés - tente ta chance à la Boîte Cosmique (Boutique) pour les derniers !";
   $("bigBangSummaryModal").classList.remove("hidden");
@@ -1279,7 +1292,7 @@ function openCosmicBoxRevealModal(box) {
     anim.textContent = box.god.emoji;
     if (box.duplicate) {
       $("cosmicBoxTitle").textContent = `${box.god.name} (déjà possédé)`;
-      $("cosmicBoxText").textContent = `Doublon converti en +${box.gems} 💎`;
+      $("cosmicBoxText").innerHTML = `Doublon converti en +${box.gems} ${currencyIconHtml("gems")}`;
     } else {
       $("cosmicBoxTitle").textContent = `✨ Nouveau Dieu : ${box.god.name} !`;
       $("cosmicBoxText").textContent = `${rarity.label} - ${box.god.title}`;
