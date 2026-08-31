@@ -75,9 +75,26 @@ function tierInlineIconHtml(tier) {
 // small inline glyphs rather than commissioning separate icons - at
 // 14-16px next to a number they read fine as the currency symbol.
 function currencyIconHtml(type) {
+  if (type === "stardust") return `<img class="inlineCurrencyIcon" src="assets/ui/stardust.png" alt="Stardust">`;
   if (type === "gems") return `<img class="inlineCurrencyIcon" src="assets/ui/gems_ad.png" alt="Gems">`;
   if (type === "energy") return `<img class="inlineCurrencyIcon" src="assets/ui/ascension.png" alt="Énergie Cosmique">`;
   return "";
+}
+
+// Reward labels in config.js (DAILY_LOGIN_REWARDS) and retention.js
+// (WHEEL_PRIZES) are plain strings with the emoji baked in ("100 ✨",
+// "20 💎"...) - both files load BEFORE this one, so they can't call
+// currencyIconHtml() themselves. Swapping the glyphs at render time here
+// instead handles every such label generically, without touching each
+// config entry individually.
+function lockIconHtml() { return `<img class="inlineCurrencyIcon" src="assets/ui/cadenas.png" alt="">`; }
+function trophyIconHtml() { return `<img class="inlineCurrencyIcon" src="assets/ui/succes.png" alt="">`; }
+
+function withCurrencyIcons(text) {
+  return text
+    .replace(/✨/g, currencyIconHtml("stardust"))
+    .replace(/💎/g, currencyIconHtml("gems"))
+    .replace(/⚡/g, currencyIconHtml("energy"));
 }
 
 // Builds the tile's icon element: custom artwork when the active skin
@@ -143,7 +160,7 @@ function renderCell(i, opts) {
       label.innerHTML = `<span class="emoji">${currencyIconHtml("gems")}</span><span>Sauter</span>`;
     } else {
       const n = state.extraUnlockedCount;
-      label.innerHTML = `<span class="emoji">🔒</span><span>${formatNumber(unlockCost(n))}✨</span>`;
+      label.innerHTML = `<span class="emoji"><img src="assets/ui/cadenas.png" alt=""></span><span>${formatNumber(unlockCost(n))}${currencyIconHtml("stardust")}</span>`;
     }
     cell.appendChild(label);
     return;
@@ -285,7 +302,7 @@ function updateFabs() {
   // "claimed today" streak/fire state, so that one still falls back to a
   // plain emoji - but the default gift state now stays as the real image.
   const dailyIcon = dom.fabDailyLogin.querySelector(".fabIcon");
-  dailyIcon.innerHTML = claimedToday ? '<div class="emoji">🔥</div>' : '<img class="uiIcon" src="assets/ui/cadeau.png" alt="">';
+  dailyIcon.innerHTML = claimedToday ? '<img class="uiIcon" src="assets/ui/flamme.png" alt="">' : '<img class="uiIcon" src="assets/ui/cadeau.png" alt="">';
   dom.fabDailyLogin.querySelector(".fabLabel").textContent = claimedToday ? `Série ${state.dailyLogin.streak}` : "Cadeau";
   ensureDailySpin(state);
   dom.fabWheel.classList.toggle("hidden", state.dailySpin.freeUsed && state.dailySpin.bonusUsed);
@@ -515,7 +532,7 @@ function spawnFloatingBonus(idx, amount) {
   const cell = cellEls[idx];
   const el = document.createElement("div");
   el.className = "floatBonus";
-  el.textContent = "+" + formatNumber(amount) + " ✨";
+  el.innerHTML = "+" + formatNumber(amount) + " " + currencyIconHtml("stardust");
   cell.appendChild(el);
   setTimeout(() => el.remove(), 750);
 }
@@ -815,7 +832,7 @@ function renderAchievementsPanel() {
     const value = achievementValue(state, a.cat);
     const card = el("div", "card achCard" + (unlocked ? "" : " locked"));
     card.innerHTML = `<div class="rowBetween">
-        <div><span class="achBadge">${unlocked ? "🏆" : "🔒"}</span> <strong>${a.name}</strong></div>
+        <div><span class="achBadge">${unlocked ? trophyIconHtml() : lockIconHtml()}</span> <strong>${a.name}</strong></div>
         <span class="tag">${a.reward} ${currencyIconHtml("gems")}</span>
       </div>
       <div class="progressBar"><div class="fill" style="width:${Math.min(100, value / a.target * 100).toFixed(1)}%"></div></div>
@@ -869,7 +886,7 @@ function renderStoryPanel() {
     const card = el("div", "card storyCard" + (unlocked ? "" : " locked"));
     card.innerHTML = unlocked
       ? `<h3>✨ ${frag.title}</h3><p class="desc">${frag.text}</p>`
-      : `<h3>🔒 ???</h3><p class="desc">Fragment verrouillé - continue ta progression pour le découvrir.</p>`;
+      : `<h3>${lockIconHtml()} ???</h3><p class="desc">Fragment verrouillé - continue ta progression pour le découvrir.</p>`;
     dom.panelBody.appendChild(card);
   });
 
@@ -951,17 +968,24 @@ function renderProgressionPanel() {
   // challenge most players won't stumble into by accident).
   const godById = (id) => GODS.find(g => g.id === id);
   const godStep = (id) => { const g = godById(id); return { emoji: g.emoji, done: isGodUnlocked(state, id), text: g.name, sub: g.unlock.label }; };
+  // .inlineTierIcon already has a dedicated size rule for .roadIconGlyph
+  // context (see style.css) from the "Atteindre l'Univers" step below, so
+  // these custom-icon steps reuse that same class rather than needing a
+  // new one. Only the steps Loris specifically flagged (Dieux/Big Bang/
+  // Thanatos/Succès) get a custom icon here - the other gods keep their
+  // plain emoji until their own portraits exist (a later, separate batch).
+  const roadIcon = (src) => `<img class="inlineTierIcon" src="assets/ui/${src}" alt="">`;
   const steps = [];
-  steps.push({ emoji: "🔱", done: !!state.gods.currentGodId, text: "Éveiller ton premier Dieu" });
+  steps.push({ emoji: roadIcon("dieux.png"), done: !!state.gods.currentGodId, text: "Éveiller ton premier Dieu" });
   steps.push(godStep("astreos"));
   steps.push(godStep("helios"));
   steps.push(godStep("nyx"));
   steps.push(godStep("erebus"));
   steps.push({ emoji: tierInlineIconHtml(TIERS.length), done: state.lifetime.maxTierEver >= TIERS.length, text: "Atteindre l'Univers" });
-  steps.push({ emoji: "💥", done: state.lifetime.bigBangCount >= 1, text: "Premier Big Bang" });
-  steps.push(godStep("thanatos"));
+  steps.push({ emoji: roadIcon("bigbang.png"), done: state.lifetime.bigBangCount >= 1, text: "Premier Big Bang" });
+  steps.push({ ...godStep("thanatos"), emoji: roadIcon("mort.png") });
   steps.push(godStep("chronos"));
-  steps.push({ emoji: "🏆", done: state.achievements.unlockedIds.length >= ACHIEVEMENTS.length,
+  steps.push({ emoji: roadIcon("succes.png"), done: state.achievements.unlockedIds.length >= ACHIEVEMENTS.length,
     text: "Tous les succès", sub: `${state.achievements.unlockedIds.length}/${ACHIEVEMENTS.length}` });
 
   const nextIdx = steps.findIndex(s => !s.done);
@@ -1030,16 +1054,16 @@ function openGodDetailModal(godId) {
 
   if (!unlocked) {
     const info = el("div", "godUnlockInfo");
-    if (god.unlock.type === "milestone") info.textContent = "🔒 " + god.unlock.label;
+    if (god.unlock.type === "milestone") info.innerHTML = lockIconHtml() + " " + god.unlock.label;
     else if (god.unlock.type === "challenge") {
       const progress = god.unlock.challengeId === "erebus" ? state.gods.erebusStreak : 0;
       info.textContent = `⚔️ ${god.unlock.label}` + (god.unlock.challengeId === "erebus" ? ` (${Math.min(progress, god.unlock.target)}/${god.unlock.target})` : "");
     } else if (god.unlock.type === "shop") {
-      info.innerHTML = `🔒 Boutique : ${god.unlock.cost} ${currencyIconHtml("gems")} ${god.unlock.altLabel ? "(" + god.unlock.altLabel + ")" : ""}`;
+      info.innerHTML = `${lockIconHtml()} Boutique : ${god.unlock.cost} ${currencyIconHtml("gems")} ${god.unlock.altLabel ? "(" + god.unlock.altLabel + ")" : ""}`;
     } else if (god.unlock.type === "box") {
-      info.textContent = "🔒 Uniquement via la Boîte Cosmique (Boutique) - pas d'autre moyen de l'éveiller";
+      info.innerHTML = `${lockIconHtml()} Uniquement via la Boîte Cosmique (Boutique) - pas d'autre moyen de l'éveiller`;
     } else {
-      info.textContent = "🔒 Éveille ton premier Dieu via le rituel des lunes.";
+      info.innerHTML = `${lockIconHtml()} Éveille ton premier Dieu via le rituel des lunes.`;
     }
     card.appendChild(info);
     if (god.unlock.type === "shop") {
@@ -1184,14 +1208,14 @@ function openDailyModal() {
   const state = Game.state;
   const freezeNote = state.dailyLogin.streakFreezeCharges > 0
     ? ` — ❄️ ${state.dailyLogin.streakFreezeCharges} gel(s) de série en réserve` : "";
-  $("dailyStreakLine").textContent = `🔥 Série actuelle : ${state.dailyLogin.streak} jour(s)${freezeNote}`;
+  $("dailyStreakLine").innerHTML = `<img class="inlineCurrencyIcon" src="assets/ui/flamme.png" alt=""> Série actuelle : ${state.dailyLogin.streak} jour(s)${freezeNote}`;
   const grid = $("dailyGrid");
   grid.innerHTML = "";
   DAILY_REWARDS.forEach(r => {
     const claimedAlready = r.day < state.dailyLogin.cycleDay || (r.day === state.dailyLogin.cycleDay && !isDailyLoginAvailable(state));
     const isToday = r.day === state.dailyLogin.cycleDay;
     const cellDiv = el("div", "dayCell" + (claimedAlready ? " claimed" : "") + (isToday ? " today" : ""));
-    cellDiv.innerHTML = `<div class="dNum">Jour ${r.day}</div><div>${r.label}</div>`;
+    cellDiv.innerHTML = `<div class="dNum">Jour ${r.day}</div><div>${withCurrencyIcons(r.label)}</div>`;
     grid.appendChild(cellDiv);
   });
   $("dailyClaim").disabled = !isDailyLoginAvailable(state);
@@ -1402,23 +1426,33 @@ function spawnShootingStar() {
   const bg = $("starsBg");
   const star = document.createElement("div");
   star.className = "shootingStar";
-  // Always travels roughly top-left -> bottom-right or top-right ->
-  // bottom-left (a shooting star reads wrong moving straight up/sideways) -
-  // starts somewhere in the top half, off to one side, so it has room to
-  // cross a good stretch of the screen before it fades out near the edge.
+  // Bug fixes (Loris): (1) the travel distance was a fixed 130-220px,
+  // which - combined with the diagonal dy eating into the horizontal
+  // reach - didn't actually cross a real (esp. narrower mobile) viewport,
+  // so the star visibly stopped mid-screen instead of exiting it.
+  // Distance is now computed from the ACTUAL viewport size, with enough
+  // overshoot (>100%) to guarantee it exits fully before fading. (2) the
+  // trail (::before) was always horizontal, just flipped left/right -
+  // it never actually pointed backward along the real diagonal path,
+  // which read as "off"/disconnected from the star. It's now rotated to
+  // the exact opposite angle of travel (atan2 of the real dx/dy) and
+  // shortened, so it reads as a proper trailing streak.
+  const vw = window.innerWidth, vh = window.innerHeight;
   const fromLeft = Math.random() < 0.5;
-  const startX = fromLeft ? -5 + Math.random() * 15 : 90 + Math.random() * 15;
-  const startY = 5 + Math.random() * 35;
-  const travel = 130 + Math.random() * 90; // vw-ish units via px approximation below
-  const dx = (fromLeft ? 1 : -1) * travel;
-  const dy = travel * (0.45 + Math.random() * 0.35);
-  const dur = (0.9 + Math.random() * 0.6).toFixed(2) + "s";
-  star.style.left = startX + "vw";
-  star.style.top = startY + "vh";
+  const startX = fromLeft ? -vw * 0.08 : vw * 1.08;
+  const startY = vh * (0.05 + Math.random() * 0.3);
+  const dx = (fromLeft ? 1 : -1) * vw * (1.16 + Math.random() * 0.14); // always fully crosses + exits
+  const dy = vh * (0.35 + Math.random() * 0.35);
+  const dist = Math.hypot(dx, dy);
+  const speed = 900 + Math.random() * 500; // px/s - keeps a consistent "shooting star" pace regardless of distance
+  const dur = Math.min(Math.max(dist / speed, 0.7), 1.8).toFixed(2) + "s";
+  const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+  star.style.left = startX + "px";
+  star.style.top = startY + "px";
   star.style.setProperty("--dx", dx + "px");
   star.style.setProperty("--dy", dy + "px");
   star.style.setProperty("--dur", dur);
-  star.style.setProperty("--trail-angle", (fromLeft ? 180 : 0) + "deg");
+  star.style.setProperty("--trail-angle", (angle + 180) + "deg"); // points backward along the real path
   bg.appendChild(star);
   setTimeout(() => star.remove(), (parseFloat(dur) * 1000) + 100);
 }
