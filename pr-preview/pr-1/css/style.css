@@ -271,6 +271,12 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
   background:radial-gradient(circle at 35% 30%,#3a3170,#211c46 70%);
   border:1px solid rgba(255,255,255,.08);box-shadow:inset 0 1px 2px rgba(255,255,255,.08);}
 .fabIcon img.uiIcon{width:74%;height:74%;object-fit:contain;}
+/* Succès (trophy) read a touch too large next to the other badge icons
+   (Loris) - same per-icon override pattern as tier iconScale, just via a
+   src-attribute selector since these fab/drawer icons aren't driven by a
+   JS-side scale field like TIERS entries are. */
+.fabIcon img.uiIcon[src*="succes.png"],
+.drawerIcon img.uiIcon[src*="succes.png"]{width:64%;height:64%;}
 .fabLabel{white-space:nowrap;}
 /* These two labels alternate between a fixed string ("Boost x2", "+8 Gems")
    and a countdown ("5s" vs "12s" vs "1m 30s") - without a stable width, the

@@ -151,20 +151,24 @@ const Sfx = {
   // is what should feel the most addictive, so it's the one thing that
   // audibly escalates instead of repeating identically every time.
   meteorImpact(newTier, streak) {
-    // Loris: the streak escalation (COMBO_NOTES pitch step) wasn't punchy
-    // enough between hit 1 and hit 2 - a whole-tone pitch bump on a single
-    // small chime is subtle, and everything ELSE about the sound (the pop,
-    // the crack, the whoosh) stayed byte-for-byte identical regardless of
-    // streak. `boost` now scales the volume - and, for the pop's sweep, the
-    // pitch swing too - of every layer, not just the reward chime, so hit 2
-    // is audibly bigger than hit 1, hit 3 bigger still, etc. Math.min caps
-    // keep it from clipping/distorting at a long streak.
+    // Loris (challenging the previous version, correctly): the overall
+    // punch/volume was scaling with STREAK (merge speed), but the VISUAL
+    // effect (playMeteorMerge, ui.js) already scales with TIER per Noah's
+    // original note ("de plus en plus fort en fonction du niveau de merge,
+    // pas de la vitesse") - so sound and visual were escalating on two
+    // different axes, which could mismatch (a huge tier-8 merge landing
+    // with a quiet sound because it happened slowly, or a tiny tier-1
+    // merge sounding huge because it was hit #5 in a fast chain). `boost`
+    // is now tier-led, with streak kept as a much smaller accent rather
+    // than the main driver. The COMBO_NOTES reward-chime melody itself
+    // still climbs with streak, untouched - Loris specifically liked that
+    // part and it's a separate concern from overall loudness/punch.
+    const t = Math.min(newTier, 10);
     const s = Math.min(streak || 0, 6);
-    const boost = 1 + s * 0.28; // up to ~2.7x at streak 6
+    const boost = 1 + (t - 1) * 0.19 + s * 0.05; // tier1/streak0 ~1x, tier10/streak6 ~2.75x
     noiseBurst(0.05, "bandpass", 2800, 1000, Math.min(0.045 * boost, 0.11));
     setTimeout(() => {
-      const t = Math.min(newTier, 10);
-      const swing = 1 + s * 0.1; // pitch drop widens a bit with streak too, not just louder
+      const swing = 1 + (t - 1) * 0.07 + s * 0.03; // pitch swing now widens mainly with tier
       sweep(520 + t * 9, (200 + t * 6) / swing, 0.09, "triangle", Math.min(0.12 * boost, 0.28));
       noiseBurst(0.07, "lowpass", 1800, 280, Math.min(0.07 * boost, 0.17));
       noiseBurst(0.05, "highpass", 2200 * swing, 3200 * swing, Math.min(0.02 * boost, 0.05));
