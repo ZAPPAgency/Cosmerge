@@ -536,7 +536,7 @@ function onWheelSpinFree() {
   $("wheelSpinFree").disabled = true; $("wheelSpinAd").disabled = true;
   spinVisual(() => {
     const prize = spinWheel(Game.state, false);
-    $("wheelResult").textContent = prize ? `Gagné : ${prize.label}` : "Déjà utilisé aujourd'hui.";
+    $("wheelResult").innerHTML = prize ? `Gagné : ${withCurrencyIcons(prize.label)}` : "Déjà utilisé aujourd'hui.";
     Sfx.chest();
     refreshWheelButtons();
     updateHeader(); updateFabs();
@@ -549,7 +549,7 @@ async function onWheelSpinAd() {
   if (!ok) { refreshWheelButtons(); return; }
   spinVisual(() => {
     const prize = spinWheel(Game.state, true);
-    $("wheelResult").textContent = prize ? `Gagné : ${prize.label}` : "Déjà utilisé aujourd'hui.";
+    $("wheelResult").innerHTML = prize ? `Gagné : ${withCurrencyIcons(prize.label)}` : "Déjà utilisé aujourd'hui.";
     Sfx.chest();
     refreshWheelButtons();
     updateHeader(); updateFabs();
