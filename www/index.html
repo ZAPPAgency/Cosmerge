@@ -37,7 +37,7 @@
     <meta name="apple-mobile-web-app-title" content="Godspark" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#0a0620" />
-    <link rel="stylesheet" href="css/style.css?v=50" />
+    <link rel="stylesheet" href="css/style.css?v=51" />
   </head>
   <body>
     <div id="starsBg"></div>
@@ -50,7 +50,9 @@
           <span class="rate" id="stardustRate">+0/s</span>
         </div>
         <div class="currency gems" id="gemsPill">
-          <span class="icon">💎</span>
+          <span class="icon"
+            ><img class="inlineCurrencyIcon" src="assets/ui/gems_ad.png" alt="Gems"
+          /></span>
           <span class="value" id="gemsValue">0</span>
         </div>
         <button
@@ -61,7 +63,9 @@
           🔄
         </button>
         <div class="currency energy" id="energyPill">
-          <span class="icon">⚡</span>
+          <span class="icon"
+            ><img class="inlineCurrencyIcon" src="assets/ui/ascension.png" alt="Énergie Cosmique"
+          /></span>
           <span class="value" id="energyValue">0</span>
         </div>
         <button class="iconBtn" id="menuBtn" aria-label="Menu">☰</button>
@@ -117,7 +121,8 @@
               ✨ <span id="invokeCost">15</span>
             </button>
             <button class="btn" id="invokeBtnGems">
-              💎 <span id="invokeCostGems">5</span>
+              <img class="inlineCurrencyIcon" src="assets/ui/gems_ad.png" alt="Gems" />
+              <span id="invokeCostGems">5</span>
             </button>
           </div>
         </div>
@@ -291,7 +296,9 @@
         </p>
         <p class="rowBetween">
           <span>Énergie Cosmique gagnée</span
-          ><strong id="bbSummaryEnergy">+0 ⚡</strong>
+          ><strong id="bbSummaryEnergy"
+            >+0 <img class="inlineCurrencyIcon" src="assets/ui/ascension.png" alt=""
+          /></strong>
         </p>
         <p class="desc" id="bbSummaryHint" style="margin-top: 10px"></p>
         <button
@@ -404,7 +411,10 @@
     <!-- Gems quick menu: tapping the Gems pill offers the two things Gems are for -->
     <div class="modalOverlay hidden" id="gemsMenuModal">
       <div class="modalCard">
-        <h3>💎 Gems</h3>
+        <h3>
+          <img class="inlineCurrencyIcon" src="assets/ui/gems_ad.png" alt="" />
+          Gems
+        </h3>
         <p class="desc">Que veux-tu faire avec tes Gems ?</p>
         <div class="modalBtns" style="flex-direction: column">
           <button class="btn primary full" id="gemsMenuShop">
@@ -513,16 +523,16 @@
       </div>
     </div>
 
-    <script src="js/config.js?v=50"></script>
-    <script src="js/state.js?v=50"></script>
-    <script src="js/audio.js?v=50"></script>
-    <script src="js/services.js?v=50"></script>
-    <script src="js/economy.js?v=50"></script>
-    <script src="js/gods.js?v=50"></script>
-    <script src="js/retention.js?v=50"></script>
-    <script src="js/ui.js?v=50"></script>
-    <script src="js/input.js?v=50"></script>
-    <script src="js/main.js?v=50"></script>
+    <script src="js/config.js?v=51"></script>
+    <script src="js/state.js?v=51"></script>
+    <script src="js/audio.js?v=51"></script>
+    <script src="js/services.js?v=51"></script>
+    <script src="js/economy.js?v=51"></script>
+    <script src="js/gods.js?v=51"></script>
+    <script src="js/retention.js?v=51"></script>
+    <script src="js/ui.js?v=51"></script>
+    <script src="js/input.js?v=51"></script>
+    <script src="js/main.js?v=51"></script>
     <script type="module" src="js/native-bridge.js"></script>
   </body>
 </html>
