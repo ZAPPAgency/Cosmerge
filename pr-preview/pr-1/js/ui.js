@@ -1391,4 +1391,41 @@ function buildStars() {
     s.style.animationDelay = (Math.random() * 3) + "s";
     bg.appendChild(s);
   }
+  scheduleShootingStars();
+}
+
+// Occasional shooting star crossing the background, behind the grid
+// (Loris: "un fond un peu plus vivant, sans être perturbant") - one at a
+// time, at a random interval, so it reads as a rare little "did you catch
+// that?" moment rather than a repeating pattern that draws the eye.
+function spawnShootingStar() {
+  const bg = $("starsBg");
+  const star = document.createElement("div");
+  star.className = "shootingStar";
+  // Always travels roughly top-left -> bottom-right or top-right ->
+  // bottom-left (a shooting star reads wrong moving straight up/sideways) -
+  // starts somewhere in the top half, off to one side, so it has room to
+  // cross a good stretch of the screen before it fades out near the edge.
+  const fromLeft = Math.random() < 0.5;
+  const startX = fromLeft ? -5 + Math.random() * 15 : 90 + Math.random() * 15;
+  const startY = 5 + Math.random() * 35;
+  const travel = 130 + Math.random() * 90; // vw-ish units via px approximation below
+  const dx = (fromLeft ? 1 : -1) * travel;
+  const dy = travel * (0.45 + Math.random() * 0.35);
+  const dur = (0.9 + Math.random() * 0.6).toFixed(2) + "s";
+  star.style.left = startX + "vw";
+  star.style.top = startY + "vh";
+  star.style.setProperty("--dx", dx + "px");
+  star.style.setProperty("--dy", dy + "px");
+  star.style.setProperty("--dur", dur);
+  star.style.setProperty("--trail-angle", (fromLeft ? 180 : 0) + "deg");
+  bg.appendChild(star);
+  setTimeout(() => star.remove(), (parseFloat(dur) * 1000) + 100);
+}
+function scheduleShootingStars() {
+  // Delay-then-spawn (not spawn-then-delay) so the first one doesn't fire
+  // immediately on page load, while everything else is still settling in -
+  // it should feel like a rare thing you happen to catch, not a boot cue.
+  const next = 6000 + Math.random() * 12000; // 6-18s
+  setTimeout(() => { spawnShootingStar(); scheduleShootingStars(); }, next);
 }
