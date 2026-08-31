@@ -93,6 +93,12 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .invokeSectionRow{display:flex;gap:6px;}
 .invokeSectionRow .btn{padding:8px 12px;font-size:13px;}
 .btn.bigbang{background:linear-gradient(135deg,#f59e0b,#dc2626);border-color:#fbbf2477;box-shadow:0 4px 16px #f59e0b66;animation:bigBangPulse 1.4s ease-in-out infinite;}
+/* The Big Bang icon's own warm tones (reds/oranges) blend into this
+   button's orange-to-red gradient (Loris) - a small dark backdrop behind
+   just the icon, only in this one spot, fixes the contrast without
+   touching the artwork (which reads fine everywhere else it's used, on
+   dark backgrounds). */
+.btn.bigbang .inlineCurrencyIcon{background:radial-gradient(circle, rgba(0,0,0,.4) 0%, transparent 72%);border-radius:50%;}
 .btn.ghost{background:transparent;border:1px solid #4a3f8c;box-shadow:none;}
 .btn.danger{background:linear-gradient(135deg,#f87171,#7f1d1d);border-color:#fca5a577;}
 .btn:disabled,.btn.disabled{opacity:.5;filter:grayscale(.6);box-shadow:none;animation:none;}

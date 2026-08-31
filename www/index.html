@@ -37,7 +37,7 @@
     <meta name="apple-mobile-web-app-title" content="Godspark" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#0a0620" />
-    <link rel="stylesheet" href="css/style.css?v=54" />
+    <link rel="stylesheet" href="css/style.css?v=55" />
   </head>
   <body>
     <div id="starsBg"></div>
@@ -345,7 +345,10 @@
     <!-- Stardust info popup: tapping the Stardust pill -->
     <div class="modalOverlay hidden" id="stardustInfoModal">
       <div class="modalCard">
-        <h3>✨ Ta grille</h3>
+        <h3>
+          <img class="inlineCurrencyIcon" src="assets/ui/stardust.png" alt="" />
+          Ta grille
+        </h3>
         <p class="rowBetween">
           <span>Grille démarrée depuis</span
           ><strong id="stardustInfoRunTime">-</strong>
@@ -355,7 +358,9 @@
           ><strong id="stardustInfoToday">-</strong>
         </p>
         <p class="rowBetween">
-          <span>🏆 Votre meilleur temps (Big Bang)</span
+          <span
+            ><img class="inlineCurrencyIcon" src="assets/ui/succes.png" alt="" />
+            Votre meilleur temps (Big Bang)</span
           ><strong id="stardustInfoBest">-</strong>
         </p>
         <button
@@ -430,10 +435,12 @@
         <p class="desc">Que veux-tu faire avec tes Gems ?</p>
         <div class="modalBtns" style="flex-direction: column">
           <button class="btn primary full" id="gemsMenuShop">
-            🛒 Dépenser en boutique
+            <img class="inlineCurrencyIcon" src="assets/ui/boutique.png" alt="" />
+            Dépenser en boutique
           </button>
           <button class="btn full" id="gemsMenuGods" style="margin-top: 8px">
-            🔱 Améliorer un Dieu
+            <img class="inlineCurrencyIcon" src="assets/ui/dieux.png" alt="" />
+            Améliorer un Dieu
           </button>
         </div>
         <button
@@ -535,16 +542,16 @@
       </div>
     </div>
 
-    <script src="js/config.js?v=54"></script>
-    <script src="js/state.js?v=54"></script>
-    <script src="js/audio.js?v=54"></script>
-    <script src="js/services.js?v=54"></script>
-    <script src="js/economy.js?v=54"></script>
-    <script src="js/gods.js?v=54"></script>
-    <script src="js/retention.js?v=54"></script>
-    <script src="js/ui.js?v=54"></script>
-    <script src="js/input.js?v=54"></script>
-    <script src="js/main.js?v=54"></script>
+    <script src="js/config.js?v=55"></script>
+    <script src="js/state.js?v=55"></script>
+    <script src="js/audio.js?v=55"></script>
+    <script src="js/services.js?v=55"></script>
+    <script src="js/economy.js?v=55"></script>
+    <script src="js/gods.js?v=55"></script>
+    <script src="js/retention.js?v=55"></script>
+    <script src="js/ui.js?v=55"></script>
+    <script src="js/input.js?v=55"></script>
+    <script src="js/main.js?v=55"></script>
     <script type="module" src="js/native-bridge.js"></script>
   </body>
 </html>
