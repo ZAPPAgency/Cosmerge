@@ -242,12 +242,16 @@ function checkAchievements(state) {
 }
 
 // ---- Daily wheel ----
+// `shortLabel` (optional): a tighter variant for buildWheelSegments() (ui.js)
+// to fit inside a narrow slice - only "Fragment de skin" needs one (its 36°
+// slice is too tight for the full 3-word label at a readable size). Full
+// `label` is still what shows in the "Gagné : ..." result text.
 const WHEEL_PRIZES = [
   { type: "stardust", amount: 200, weight: 30, label: "200 ✨" },
   { type: "stardust", amount: 500, weight: 20, label: "500 ✨" },
   { type: "gems", amount: 10, weight: 20, label: "10 💎" },
   { type: "gems", amount: 25, weight: 10, label: "25 💎" },
-  { type: "skinFragment", amount: 1, weight: 10, label: "Fragment de skin" },
+  { type: "skinFragment", amount: 1, weight: 10, label: "Fragment de skin", shortLabel: "Skin" },
   { type: "cosmicEnergy", amount: 1, weight: 5, label: "1 ⚡" },
   { type: "stardust", amount: 1500, weight: 5, label: "1500 ✨" },
 ];
