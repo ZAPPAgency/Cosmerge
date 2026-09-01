@@ -729,7 +729,7 @@ async function onBuyIAP(productId) {
 }
 async function onRestorePurchases() {
   await IAPService.restorePurchases();
-  toast("Achats restaurés (simulation).");
+  toast("Achats restaurés.");
   refreshCurrentPanel();
 }
 function onChooseGod(godId) {

@@ -1377,7 +1377,7 @@ function openPurchaseConfirmModal(product) {
   $("purchaseConfirmTitle").textContent = product.name;
   $("purchaseConfirmText").textContent = product.id === "vip_monthly"
     ? "Le Pass Supernova est actif dès maintenant : +100% de production, plus aucune pub, tous les skins débloqués, et tes 50 Gems quotidiennes dès demain."
-    : `Achat confirmé (simulation) - ${product.desc || "profite-en !"}`;
+    : `Achat confirmé - ${product.desc || "profite-en !"}`;
   $("purchaseConfirmModal").classList.remove("hidden");
 }
 function closePurchaseConfirmModal() { $("purchaseConfirmModal").classList.add("hidden"); }
