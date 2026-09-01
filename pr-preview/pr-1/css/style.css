@@ -99,6 +99,18 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
   text-transform:uppercase;letter-spacing:.04em;padding-left:2px;}
 .invokeSectionRow{display:flex;gap:6px;}
 .invokeSectionRow .btn{padding:8px 12px;font-size:13px;}
+/* "Échanger deux cases" fab, right next to Invoquer (Loris: c'est un
+   service tres utile, mal mis en avant a 3 taps dans la Boutique - le
+   sortir ici doit a la fois le rendre plus facile a utiliser et donner
+   plus envie de Gems, donc plus envie de regarder les pubs Gems). Same
+   label-then-button shape as .invokeSection, teal accent (matches the
+   Gems currency color) to read as its own distinct action rather than a
+   3rd Invoquer choice. No dedicated artwork yet (🔀 emoji, same fallback
+   every not-yet-illustrated spot uses) - swap for a custom icon later if
+   Loris wants one made. */
+.swapSection{display:flex;flex-direction:column;gap:3px;}
+.swapCellsBtn{background:linear-gradient(135deg,#0891b2,#155e75);border-color:#22d3ee77;
+  box-shadow:0 3px 12px #0891b255;padding:8px 12px;font-size:13px;}
 .btn.bigbang{background:linear-gradient(135deg,#f59e0b,#dc2626);border-color:#fbbf2477;box-shadow:0 4px 16px #f59e0b66;animation:bigBangPulse 1.4s ease-in-out infinite;}
 /* The Big Bang icon's own warm tones (reds/oranges) blend into this
    button's orange-to-red gradient (Loris) - a small dark backdrop behind
@@ -319,12 +331,6 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
   background:radial-gradient(circle at 35% 30%,#3a3170,#211c46 70%);
   border:1px solid rgba(255,255,255,.08);box-shadow:inset 0 1px 2px rgba(255,255,255,.08);}
 .fabIcon img.uiIcon{width:74%;height:74%;object-fit:contain;}
-/* Succès (trophy) read a touch too large next to the other badge icons
-   (Loris) - same per-icon override pattern as tier iconScale, just via a
-   src-attribute selector since these fab/drawer icons aren't driven by a
-   JS-side scale field like TIERS entries are. */
-.fabIcon img.uiIcon[src*="succes.png"],
-.drawerIcon img.uiIcon[src*="succes.png"]{width:64%;height:64%;}
 .fabLabel{white-space:nowrap;}
 /* These two labels alternate between a fixed string ("Boost x2", "+8 Gems")
    and a countdown ("5s" vs "12s" vs "1m 30s") - without a stable width, the
