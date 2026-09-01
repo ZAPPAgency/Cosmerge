@@ -666,7 +666,7 @@ const PANEL_RENDERERS = {
   shop: { title: "Boutique", render: renderShopPanel },
   gods: { title: "Dieux du Cosmos", render: renderGodsPanel },
   skills: { title: `Ascension ${currencyIconHtml("energy")}`, render: renderSkillsPanel },
-  runUpgrades: { title: `Investissement ${currencyIconHtml("stardust")}`, render: renderRunUpgradesPanel },
+  runUpgrades: { title: `Alchimie Stellaire ${currencyIconHtml("stardust")}`, render: renderRunUpgradesPanel },
   quests: { title: "Quêtes quotidiennes", render: renderQuestsPanel },
   achievements: { title: "Succès", render: renderAchievementsPanel },
   progression: { title: "Progression", render: renderProgressionPanel },
@@ -871,7 +871,7 @@ function renderSkillsPanel() {
 function renderRunUpgradesPanel() {
   const state = Game.state;
   dom.panelBody.innerHTML = "";
-  dom.panelBody.appendChild(el("p", "desc", `Investis ton Stardust (${currencyIconHtml("stardust")} ${formatNumber(state.stardust)}) de cette grille dans des bonus qui durent jusqu'au prochain Big Bang.`));
+  dom.panelBody.appendChild(el("p", "desc", `Transmute le Stardust (${currencyIconHtml("stardust")} ${formatNumber(state.stardust)}) de cette grille en bonus qui durent jusqu'au prochain Big Bang.`));
   Object.keys(RUN_UPGRADE_TREE).forEach(key => {
     const branch = RUN_UPGRADE_TREE[key];
     const level = state.runUpgrades[key];
