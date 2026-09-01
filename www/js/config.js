@@ -72,7 +72,33 @@ const TIERS = [
   // Cool dark chosen over warm dark per Loris ("le froid sinon c'est
   // vraiment pas joli").
   { n: 10, name: "Univers", emoji: "✨", icon: "tier-10-univers.png", from: "#1e1a32", to: "#05040a" },
+  // Tiers 11-14 (Loris: "pour allonger le temps de jeu [...] il faudrait
+  // pouvoir continuer [au-delà] que 10" - players hitting Univers had
+  // nowhere left to go but Big Bang, since performMerge/attemptMerge
+  // (economy.js/input.js) both hard-block merging past the last TIERS
+  // entry). No custom art yet - plain emoji for now, same "ships now,
+  // gets real art later" pattern as every other placeholder icon this
+  // session. Names/emoji are a first pass, not final - open to Loris
+  // renaming these to fit the game's own "Rupture" lore better. Colors
+  // keep getting darker/more saturated the same way tiers 6-10 did, so
+  // each new tier's (still emoji, for now) subject keeps popping against
+  // its tile once real art exists.
+  { n: 11, name: "Multivers", emoji: "🌀", from: "#2e1065", to: "#0a0118" },
+  { n: 12, name: "Singularité", emoji: "⚛️", from: "#4c0519", to: "#0a0005" },
+  { n: 13, name: "Infini", emoji: "♾️", from: "#052e2b", to: "#000a08" },
+  { n: 14, name: "Genèse", emoji: "🌟", from: "#1a1a2e", to: "#000000" },
 ];
+// Big Bang eligibility used to just be "reached the last TIERS entry"
+// (t.tier === TIERS.length, economy.js hasUniverseTile) - broke the moment
+// TIERS grew past Univers (tier 10), since merging two Univers tiles into a
+// Multivers would remove every tier-10 tile from the grid and silently
+// revoke Big Bang eligibility the player had already earned. Fixed
+// reference point instead: reaching Univers OR anything higher keeps Big
+// Bang available forever after, however far past it the run goes. Also
+// used by gods.js (Morgorath challenge - "reach Univers" specifically, not
+// whatever the new ceiling is) and the Progression roadmap's "Atteindre
+// l'Univers" step (ui.js).
+const UNIVERSE_TIER = 10;
 
 const INITIAL_UNLOCKED = [7, 8, 9, 10, 11, 13, 14, 15, 16, 17];
 
@@ -432,6 +458,13 @@ const ACHIEVEMENTS = [
   { id: "tier_8", cat: "maxTier", target: 8, name: "Horizon des événements", reward: 40 },
   { id: "tier_9", cat: "maxTier", target: 9, name: "Voie lactée", reward: 70 },
   { id: "tier_10", cat: "maxTier", target: 10, name: "Créateur d'univers", reward: 120 },
+  // Tiers 11-14 (Loris: allonger le temps de jeu après Univers - voir
+  // TIERS/UNIVERSE_TIER, config.js) - fresh goals to chase once the grid
+  // used to be a dead end at tier 10.
+  { id: "tier_11", cat: "maxTier", target: 11, name: "Au-delà de l'Univers", reward: 160 },
+  { id: "tier_12", cat: "maxTier", target: 12, name: "Point de singularité", reward: 220 },
+  { id: "tier_13", cat: "maxTier", target: 13, name: "Sans limites", reward: 300 },
+  { id: "tier_14", cat: "maxTier", target: 14, name: "Créateur de tout", reward: 400 },
   { id: "bigbang_1", cat: "bigBangs", target: 1, name: "Premier Big Bang", reward: 30 },
   { id: "bigbang_5", cat: "bigBangs", target: 5, name: "Cycle cosmique", reward: 80 },
   { id: "bigbang_20", cat: "bigBangs", target: 20, name: "Éternel recommencement", reward: 200 },

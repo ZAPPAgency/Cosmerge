@@ -105,8 +105,11 @@ function onFusionForGods(state, newTier) {
   }
 
   // Morgorath challenge: reach the Universe tier without ever using a
-  // grid-shortcut shop item (Sauter une case / Échanger deux cases) this run.
-  if (newTier === TIERS.length && !state.gods.usedShortcutThisRun) {
+  // grid-shortcut shop item (Sauter une case / Échanger deux cases) this
+  // run. Fixed at UNIVERSE_TIER (config.js) - this is specifically about
+  // reaching Univers, not whatever the current top tier happens to be now
+  // that TIERS extends past it.
+  if (newTier === UNIVERSE_TIER && !state.gods.usedShortcutThisRun) {
     state.gods.morgorathChallengeCleared = true;
   }
 

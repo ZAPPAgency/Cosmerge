@@ -1191,7 +1191,10 @@ function renderProgressionPanel() {
   steps.push(godStep("helios"));
   steps.push(godStep("nyx"));
   steps.push(godStep("erebus"));
-  steps.push({ emoji: tierInlineIconHtml(TIERS.length), done: state.lifetime.maxTierEver >= TIERS.length, text: "Atteindre l'Univers" });
+  // Fixed at UNIVERSE_TIER (config.js), not TIERS.length - this step is
+  // specifically "reach Univers", which no longer means "reach the last
+  // tier" now that TIERS extends past it.
+  steps.push({ emoji: tierInlineIconHtml(UNIVERSE_TIER), done: state.lifetime.maxTierEver >= UNIVERSE_TIER, text: "Atteindre l'Univers" });
   steps.push({ emoji: roadIcon("bigbang.png"), done: state.lifetime.bigBangCount >= 1, text: "Premier Big Bang" });
   steps.push(godStep("thanatos"));
   steps.push(godStep("chronos"));
