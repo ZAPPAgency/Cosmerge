@@ -560,6 +560,9 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .cosmicBoxAnim{font-size:52px;line-height:1;margin:10px auto 16px;width:88px;height:88px;
   display:flex;align-items:center;justify-content:center;border-radius:20px;
   background:radial-gradient(circle at 35% 30%, #2a2450, #14102a);border:2px solid #3a3070;}
+/* God portrait (godPortraitHtml, ui.js) filling the reveal badge - was a
+   plain emoji glyph sized via the badge's own font-size. */
+.cosmicBoxPortrait{width:76px;height:76px;object-fit:contain;}
 .cosmicBoxAnim.spinning{animation:cosmicBoxSpin .6s ease-in-out infinite;}
 @keyframes cosmicBoxSpin{0%,100%{transform:scale(1) rotate(0deg);}50%{transform:scale(1.12) rotate(8deg);}}
 .cosmicBoxAnim.revealed{border-color:var(--rarity-color, var(--accent2));
@@ -628,6 +631,11 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 /* Tier artwork mentioned inline in text (the tutorial, stat lines...) -
    see tierInlineIconHtml() in ui.js. */
 .inlineTierIcon{width:18px;height:18px;object-fit:contain;vertical-align:-4px;margin:0 1px;}
+/* God portrait mentioned inline next to its name (Histoire panel's "Ton
+   Dieu du moment" card title) - see godPortraitHtml() in ui.js. Round,
+   unlike the tier art above, since these are face portraits. */
+.godInlineIcon{width:24px;height:24px;object-fit:contain;object-position:top;border-radius:50%;
+  vertical-align:-6px;margin:0 1px;}
 /* Gems/Cosmic Energy currency glyph (currencyIconHtml, ui.js) - reuses the
    gems_ad.png/ascension.png fab artwork as a small inline symbol wherever
    those currencies are shown in text (header pills, shop prices, skill
@@ -736,6 +744,10 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .godTile.locked{opacity:.5;border-color:#2a2450;}
 .godTile.equipped{box-shadow:0 0 0 1px var(--accent2) inset, 0 0 14px #22d3ee44;}
 .godTileEmoji{font-size:30px;line-height:1;}
+/* Custom god portrait (godPortraitHtml, ui.js) filling the same spot a
+   30px emoji glyph used to occupy - given real character art now, this
+   gets to be noticeably bigger without unbalancing the tile. */
+.godTilePortrait{width:54px;height:54px;object-fit:contain;}
 .godTileName{font-size:11px;font-weight:700;text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
 .godTileTitle{font-size:9px;color:var(--text-dim);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
 .godTileBadge{position:absolute;top:4px;right:4px;font-size:11px;background:#0d2a30;color:var(--accent2);
@@ -745,6 +757,12 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .godTop{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
 .godEmoji{width:42px;height:42px;border-radius:12px;background:#1a1640;display:flex;align-items:center;
   justify-content:center;font-size:22px;flex-shrink:0;border:1px solid #2a2450;}
+/* The detail modal is the closest thing to a "profile view" a god gets -
+   worth showing its portrait much bigger than the 42px generic badge
+   above (was a 52x52 inline-style override before real portraits
+   existed). */
+.godDetailEmoji{width:96px;height:96px;border-radius:18px;font-size:44px;}
+.godDetailPortrait{width:88px;height:88px;object-fit:contain;}
 .godNames{flex:1;min-width:0;}
 .godName{font-size:15px;font-weight:800;}
 .godTitle{font-size:11px;color:var(--text-dim);}
@@ -773,6 +791,7 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .godRitualCard.bienveillant{border-color:#93c5fd88;box-shadow:0 0 14px #93c5fd22;}
 .godRitualCard.dechu{border-color:#fca5a588;box-shadow:0 0 14px #fca5a522;}
 .godRitualCard .godEmoji{width:44px;height:44px;font-size:24px;margin-bottom:2px;}
+.godRitualPortrait{width:44px;height:44px;object-fit:contain;}
 .godRitualCard .godName{font-size:14px;font-weight:800;}
 .godRitualCard .godTitle{font-size:10.5px;color:var(--text-dim);}
 .godRitualCard .godDesc{font-size:11px;color:#c9c3f0;margin:4px 0 0;line-height:1.35;}
