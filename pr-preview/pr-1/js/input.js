@@ -885,6 +885,11 @@ function wireEvents() {
   dom.panelClose.addEventListener("click", closePanel);
 
   $("fabShop").addEventListener("click", () => openPanel("shop"));
+  // Loris: le panneau Investissement (RUN_UPGRADE_TREE) doit être accessible
+  // directement depuis l'écran de jeu, pas seulement enfoui dans le menu ☰ -
+  // fab toujours visible, comme Boutique, plutôt que conditionnel comme
+  // Cadeau/Roue.
+  $("fabRunUpgrades").addEventListener("click", () => openPanel("runUpgrades"));
   dom.fabDailyLogin.addEventListener("click", openDailyModal);
   dom.fabWheel.addEventListener("click", openWheelModal);
   $("fabBoost").addEventListener("click", onWatchProdBoostAd);
