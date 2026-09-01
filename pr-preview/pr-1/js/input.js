@@ -214,7 +214,11 @@ const MERGE_STREAK_WINDOW_MS = 900;
 function attemptMerge(fromIdx, toIdx) {
   const state = Game.state;
   const before = state.grid[fromIdx];
-  if (before && before.tier >= TIERS.length) { Sfx.error(); toast("L'Univers ne peut pas fusionner davantage."); return; }
+  // Generic tier name instead of a hardcoded "L'Univers" - Univers (tier
+  // 10) is no longer the actual ceiling now that TIERS extends past it
+  // (UNIVERSE_TIER, config.js) - this guard only fires on the TRUE top
+  // tier now (currently Genèse).
+  if (before && before.tier >= TIERS.length) { Sfx.error(); toast(`${tierName(before.tier)} ne peut pas fusionner davantage.`); return; }
   const result = performMerge(state, fromIdx, toIdx);
   if (!result) return;
   const now = performance.now();
@@ -230,7 +234,12 @@ function attemptMerge(fromIdx, toIdx) {
     renderCell(toIdx, { merged: true });
     HapticService.impact(result.newTier >= 8 ? "heavy" : "medium");
     if (result.gemBonus) toast("+1 💎 Gem bonus !");
-    if (result.newTier === TIERS.length) toast("Univers créé ! 💥");
+    // "Univers créé" stays tied to UNIVERSE_TIER specifically (config.js) -
+    // that's still the real Big-Bang-eligibility milestone, whether or not
+    // the run pushes further. The true new ceiling (TIERS.length) gets its
+    // own separate milestone toast instead of silently losing its moment.
+    if (result.newTier === UNIVERSE_TIER) toast("Univers créé ! 💥");
+    else if (result.newTier === TIERS.length) toast(`${tierName(result.newTier)} atteint(e) - le sommet de la Création ! 🌟`);
     else toast(tierName(result.newTier) + " " + tierEmoji(result.newTier) + " !");
     maybeOpenGodRitual();
   }, Game.mergeStreak, result.newTier);

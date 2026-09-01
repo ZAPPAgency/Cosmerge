@@ -1,8 +1,15 @@
 // Godspark - prestige (Big Bang), permanent skill tree, shop logic
 "use strict";
 
+// Was `t.tier === TIERS.length` - broke the moment TIERS grew past Univers
+// (tier 10, UNIVERSE_TIER in config.js): merging two Univers tiles into a
+// Multivers removes every tier-10 tile from the grid, which would silently
+// revoke Big Bang eligibility a player had already earned. UNIVERSE_TIER is
+// a fixed reference instead of "whatever the current ceiling is" - reaching
+// Univers or anything higher keeps Big Bang available for the rest of the
+// run, however far past it the player pushes.
 function hasUniverseTile(state) {
-  return state.grid.some(t => t && t.tier === TIERS.length);
+  return state.grid.some(t => t && t.tier >= UNIVERSE_TIER);
 }
 // "Surcharge du Big Bang" run upgrade (RUN_UPGRADE_TREE, config.js) applies
 // here rather than inside the pure bigBangGain() formula (config.js) so
