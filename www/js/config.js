@@ -168,14 +168,22 @@ function skillCost(branchKey, nextLevel) {
 // levels costs roughly 2-2.5x the same-numbered Catalyseur level, even
 // though Catalyseur's own total is larger overall (15 levels vs 8). Total
 // to max all 4 branches is now ~4.7M (was ~1.1M, was ~20K before that).
+// `first` (Loris: "diminuer le prix d'améliorations de l'alchimie pour le
+// premier niveau histoire que au moins le premier niveau soit facilement
+// accessible mais pas après") - a deliberately discounted level-1 price,
+// separate from base/growth so levels 2+ keep exactly the same steep curve
+// already tuned above (base itself still IS the level-2 cost, growth^1) -
+// only the very first purchase is cheap, everything after jumps straight
+// back onto the normal curve.
 const RUN_UPGRADE_TREE = {
-  catalyst: { name: "Catalyseur Stellaire", desc: "+4% production de Stardust de chaque case / niveau", maxLevel: 15, base: 3000, growth: 1.5 },
-  resonance: { name: "Résonance des Cases", desc: "+3% de chance de débloquer une case supplémentaire gratuite à chaque déblocage / niveau", maxLevel: 10, base: 5000, growth: 1.5 },
-  surge: { name: "Surcharge du Big Bang", desc: "+5% d'Énergie Cosmique gagnée au prochain Big Bang / niveau", maxLevel: 10, base: 8000, growth: 1.55 },
-  cadence: { name: "Cadence Stellaire", desc: "-4% cooldown de spawn auto / niveau (plancher 3s, cumulable avec Gravité Rapide)", maxLevel: 8, base: 6000, growth: 1.55 },
+  catalyst: { name: "Catalyseur Stellaire", desc: "+4% production de Stardust de chaque case / niveau", maxLevel: 15, base: 3000, growth: 1.5, first: 300 },
+  resonance: { name: "Résonance des Cases", desc: "+3% de chance de débloquer une case supplémentaire gratuite à chaque déblocage / niveau", maxLevel: 10, base: 5000, growth: 1.5, first: 500 },
+  surge: { name: "Surcharge du Big Bang", desc: "+5% d'Énergie Cosmique gagnée au prochain Big Bang / niveau", maxLevel: 10, base: 8000, growth: 1.55, first: 800 },
+  cadence: { name: "Cadence Stellaire", desc: "-4% cooldown de spawn auto / niveau (plancher 3s, cumulable avec Gravité Rapide)", maxLevel: 8, base: 6000, growth: 1.55, first: 600 },
 };
 function runUpgradeCost(branchKey, nextLevel) {
   const b = RUN_UPGRADE_TREE[branchKey];
+  if (nextLevel === 1) return b.first;
   return Math.ceil(b.base * Math.pow(b.growth, nextLevel - 1));
 }
 
