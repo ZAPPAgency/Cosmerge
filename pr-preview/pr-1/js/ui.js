@@ -555,21 +555,6 @@ function spawnImpactDebris(idx, streak, power) {
   }
 }
 
-function spawnParticles(idx) {
-  const cell = cellEls[idx];
-  for (let k = 0; k < 7; k++) {
-    const p = document.createElement("div");
-    p.className = "particle";
-    const angle = Math.random() * Math.PI * 2;
-    const dist = 20 + Math.random() * 18;
-    p.style.setProperty("--dx", (Math.cos(angle) * dist) + "px");
-    p.style.setProperty("--dy", (Math.sin(angle) * dist) + "px");
-    p.style.left = "50%"; p.style.top = "50%";
-    cell.appendChild(p);
-    setTimeout(() => p.remove(), 520);
-  }
-}
-
 function spawnFloatingBonus(idx, amount) {
   const cell = cellEls[idx];
   const el = document.createElement("div");
