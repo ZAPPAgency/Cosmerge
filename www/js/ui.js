@@ -984,7 +984,7 @@ function renderProgressionPanel() {
   steps.push({ emoji: tierInlineIconHtml(TIERS.length), done: state.lifetime.maxTierEver >= TIERS.length, text: "Atteindre l'Univers" });
   steps.push({ emoji: roadIcon("bigbang.png"), done: state.lifetime.bigBangCount >= 1, text: "Premier Big Bang" });
   steps.push({ ...godStep("thanatos"), emoji: roadIcon("mort.png") });
-  steps.push(godStep("chronos"));
+  steps.push({ ...godStep("chronos"), emoji: roadIcon("sablier.png") });
   steps.push({ emoji: roadIcon("succes.png"), done: state.achievements.unlockedIds.length >= ACHIEVEMENTS.length,
     text: "Tous les succès", sub: `${state.achievements.unlockedIds.length}/${ACHIEVEMENTS.length}` });
 
