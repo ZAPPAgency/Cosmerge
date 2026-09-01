@@ -189,6 +189,15 @@ const Sfx = {
   // in input.js, which calls this repeatedly at a decelerating rate for the
   // whole spin - previously the wheel spun in total silence.
   wheelTick() { beep(880 + Math.random() * 220, 0.035, "square", 0.045); },
+  // A proper little win fanfare for landing on a wheel prize (Loris found
+  // reusing Sfx.chest() - the same sound as the daily-login chest - too
+  // easy to miss/not register as "the wheel specifically paid out"). A
+  // brighter, longer ascending run than chest()'s plain 3-note triad, with
+  // a quick high sparkle flourish tacked on at the end.
+  wheelWin() {
+    chime([523.25, 659.25, 783.99, 1046.5], 65, "triangle", 0.075);
+    setTimeout(() => chime([1318.5, 1568], 45, "sine", 0.05), 260);
+  },
   quest() { chime([660, 880], 90, "sine", 0.06); },
 };
 

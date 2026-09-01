@@ -538,7 +538,7 @@ function onWheelSpinFree() {
   spinVisual(() => {
     const prize = spinWheel(Game.state, false);
     $("wheelResult").innerHTML = prize ? `Gagné : ${withCurrencyIcons(prize.label)}` : "Déjà utilisé aujourd'hui.";
-    Sfx.chest();
+    Sfx.wheelWin();
     refreshWheelButtons();
     updateHeader(); updateFabs();
     saveState(Game.state);
@@ -551,7 +551,7 @@ async function onWheelSpinAd() {
   spinVisual(() => {
     const prize = spinWheel(Game.state, true);
     $("wheelResult").innerHTML = prize ? `Gagné : ${withCurrencyIcons(prize.label)}` : "Déjà utilisé aujourd'hui.";
-    Sfx.chest();
+    Sfx.wheelWin();
     refreshWheelButtons();
     updateHeader(); updateFabs();
     saveState(Game.state);

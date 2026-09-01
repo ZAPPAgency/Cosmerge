@@ -212,8 +212,17 @@ function renderCell(i, opts) {
 function renderIconStyleToggle(onChange) {
   const state = Game.state;
   const wrap = el("div", "iconStyleToggle");
-  const emojiBtn = el("button", "btn" + (state.iconStyle === "emoji" ? " primary" : " ghost"), "😀 Emoji");
-  const artBtn = el("button", "btn" + (state.iconStyle !== "emoji" ? " primary" : " ghost"), "🎨 Illustré");
+  // Each button shows Météorite (tier 1) rendered in the style it picks -
+  // the plain emoji glyph vs its actual artwork - so the toggle
+  // illustrates its own two options directly, instead of generic
+  // unrelated icons (Loris). Uses TIERS[0] directly rather than the
+  // currently-equipped set, since this is demonstrating the STYLE choice
+  // itself, not any particular category.
+  const meteorite = TIERS[0];
+  const emojiBtn = el("button", "btn" + (state.iconStyle === "emoji" ? " primary" : " ghost"),
+    `<span class="emoji">${meteorite.emoji}</span> Emoji`);
+  const artBtn = el("button", "btn" + (state.iconStyle !== "emoji" ? " primary" : " ghost"),
+    `<img class="inlineCurrencyIcon" src="assets/tiles/${meteorite.icon}" alt=""> Illustré`);
   emojiBtn.addEventListener("click", () => { onSetIconStyle("emoji"); onChange(); });
   artBtn.addEventListener("click", () => { onSetIconStyle("illustrated"); onChange(); });
   wrap.appendChild(emojiBtn);
@@ -1421,6 +1430,42 @@ function buildStars() {
     bg.appendChild(s);
   }
   scheduleShootingStars();
+  buildWheelSegments();
+}
+
+// Loris: the wheel had zero information on it - 7 flat conic-gradient
+// slices with no labels at all, just color. Also, while at it: those 7
+// slices' angles (51/103/154/206/257/283/360deg boundaries, hand-picked
+// in the CSS) didn't actually match WHEEL_PRIZES' real weights (30/20/
+// 20/10/10/5/5) - a 5-weight prize had the same visual slice size as a
+// 20-weight one. Both are fixed here together: the conic-gradient is now
+// computed from the real weights (so slice size = real odds), and each
+// slice gets an upright label (via withCurrencyIcons so it picks up the
+// custom currency icons) positioned at its middle angle. Static content -
+// built once at boot, not on every modal open.
+function buildWheelSegments() {
+  const wheelEl = $("wheelEl");
+  wheelEl.innerHTML = "";
+  const total = WHEEL_PRIZES.reduce((s, p) => s + p.weight, 0);
+  const colors = ["#3730a3", "#7c3aed", "#2563eb", "#0891b2", "#be185d", "#f59e0b", "#dc2626"];
+  const R = 62; // label radius (px) - wheel is 180px wide, keeps labels well inside the border
+  let acc = 0;
+  const stops = [];
+  WHEEL_PRIZES.forEach((p, i) => {
+    const startDeg = (acc / total) * 360;
+    acc += p.weight;
+    const endDeg = (acc / total) * 360;
+    stops.push(`${colors[i % colors.length]} ${startDeg}deg ${endDeg}deg`);
+    const midDeg = (startDeg + endDeg) / 2;
+    const rad = (midDeg - 90) * Math.PI / 180; // conic-gradient's 0deg is 12 o'clock, clockwise - align label math the same way
+    const x = R * Math.cos(rad);
+    const y = R * Math.sin(rad);
+    const label = el("div", "wheelSegLabel", withCurrencyIcons(p.label));
+    label.style.left = `calc(50% + ${x.toFixed(1)}px)`;
+    label.style.top = `calc(50% + ${y.toFixed(1)}px)`;
+    wheelEl.appendChild(label);
+  });
+  wheelEl.style.background = `conic-gradient(from 0deg, ${stops.join(", ")})`;
 }
 
 // Occasional shooting star crossing the background, behind the grid
