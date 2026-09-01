@@ -68,6 +68,20 @@ function tierInlineIconHtml(tier) {
     : t.emoji;
 }
 
+// Same "custom art with an emoji fallback" pattern as tierInlineIconHtml()
+// above, for the 13 GODS portraits (assets/gods/, Midjourney). `cls` picks
+// the sizing rule from style.css - every god-emoji spot in the UI (Gods
+// panel grid, detail modal, ritual picker, Histoire god-lore card, Cosmic
+// Box reveal) has its own size, so this doesn't hardcode one. `locked`
+// (default false) keeps the existing "❓, don't spoil the portrait" behavior
+// for a not-yet-unlocked god instead of showing its art.
+function godPortraitHtml(god, cls, locked) {
+  if (locked) return "❓";
+  return god.icon
+    ? `<img class="${cls}" src="assets/gods/${god.icon}" alt="${god.name}">`
+    : god.emoji;
+}
+
 // Same idea for the Gems/Cosmic Energy currency glyphs (Loris: the fab
 // icon batch replaced 💎/⚡ on the "Pub contre Gems"/"Ascension" buttons
 // themselves, but every OTHER place those currencies are shown - header
@@ -359,19 +373,20 @@ function updateFabs() {
   const god = state.gods.currentGodId ? getGod(state.gods.currentGodId) : null;
   $("fabCurrentGod").classList.toggle("hidden", !god);
   if (god) {
-    // Bug (Loris: "l'icone qui ressort... c'est l'emoji iOS, alors que ca
-    // devrait etre l'illustration") - this used to be `.textContent =
-    // god.emoji`, which (1) wiped out the <img class="uiIcon"
-    // src="assets/ui/dieux.png"> baked into index.html on every single
-    // updateFabs() call, replacing it with the equipped god's own plain
-    // iOS emoji glyph (e.g. Sélena -> 🌙), and (2) even if it hadn't, no
-    // per-god portrait artwork exists yet (GODS entries have no `icon`
-    // field - see the Fruits/Légumes/god-portraits backlog) so there'd be
-    // nothing to show but that same emoji anyway. Leaving fabGodEmoji's
-    // content untouched keeps the shared "Dieux du Cosmos" trident artwork
-    // showing for every god - same fallback tierIconNode() uses elsewhere
-    // for anything without its own custom art yet. Revisit once individual
-    // god portraits exist.
+    // Bug fix, then revisited once portraits shipped (Loris: "l'icone qui
+    // ressort... c'est l'emoji iOS, alors que ca devrait etre
+    // l'illustration"). Was `.textContent = god.emoji`, which wiped out
+    // the <img> baked into index.html on every single updateFabs() call.
+    // Fixed first by leaving the shared "Dieux du Cosmos" trident showing
+    // for every god (no per-god art existed yet then); now that GODS
+    // entries have their own `icon` (assets/gods/, see godPortraitHtml()),
+    // this shows the actually-equipped god's real portrait instead -
+    // only touches the DOM when the equipped god changed, since
+    // updateFabs() runs on every merge/tick.
+    if (lastHeaderRender.fabGodId !== god.id) {
+      $("fabGodEmoji").innerHTML = godPortraitHtml(god, "uiIcon");
+      lastHeaderRender.fabGodId = god.id;
+    }
     $("fabGodName").textContent = god.name;
   }
 }
@@ -938,7 +953,7 @@ function renderStoryPanel() {
     const god = getGod(state.gods.currentGodId);
     dom.panelBody.appendChild(el("h3", null, "Ton Dieu du moment"));
     const godCard = el("div", "card storyCard");
-    godCard.innerHTML = `<h3>${god.emoji} ${god.name}, ${god.title}</h3>
+    godCard.innerHTML = `<h3>${godPortraitHtml(god, "godInlineIcon")} ${god.name}, ${god.title}</h3>
       <p class="desc">${god.lore}</p>`;
     dom.panelBody.appendChild(godCard);
   }
@@ -975,7 +990,7 @@ function renderGodsPanel() {
     tile.style.setProperty("--rarity-color", rarity.color);
     tile.innerHTML = `
       ${equipped ? '<span class="godTileBadge">✓</span>' : (queued ? '<span class="godTileBadge queued">⏳</span>' : "")}
-      <div class="godTileEmoji">${unlocked ? god.emoji : "❓"}</div>
+      <div class="godTileEmoji">${godPortraitHtml(god, "godTilePortrait", !unlocked)}</div>
       <div class="godTileName">${unlocked ? god.name : "???"}</div>
       <div class="godTileTitle">${unlocked ? god.title : rarity.label}</div>`;
     tile.addEventListener("click", () => openGodDetailModal(god.id));
@@ -1060,7 +1075,7 @@ function openGodPickerModal() {
   const available = GODS.filter(g => isGodUnlocked(state, g.id));
   available.forEach(god => {
     const card = el("button", "godRitualCard " + god.alignment);
-    card.innerHTML = `<div class="godEmoji">${god.emoji}</div>
+    card.innerHTML = `<div class="godEmoji">${godPortraitHtml(god, "godRitualPortrait")}</div>
       <div class="godName">${god.name}</div>
       <div class="godTitle">${god.title}</div>
       <p class="godDesc">${god.desc}</p>`;
@@ -1088,7 +1103,7 @@ function openGodDetailModal(godId) {
   const card = $("godDetailCard");
   card.innerHTML = `
     <div class="godTop">
-      <div class="godEmoji" style="width:52px;height:52px;font-size:26px;">${unlocked ? god.emoji : "❓"}</div>
+      <div class="godEmoji godDetailEmoji">${godPortraitHtml(god, "godDetailPortrait", !unlocked)}</div>
       <div class="godNames">
         <div class="godName" style="font-size:18px;">${unlocked ? god.name : "???"}</div>
         <div class="godTitle">${unlocked ? god.title : "Non éveillé"}</div>
@@ -1369,7 +1384,7 @@ function openCosmicBoxRevealModal(box) {
     const rarity = RARITY[box.god.rarity];
     anim.className = "cosmicBoxAnim revealed";
     anim.style.setProperty("--rarity-color", rarity.color);
-    anim.textContent = box.god.emoji;
+    anim.innerHTML = godPortraitHtml(box.god, "cosmicBoxPortrait");
     if (box.duplicate) {
       $("cosmicBoxTitle").textContent = `${box.god.name} (déjà possédé)`;
       $("cosmicBoxText").innerHTML = `Doublon converti en +${box.gems} ${currencyIconHtml("gems")}`;

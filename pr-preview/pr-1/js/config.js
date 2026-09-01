@@ -125,9 +125,15 @@ const RARITY = {
   legendaire: { label: "Légendaire", color: "#fbbf24" },
 };
 
+// `icon` (all 13, this whole array): custom AI-generated portrait
+// (Midjourney, background removed), assets/gods/<icon>. Same "falls back
+// to the plain emoji while locked" pattern as tierIconNode() - see
+// godPortraitHtml() in ui.js, the single helper every god-emoji spot in
+// the UI (Gods panel grid, detail modal, ritual picker, Histoire, Cosmic
+// Box reveal) now goes through.
 const GODS = [
   {
-    id: "selena", name: "Séléna", title: "Déesse des Lunes", emoji: "🌙",
+    id: "selena", name: "Séléna", title: "Déesse des Lunes", emoji: "🌙", icon: "selena.png",
     rarity: "commun", alignment: "bienveillant",
     desc: "+15% production des Lunes et Planètes naines",
     effects: { tierProdBonus: { minTier: 2, maxTier: 3, mult: 1.15 } }, // used in state.js effectiveTileProd/totalProduction
@@ -145,7 +151,7 @@ const GODS = [
   // instead. See onFusionForGods() (gods.js) for the ritual granting both at
   // once, and openGodPickerModal() (ui.js) for the side-by-side picker.
   {
-    id: "zephar", name: "Zéphar", title: "Seigneur des Lunes Brisées", emoji: "🌘",
+    id: "zephar", name: "Zéphar", title: "Seigneur des Lunes Brisées", emoji: "🌘", icon: "zephar.png",
     rarity: "commun", alignment: "dechu",
     desc: "+15% chance de Gem bonus par fusion, mais -8% production des Lunes et Planètes naines",
     effects: { gemChanceBonus: 0.15, tierProdBonus: { minTier: 2, maxTier: 3, mult: 0.92 } },
@@ -153,7 +159,7 @@ const GODS = [
     lore: "Zéphar n'a jamais pardonné à la Lune d'avoir survécu presque intacte quand tout le reste s'est brisé. Il rôde parmi les fragments et offre, à qui l'écoute, la richesse cachée dans chaque éclat - contre un peu de la lumière qu'ils portaient encore.",
   },
   {
-    id: "astreos", name: "Astréos", title: "Gardien des Astéroïdes", emoji: "☄️",
+    id: "astreos", name: "Astréos", title: "Gardien des Astéroïdes", emoji: "☄️", icon: "astreos.png",
     rarity: "commun", alignment: "bienveillant",
     desc: "Spawn automatique 10% plus rapide",
     effects: { spawnSpeedMult: 0.9 }, // used in state.js autoSpawnIntervalMs
@@ -161,7 +167,7 @@ const GODS = [
     lore: "Il fut le premier corps à se briser lors de la Rupture. Depuis, il pousse inlassablement la poussière vers la lumière, pour que jamais une case ne reste vide trop longtemps.",
   },
   {
-    id: "nyx", name: "Nyx", title: "Dame du Vide", emoji: "🌌",
+    id: "nyx", name: "Nyx", title: "Dame du Vide", emoji: "🌌", icon: "nyx.png",
     rarity: "rare", alignment: "bienveillant",
     desc: "+1 case de départ supplémentaire",
     effects: { extraStartCells: 1 }, // used in state.js freshGrid
@@ -169,7 +175,7 @@ const GODS = [
     lore: "Nyx n'a jamais choisi de camp - elle est l'espace lui-même, celui qui reste à conquérir. Ceux qui apprennent à l'apprivoiser trouvent toujours un peu plus de place qu'annoncé.",
   },
   {
-    id: "helios", name: "Hélios", title: "Cœur Ardent", emoji: "☀️",
+    id: "helios", name: "Hélios", title: "Cœur Ardent", emoji: "☀️", icon: "helios.png",
     rarity: "rare", alignment: "bienveillant",
     desc: "+20% production des Étoiles et Étoiles à neutrons",
     effects: { tierProdBonus: { minTier: 6, maxTier: 7, mult: 1.2 } },
@@ -177,7 +183,7 @@ const GODS = [
     lore: "Quand la fusion atteint l'incandescence, Hélios se réveille. Il ne connaît qu'une loi : brûler plus fort, encore, jusqu'à ce que le froid du vide n'ait plus aucune prise.",
   },
   {
-    id: "chronos", name: "Chronos", title: "Maître du Temps", emoji: "⏳",
+    id: "chronos", name: "Chronos", title: "Maître du Temps", emoji: "⏳", icon: "chronos.png",
     rarity: "rare", alignment: "bienveillant",
     desc: "+4h de plafond de gains hors-ligne",
     effects: { offlineCapBonusH: 4 }, // used in state.js offlineCapHours
@@ -185,7 +191,7 @@ const GODS = [
     lore: "Chronos a vu trois univers se replier sur eux-mêmes et renaître. Il ne juge plus le temps qui passe - il apprend simplement à en garder un peu plus de côté pour toi.",
   },
   {
-    id: "erebus", name: "Erebus", title: "Seigneur du Chaos", emoji: "🌑",
+    id: "erebus", name: "Erebus", title: "Seigneur du Chaos", emoji: "🌑", icon: "erebus.png",
     rarity: "epique", alignment: "dechu",
     desc: "+25% Gems gagnées, mais -10% production globale",
     effects: { gemsMult: 1.25, prodMult: 0.9 },
@@ -197,7 +203,7 @@ const GODS = [
     lore: "Erebus fut banni pour avoir préféré le désordre fécond à l'ordre stérile. Le servir a un prix - moins de matière produite - mais il paie grassement en poussière précieuse ceux qui l'acceptent.",
   },
   {
-    id: "thanatos", name: "Thanatos", title: "l'Inévitable", emoji: "💀",
+    id: "thanatos", name: "Thanatos", title: "l'Inévitable", emoji: "💀", icon: "thanatos.png",
     rarity: "epique", alignment: "dechu",
     desc: "Le prochain Big Bang garantit au moins 5 ⚡ Énergie Cosmique",
     effects: { bigBangMinEnergy: 5 }, // used in economy.js performBigBang
@@ -209,7 +215,7 @@ const GODS = [
     lore: "Thanatos n'attend jamais que tout soit fini pour mettre un terme aux choses. Il enseigne qu'un cycle interrompu à temps vaut parfois mieux qu'un cycle mené jusqu'à l'épuisement.",
   },
   {
-    id: "gaia", name: "Gaïa Suprême", title: "Créatrice", emoji: "🌍",
+    id: "gaia", name: "Gaïa Suprême", title: "Créatrice", emoji: "🌍", icon: "gaia.png",
     rarity: "legendaire", alignment: "bienveillant",
     desc: "+10% à toute la production, +5% chance de Gem bonus par fusion",
     effects: { prodMult: 1.1, gemChanceBonus: 0.05 },
@@ -217,7 +223,7 @@ const GODS = [
     lore: "Avant la Rupture, Gaïa était le Cosmos tout entier. Ce qu'elle t'offre n'est qu'un souvenir de cette unité - mais même un souvenir de la Création reste un cadeau immense.",
   },
   {
-    id: "morgorath", name: "Morgorath", title: "Dévoreur d'Étoiles", emoji: "🕳️",
+    id: "morgorath", name: "Morgorath", title: "Dévoreur d'Étoiles", emoji: "🕳️", icon: "morgorath.png",
     rarity: "legendaire", alignment: "dechu",
     desc: "+40% production des Trous noirs, Galaxies et Univers",
     effects: { tierProdBonus: { minTier: 8, maxTier: 10, mult: 1.4 } },
@@ -233,7 +239,7 @@ const GODS = [
   // deliberately non-commun, per design intent: the Cosmic Box should feel
   // worth opening even for a player who's already awakened every story god.
   {
-    id: "iris", name: "Iris", title: "Messagère des Fragments", emoji: "🌈",
+    id: "iris", name: "Iris", title: "Messagère des Fragments", emoji: "🌈", icon: "iris.png",
     rarity: "rare", alignment: "bienveillant",
     desc: "+18% production des Planètes et Géantes gazeuses",
     effects: { tierProdBonus: { minTier: 4, maxTier: 5, mult: 1.18 } },
@@ -241,7 +247,7 @@ const GODS = [
     lore: "Iris ne s'éveille jamais d'elle-même - elle apparaît, ou elle n'apparaît pas, au hasard d'une Boîte Cosmique ouverte. Elle porte les messages qu'aucun autre Dieu endormi ne peut plus entendre.",
   },
   {
-    id: "eris", name: "Éris", title: "Semeuse de Discorde", emoji: "🔮",
+    id: "eris", name: "Éris", title: "Semeuse de Discorde", emoji: "🔮", icon: "eris.png",
     rarity: "epique", alignment: "dechu",
     desc: "+8% chance de Gem bonus par fusion, mais -7% production globale",
     effects: { gemChanceBonus: 0.08, prodMult: 0.93 },
@@ -249,7 +255,7 @@ const GODS = [
     lore: "Éris trouve la Rupture magnifique - un chaos si parfait qu'elle refuse d'y voir un accident. Ceux qui l'invoquent gagnent en fortune ce qu'ils perdent en constance.",
   },
   {
-    id: "nemesis", name: "Némésis", title: "la Justicière Cosmique", emoji: "⚖️",
+    id: "nemesis", name: "Némésis", title: "la Justicière Cosmique", emoji: "⚖️", icon: "nemesis.png",
     rarity: "legendaire", alignment: "dechu",
     desc: "+12% production globale et +12% Gems gagnées",
     effects: { prodMult: 1.12, gemsMult: 1.12 },
