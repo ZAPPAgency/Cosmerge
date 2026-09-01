@@ -105,9 +105,10 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
    plus envie de Gems, donc plus envie de regarder les pubs Gems). Same
    label-then-button shape as .invokeSection, teal accent (matches the
    Gems currency color) to read as its own distinct action rather than a
-   3rd Invoquer choice. No dedicated artwork yet (🔀 emoji, same fallback
-   every not-yet-illustrated spot uses) - swap for a custom icon later if
-   Loris wants one made. */
+   3rd Invoquer choice. No icon on the button itself (Loris: dropped the
+   🔀 emoji placeholder rather than commission art for it) - the "Échanger"
+   label above already names the action, the Gems cost is the only thing
+   worth an icon here. */
 .swapSection{display:flex;flex-direction:column;gap:3px;}
 .swapCellsBtn{background:linear-gradient(135deg,#0891b2,#155e75);border-color:#22d3ee77;
   box-shadow:0 3px 12px #0891b255;padding:8px 12px;font-size:13px;}
