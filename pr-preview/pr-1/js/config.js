@@ -156,20 +156,23 @@ function skillCost(branchKey, nextLevel) {
 //   Gravité Rapide skill and any god spawnSpeedMult as its own independent
 //   multiplier
 //
-// Costs (base/growth): first pass badly under-priced this - it was
-// calibrated against a made-up ~20K total-to-max figure with no relation to
-// the game's actual Stardust economy. unlockCost() alone (config.js) totals
-// ~83M Stardust to unlock all 30 cells of a grid, so a tree that's fully
-// maxed for ~20K was essentially free pocket change (Loris: maxed it all
-// out at "peut-être dix mille" Stardust). Repriced so the total to max all
-// 4 branches lands around ~1.1M - a real fraction of a run's income, early
-// levels still reachable through normal play, but maxing everything is a
-// deliberate, costly commitment rather than a rounding error.
+// Costs (base/growth): second pass, still too cheap (Loris: "on arrive
+// trop rapidement aux 1000 ou 2000 stardust donc trop facile de bourriner
+// les améliorations dès le début" - could already afford several levels
+// within the first couple minutes of a fresh run). Bases raised well past
+// what idle income accumulates that early (3000-8000 for a first level,
+// vs 400-1500 before), so Alchimie Stellaire only becomes relevant once a
+// run is genuinely underway. Also: Cadence Stellaire was cheaper than
+// Catalyseur Stellaire despite Loris wanting it priced as the pricier of
+// the two - its base/growth are now both higher, so every one of its 8
+// levels costs roughly 2-2.5x the same-numbered Catalyseur level, even
+// though Catalyseur's own total is larger overall (15 levels vs 8). Total
+// to max all 4 branches is now ~4.7M (was ~1.1M, was ~20K before that).
 const RUN_UPGRADE_TREE = {
-  catalyst: { name: "Catalyseur Stellaire", desc: "+4% production de Stardust de chaque case / niveau", maxLevel: 15, base: 600, growth: 1.55 },
-  resonance: { name: "Résonance des Cases", desc: "+3% de chance de débloquer une case supplémentaire gratuite à chaque déblocage / niveau", maxLevel: 10, base: 1000, growth: 1.5 },
-  surge: { name: "Surcharge du Big Bang", desc: "+5% d'Énergie Cosmique gagnée au prochain Big Bang / niveau", maxLevel: 10, base: 1500, growth: 1.55 },
-  cadence: { name: "Cadence Stellaire", desc: "-4% cooldown de spawn auto / niveau (plancher 3s, cumulable avec Gravité Rapide)", maxLevel: 8, base: 400, growth: 1.5 },
+  catalyst: { name: "Catalyseur Stellaire", desc: "+4% production de Stardust de chaque case / niveau", maxLevel: 15, base: 3000, growth: 1.5 },
+  resonance: { name: "Résonance des Cases", desc: "+3% de chance de débloquer une case supplémentaire gratuite à chaque déblocage / niveau", maxLevel: 10, base: 5000, growth: 1.5 },
+  surge: { name: "Surcharge du Big Bang", desc: "+5% d'Énergie Cosmique gagnée au prochain Big Bang / niveau", maxLevel: 10, base: 8000, growth: 1.55 },
+  cadence: { name: "Cadence Stellaire", desc: "-4% cooldown de spawn auto / niveau (plancher 3s, cumulable avec Gravité Rapide)", maxLevel: 8, base: 6000, growth: 1.55 },
 };
 function runUpgradeCost(branchKey, nextLevel) {
   const b = RUN_UPGRADE_TREE[branchKey];

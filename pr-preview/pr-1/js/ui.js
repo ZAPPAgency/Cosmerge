@@ -342,13 +342,49 @@ function updateHeader() {
   if (hint !== lastHeaderRender.hint) { dom.selectionHint.textContent = hint; lastHeaderRender.hint = hint; }
 }
 
+// Loris: "je pense que le bouton boost x2 et case gratuite et 10 gems [...]
+// devrait apparaître petit à petit lors des premières fusions, d'abord on
+// laisse un peu le joueur découvrir le jeu, ensuite une animation fait
+// apparaître le bouton [...] alchimie et cadeau et [le fab dieu] je pense
+// qu'ils devraient aussi apparaître petit à petit" - a fresh save now
+// starts every one of these fabs hidden (index.html) and they trickle in
+// here, gated on state.lifetime.fusions (persists across Big Bangs, never
+// resets - a one-time onboarding trickle, not something that re-hides
+// later). fabCurrentGod isn't in this table: it already only exists once a
+// god is equipped, which itself only happens a good few merges in - it
+// just gets the same reveal animation the first time that happens.
+const FAB_DISCOVERY_FUSIONS = {
+  fabUnlockCellAd: 2,
+  fabBoost: 4,
+  fabGemsAd: 6,
+  fabRunUpgrades: 8,
+  fabDailyLogin: 10,
+};
+// Shows/hides one fab, playing its one-shot pop-in animation (.fabReveal,
+// style.css) only on the actual hidden->visible transition, and only once
+// per fab per session (Game.fabRevealed) - updateFabs() runs on nearly
+// every action, so without that guard the animation would replay on every
+// single call once a fab is already visible.
+function revealFab(id, shouldShow) {
+  const elDom = $(id);
+  if (!shouldShow) { elDom.classList.add("hidden"); return; }
+  const wasHidden = elDom.classList.contains("hidden");
+  elDom.classList.remove("hidden");
+  if (wasHidden && !Game.fabRevealed.has(id)) {
+    Game.fabRevealed.add(id);
+    elDom.classList.add("fabReveal");
+    setTimeout(() => elDom.classList.remove("fabReveal"), 500);
+  }
+}
+
 function updateFabs() {
   const state = Game.state;
+  const fusions = state.lifetime.fusions;
   // Used to hide once claimed, which meant there was no way at all to check
   // your streak/freeze status between claims - it stays visible and just
   // switches to a "streak" readout (still opens the same modal, read-only).
   const claimedToday = !isDailyLoginAvailable(state);
-  dom.fabDailyLogin.classList.remove("hidden"); // always visible now (see comment above) - the initial HTML still starts with "hidden" for the pre-JS flash, nothing else ever cleared it
+  revealFab("fabDailyLogin", fusions >= FAB_DISCOVERY_FUSIONS.fabDailyLogin);
   // Bug (Loris: "tu n'as pas ajouté le visuel cadeau" - it WAS added, but
   // this line was clobbering it): .textContent on the .fabIcon wrapper
   // wipes out ANY child, including the <img class="uiIcon"> custom artwork
@@ -362,11 +398,12 @@ function updateFabs() {
   ensureDailySpin(state);
   dom.fabWheel.classList.toggle("hidden", state.dailySpin.freeUsed && state.dailySpin.bonusUsed);
   const allUnlocked = unlockedCount(state) >= TOTAL;
-  $("fabUnlockCellAd").classList.toggle("hidden", allUnlocked);
+  revealFab("fabUnlockCellAd", fusions >= FAB_DISCOVERY_FUSIONS.fabUnlockCellAd && !allUnlocked);
   $("fabUnlockCellAd").classList.toggle("ready", !allUnlocked && Date.now() >= state.cooldowns.unlockCellAdUntil);
   const now = Date.now();
   const boostActive = state.cooldowns.prodBoostActiveUntil > now;
   const boostReady = now >= state.cooldowns.prodBoostUntil && !boostActive;
+  revealFab("fabBoost", fusions >= FAB_DISCOVERY_FUSIONS.fabBoost);
   $("fabBoost").classList.toggle("ready", boostReady);
   $("fabBoost").classList.toggle("active", boostActive);
   const boostLabel = boostActive ? formatDuration(state.cooldowns.prodBoostActiveUntil - now)
@@ -374,14 +411,16 @@ function updateFabs() {
   if ($("fabBoostLabel").textContent !== boostLabel) $("fabBoostLabel").textContent = boostLabel;
 
   const gemsAdReady = now >= state.cooldowns.gemsAdUntil;
+  revealFab("fabGemsAd", fusions >= FAB_DISCOVERY_FUSIONS.fabGemsAd);
   $("fabGemsAd").classList.toggle("ready", gemsAdReady);
   const gemsAdLabel = gemsAdReady ? `+${GEMS_AD_REWARD} Gems` : formatDuration(state.cooldowns.gemsAdUntil - now);
   if ($("fabGemsAdLabel").textContent !== gemsAdLabel) $("fabGemsAdLabel").textContent = gemsAdLabel;
+  revealFab("fabRunUpgrades", fusions >= FAB_DISCOVERY_FUSIONS.fabRunUpgrades);
   dom.bannerAd.classList.toggle("hidden", adsRemoved(state));
   updateQuestNotifDot();
 
   const god = state.gods.currentGodId ? getGod(state.gods.currentGodId) : null;
-  $("fabCurrentGod").classList.toggle("hidden", !god);
+  revealFab("fabCurrentGod", !!god);
   if (god) {
     // Bug fix, then revisited once portraits shipped (Loris: "l'icone qui
     // ressort... c'est l'emoji iOS, alors que ca devrait etre
@@ -704,7 +743,17 @@ function renderCosmeticGrid(list, equippedId, onAfterAction) {
     const equipped = equippedId === item.id;
     const tile = el("div", "cosmeticTile" + (equipped ? " equipped" : ""));
     const swatch = el("div", "skinSwatch big");
-    swatch.textContent = item.tierSkin ? item.tierSkin[5].emoji : "🚫"; // representative mid-tier icon, or "no override" for "Cases classiques"
+    // Representative mid-tier icon (index 5 = tier 6) for this set - falls
+    // back to the classic tile's own art/emoji for "Cases classiques" (no
+    // tierSkin override) instead of a static "🚫", and now actually
+    // respects the Emoji/Illustré toggle (Loris: "si on change de mode ça
+    // change pas les visuels donc l'ananas reste un emoji [...] pareil pour
+    // le skin standard on a pas la météorite" - this always rendered the
+    // plain emoji regardless of state.iconStyle, for every set, classic
+    // included).
+    const rep = item.tierSkin ? item.tierSkin[5] : TIERS[5];
+    if (state.iconStyle !== "emoji" && rep.icon) swatch.innerHTML = `<img src="assets/tiles/${rep.icon}" alt="">`;
+    else swatch.textContent = rep.emoji;
     const name = el("div", "cosmeticName", item.name);
     // Always render a status tag, even when not owned - Loris: the cards
     // in this grid don't all have the same height (Légumes' card was
@@ -865,6 +914,22 @@ function renderSkillsPanel() {
 }
 
 // ---------------- Run upgrades panel ----------------
+// Per-level effect text (Loris: "on voit pas l'état actuel et le prochain
+// niveau des bonus" - the card only showed the generic per-level desc, not
+// what the CURRENT level is actually granting nor what the NEXT level would
+// bump it to). Percentages here are display-only copies of the real ones
+// applied in state.js (productionMultiplier/autoSpawnIntervalMs) and
+// economy.js (maybeTriggerResonance/previewBigBangGain) - keep both in sync
+// if either changes. Returns null at level 0 (nothing active yet).
+function runUpgradeEffectAtLevel(key, level) {
+  if (level <= 0) return null;
+  if (key === "catalyst") return `+${level * 4}% production de Stardust`;
+  if (key === "resonance") return `+${level * 3}% de chance de case bonus`;
+  if (key === "surge") return `+${level * 5}% d'Énergie Cosmique au Big Bang`;
+  if (key === "cadence") return `-${level * 4}% de cooldown de spawn`;
+  return null;
+}
+
 // Mirrors renderSkillsPanel() above, but priced in Stardust and reset to 0
 // every Big Bang (RUN_UPGRADE_TREE, config.js - see the design comment
 // there for why this is a separate tree from SKILL_TREE).
@@ -877,10 +942,16 @@ function renderRunUpgradesPanel() {
     const level = state.runUpgrades[key];
     const maxed = level >= branch.maxLevel;
     const cost = maxed ? null : runUpgradeCost(key, level + 1);
+    const currentText = runUpgradeEffectAtLevel(key, level) || "Aucun bonus actif";
+    const nextText = maxed ? null : runUpgradeEffectAtLevel(key, level + 1);
     const card = el("div", "card skillRow");
     card.innerHTML = `<div class="rowBetween"><h3>${branch.name}</h3><span class="skillLevel">Niv. ${level}/${branch.maxLevel}</span></div>
       <p class="desc">${branch.desc}</p>
-      <div class="progressBar"><div class="fill" style="width:${(level / branch.maxLevel * 100).toFixed(1)}%"></div></div>`;
+      <div class="progressBar"><div class="fill" style="width:${(level / branch.maxLevel * 100).toFixed(1)}%"></div></div>
+      <div class="runUpgradeEffects">
+        <span class="effectCurrent">Actuel : ${currentText}</span>
+        ${nextText ? `<span class="effectNext">Prochain : ${nextText}</span>` : ""}
+      </div>`;
     const btn = el("button", "btn primary full", maxed ? "Niveau maximum" : `Améliorer — ${cost} ${currencyIconHtml("stardust")}`);
     btn.disabled = maxed || state.stardust < cost;
     if (!maxed) btn.addEventListener("click", () => onBuyRunUpgrade(key));

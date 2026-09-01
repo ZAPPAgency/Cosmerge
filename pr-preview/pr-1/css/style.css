@@ -358,6 +358,15 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .fab.active{border-color:var(--stardust);background:linear-gradient(180deg,#3a2a0d,#241f52);}
 .fab.active .fabLabel{color:var(--stardust);font-variant-numeric:tabular-nums;}
 .fab:disabled{opacity:.4;}
+/* One-shot fab discovery pop (Loris: buttons should "apparaître petit à
+   petit lors des premières fusions [...] une animation fait apparaître le
+   bouton") - see revealFab()/FAB_DISCOVERY_FUSIONS (ui.js). */
+.fab.fabReveal{animation:fabRevealPop .5s cubic-bezier(.16,1,.3,1);}
+@keyframes fabRevealPop{
+  0%{transform:scale(.3);opacity:0;}
+  60%{transform:scale(1.12);opacity:1;}
+  100%{transform:scale(1);opacity:1;}
+}
 .fab.muted{opacity:.5;padding:6px;background:linear-gradient(180deg,#1c1838,#151230);}
 .fab.muted:active{opacity:.85;}
 /* The two ad-for-currency fabs (boost, gems) are the ones we most want
@@ -525,6 +534,7 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .skinSwatch{width:44px;height:44px;border-radius:12px;flex-shrink:0;border:1px solid #2a2450;
   display:flex;align-items:center;justify-content:center;font-size:20px;}
 .skinSwatch.big{width:56px;height:56px;font-size:26px;}
+.skinSwatch img{width:80%;height:80%;object-fit:contain;}
 .cosmeticName{font-size:12px;font-weight:700;line-height:1.25;}
 .cosmeticTile .tag{margin:-2px 0 2px;}
 .cosmeticTile .btn{padding:7px 10px;font-size:11px;width:auto;min-width:70px;}
@@ -604,6 +614,13 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 
 .skillRow .rowBetween{margin-top:6px;}
 .skillLevel{font-size:11px;color:var(--text-dim);}
+/* Alchimie Stellaire cards (renderRunUpgradesPanel, ui.js) - current vs
+   next-level effect readout, so a player can see what they already have
+   and what the next purchase actually buys, not just a generic per-level
+   desc line. */
+.runUpgradeEffects{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 10px;font-size:11px;margin:0 0 8px;}
+.runUpgradeEffects .effectCurrent{color:var(--text-dim);}
+.runUpgradeEffects .effectNext{color:var(--accent2);font-weight:700;}
 
 .tabs{display:flex;gap:6px;margin-bottom:6px;}
 .tabBtn{flex:1;padding:8px;border-radius:10px;background:var(--bg-panel2);border:1px solid #2a2450;
