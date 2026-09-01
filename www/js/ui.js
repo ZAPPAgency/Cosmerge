@@ -1374,7 +1374,10 @@ function openSkinManagerModal() {
   const state = Game.state;
   const list = $("skinManagerList");
   list.innerHTML = "";
-  list.appendChild(el("h3", null, `<img class="inlineCurrencyIcon" src="assets/ui/palette.png" alt=""> Set d'icônes`));
+  // No palette icon here (unlike the shop's identical section) - the modal's
+  // own title just above already carries it (#skinManagerModal h3, index.html),
+  // right next to this one - Loris: "il y a deux fois cette illustration".
+  list.appendChild(el("h3", null, "Set d'icônes"));
   // Emoji/Illustré switch lives here (Loris), not in the shop.
   list.appendChild(renderIconStyleToggle(openSkinManagerModal));
   list.appendChild(renderCosmeticGrid(EMOJI_SETS, state.equippedEmojiSet, openSkinManagerModal));
@@ -1471,17 +1474,21 @@ function buildStars() {
 // slice gets an upright label (via withCurrencyIcons so it picks up the
 // custom currency icons) positioned at its middle angle. Static content -
 // built once at boot, not on every modal open.
-// Redone per Loris feedback: the 3 lowest-weight prizes (Fragment de skin
-// 10%, 1500 ✨ 5%, 1 ⚡ 5%) got such thin slices that the label spilled
-// well past their own color into the neighboring ones. Each label's width
-// is now clamped to the actual chord length of ITS slice at radius R (2 *
-// R * sin(halfAngle)), not a fixed 52px for every slice regardless of how
-// wide it is - narrow slices also drop to a smaller font/icon (.narrow) so
-// the text has a real chance of fitting on one or two short lines instead
-// of overflowing sideways. Also added thin radial dividers between slices
-// and a center hub, plus a soft glossy highlight layered under the color
-// wedges - "améliorer le design" - purely decorative, doesn't touch the
-// weight-accurate slice math below.
+// Redone twice per Loris feedback. Round 1 (chord-based width clamp) still
+// let "1500 ✨"/"1 ⚡" (the two 18°-wide, 5%-weight slices) spill past their
+// own color, so round 2 adds: (1) the leading amount is wrapped in a no-wrap
+// span (wsAmt) so "1500" can't itself break across lines while the icon
+// after it still can, and the narrow font-size (7px) was picked from real
+// canvas.measureText() widths against that slice's actual chord, not
+// guessed; (2) a dark pill background behind every label, both for contrast
+// against the lighter wedge colors (f59e0b, 0891b2) - Loris: "on les voit
+// toujours pas très bien" - and so a label reads as clearly "in" one slice
+// - Loris: "le 500 il est entre 2-3 cases". Bumped R (label radius) and the
+// per-label width cap both went through a few iterations checked against
+// getBoundingClientRect() math (each label's farthest corner from the wheel
+// center vs. the wheel's own radius) to land on values that neither spill
+// past their slice NOR get clipped by .wheel's overflow:hidden at the rim -
+// see the width/R values below, not just the ~64/70 first tried.
 function buildWheelSegments() {
   const wheelEl = $("wheelEl");
   wheelEl.innerHTML = "";
@@ -1503,11 +1510,17 @@ function buildWheelSegments() {
     const x = R * Math.cos(rad);
     const y = R * Math.sin(rad);
 
-    const chord = 2 * R * Math.sin((spanDeg / 2) * Math.PI / 180);
-    const width = Math.max(20, Math.min(52, Math.round(chord * 0.86)));
     const narrow = spanDeg < 25;
-    const label = el("div", "wheelSegLabel" + (narrow ? " narrow" : ""),
-      withCurrencyIcons(p.shortLabel || p.label));
+    // Fixed width for narrow slices (sized for the widest case, "1500" at
+    // 7px - see comment above) rather than a per-slice chord computation:
+    // at this point the chord (~22px) is barely bigger than the text itself,
+    // so a formula has no real slack left to work with anyway.
+    const chord = 2 * R * Math.sin((spanDeg / 2) * Math.PI / 180);
+    const width = narrow ? 24 : Math.max(26, Math.min(32, Math.round(chord * 0.6)));
+    const text = p.shortLabel || p.label;
+    const m = text.match(/^(\S+)(.*)$/s);
+    const html = m ? `<span class="wsAmt">${m[1]}</span>${withCurrencyIcons(m[2])}` : withCurrencyIcons(text);
+    const label = el("div", "wheelSegLabel" + (narrow ? " narrow" : ""), html);
     label.style.left = `calc(50% + ${x.toFixed(1)}px)`;
     label.style.top = `calc(50% + ${y.toFixed(1)}px)`;
     label.style.width = width + "px";

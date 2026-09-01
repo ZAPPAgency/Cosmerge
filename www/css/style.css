@@ -666,15 +666,23 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
   transition:transform 3.5s cubic-bezier(.17,.67,.2,1);display:flex;align-items:center;justify-content:center;font-size:11px;}
 /* Per-label width is set inline by buildWheelSegments() (ui.js) - clamped to
    that slice's own chord length so a narrow slice's text can't spill past
-   its color into the next one any more. .narrow (span < 25°, the 3
+   its color into the next one any more. .narrow (span < 25°, the 2
    lowest-weight prizes) drops to a smaller font/icon on top of that so short
-   labels ("1 ⚡", "1500 ✨", "Skin") still have a real chance of fitting. */
-.wheelSegLabel{position:absolute;transform:translate(-50%,-50%);font-size:10px;font-weight:700;
-  color:#fff;text-align:center;text-shadow:0 1px 3px rgba(0,0,0,.8);line-height:1.15;
-  pointer-events:none;}
-.wheelSegLabel .inlineCurrencyIcon{width:12px;height:12px;vertical-align:-2px;}
-.wheelSegLabel.narrow{font-size:8.5px;line-height:1.05;}
-.wheelSegLabel.narrow .inlineCurrencyIcon{width:9px;height:9px;vertical-align:-1.5px;}
+   labels ("1 ⚡", "1500 ✨") still fit - font sizes there were picked from
+   real canvas.measureText() widths against the slice's actual chord at R=70
+   (ui.js), not guessed. .wsAmt (the leading amount/word, wrapped in
+   buildWheelSegments()) is nowrap so a number can't itself break across
+   lines - only the icon after it drops to its own line when a slice is too
+   tight for both. A soft dark pill sits behind every label for contrast
+   against the lighter wedge colors (f59e0b, 0891b2) - Loris: "on les voit
+   toujours pas très bien". */
+.wheelSegLabel{position:absolute;transform:translate(-50%,-50%);font-size:11px;font-weight:700;
+  color:#fff;text-align:center;text-shadow:0 1px 2px rgba(0,0,0,.9);line-height:1.15;
+  background:rgba(5,4,10,.4);border-radius:5px;padding:1px 3px;pointer-events:none;}
+.wheelSegLabel .wsAmt{white-space:nowrap;}
+.wheelSegLabel .inlineCurrencyIcon{width:14px;height:14px;vertical-align:-3px;}
+.wheelSegLabel.narrow{font-size:7px;line-height:1.05;padding:1px 2px;}
+.wheelSegLabel.narrow .inlineCurrencyIcon{width:8px;height:8px;vertical-align:-1.5px;}
 /* Thin radial divider "clock hands" between slices - one per boundary
    angle, rotated to that angle via inline style in buildWheelSegments().
    transform-origin:top center keeps the pivot pinned at the wheel's exact
