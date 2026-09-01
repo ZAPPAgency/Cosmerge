@@ -196,10 +196,6 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .ghostTile .emoji{font-size:26px;}
 .ghostTile .emoji.tierIcon{width:70%;height:70%;object-fit:contain;filter:none;}
 
-.particle{position:absolute;width:6px;height:6px;border-radius:50%;background:#fff;pointer-events:none;
-  animation:particleFly .5s ease-out forwards;}
-@keyframes particleFly{0%{opacity:1;transform:translate(0,0) scale(1);}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.3);}}
-
 .floatBonus{position:absolute;left:50%;top:40%;transform:translate(-50%,0);pointer-events:none;z-index:10;
   /* above .tile's z-index:5 (added for the merge effect's stacking order) -
      without this the tap-bonus text renders BEHIND the tile and is
