@@ -35,28 +35,55 @@ function trackFusionEvent(state, newTier) {
   if (promo) Game.pendingPromo = promo; // consumed by maybeOpenFusionPromo() in input.js, same pattern as Game.pendingGodRitual (gods.js)
 }
 
+// Minimum real time between any two promo popups (starter pack, remove-ads,
+// Pass Supernova) - Loris: "avec un peu plus de temps entre chaque promo".
+// On top of each promo's own fusion-count/ad-count gate below, this is a
+// safety net for the case those gates land close together in a single
+// active session (e.g. a player binging rewarded ads could hit the
+// remove-ads ad-count threshold moments after a fusion-count threshold
+// fires another promo).
+const PROMO_MIN_GAP_MS = 3 * 60 * 1000;
+// Remove-ads promo (openRemoveAdsPromptModal, ui.js) used to fire on the
+// ad-watch count alone with no fusion floor at all - between starterPack's
+// (40) and vipPass's (130) own thresholds, same "well past the fabs"
+// reasoning as both.
+const FUSIONS_BEFORE_REMOVE_ADS_PROMO = 70;
+function promoGapElapsed(state) {
+  return Date.now() - (state.lastPromoShownAt || 0) >= PROMO_MIN_GAP_MS;
+}
+function markPromoShown(state) { state.lastPromoShownAt = Date.now(); }
+
 // ---- IAP soft-prompts on fusion milestones (Loris) ----
 // Timed to real progress rather than a session/day counter: a player who's
 // fused enough times has proven they're actually playing (not just poking
 // at the tutorial), a fair moment to surface the starter pack; further in
 // is a stronger engagement signal, a better moment for the subscription
-// pitch. Both thresholds were originally 10/50 - Loris found both fired
-// too early (10 fusions is a minute or two of play), bumped to 25/80 so
-// there's real investment behind the pitch by the time it shows.
+// pitch. Thresholds were 10/50, then 25/80 - Loris pushed further still:
+// "devrait[ent] tous arrivée[s] bien plus tard, au minimum après
+// l'apparition des fabs" (the last fab, +10 Gems, only reveals at 15
+// fusions - see FAB_DISCOVERY_FUSIONS, ui.js) - now 40/130, both with a
+// wide safety margin past that.
 // `state.lifetime.fusions` only ever increases, so the `=== N` checks each
 // fire at most once per save by construction - the `promptsShown` flags
 // exist so a promo whose OTHER condition wasn't met at the exact milestone
-// (offer expired / already owned) doesn't leave a half-triggered state,
-// and so this stays readable as "have we shown this yet" rather than
-// relying on the exact-equality trick alone.
+// (offer expired / already owned / promo-gap not elapsed) doesn't leave a
+// half-triggered state, and so this stays readable as "have we shown this
+// yet" rather than relying on the exact-equality trick alone.
 function checkFusionPromo(state) {
-  if (state.lifetime.fusions === 25 && !state.promptsShown.starterPack
-    && daysBetween(state.firstPlayedDay, todayStr()) <= 2) {
+  // >= instead of the old === N: the promo-gap check below can delay a
+  // promo past its own exact milestone fusion, and === would then miss it
+  // forever (fusions only ever goes up) - the promptsShown flag is what
+  // actually guarantees "fires at most once", so >= just keeps retrying on
+  // every fusion until the gap has elapsed too.
+  if (state.lifetime.fusions >= 40 && !state.promptsShown.starterPack
+    && daysBetween(state.firstPlayedDay, todayStr()) <= 2 && promoGapElapsed(state)) {
     state.promptsShown.starterPack = true;
+    markPromoShown(state);
     return "starterPack";
   }
-  if (state.lifetime.fusions === 80 && !state.promptsShown.vipPass && !isVipActive(state)) {
+  if (state.lifetime.fusions >= 130 && !state.promptsShown.vipPass && !isVipActive(state) && promoGapElapsed(state)) {
     state.promptsShown.vipPass = true;
+    markPromoShown(state);
     return "vipPass";
   }
   return null;
@@ -100,11 +127,14 @@ function applyOfflineAutoSpawns(state, cappedMs) {
 // input.js watchRewardedAd) and flags the one moment a soft paywall for
 // "Suppression des pubs" should interrupt: the very first time the count
 // reaches 5, an amount high enough to mean the player is actually engaging
-// with rewarded ads rather than a one-off. Fires exactly once since a
-// strictly-increasing counter only equals 5 on one call.
+// with rewarded ads rather than a one-off. `>=` + the promptsShown flag
+// instead of `=== 5` (which would fire exactly once, but the caller also
+// gates on fusions/promoGapElapsed - if either isn't true yet right at the
+// 5th ad, an exact-equality check would miss the promo forever since the
+// counter never comes back down to 5).
 function trackRewardedAdWatched(state) {
   state.lifetime.adsWatched += 1;
-  return state.lifetime.adsWatched === 5;
+  return state.lifetime.adsWatched >= 5 && !state.promptsShown.removeAdsPrompt;
 }
 
 // ---- VIP daily Gems (Pass Supernova perk) ----

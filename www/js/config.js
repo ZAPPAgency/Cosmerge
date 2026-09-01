@@ -122,6 +122,14 @@ const EMOJI_SETS = [
       { emoji: "🥥", name: "Noix de Coco", icon: "fruit-8-coco.png" },
       { emoji: "🍈", name: "Melon Géant", icon: "fruit-9-melon.png" },
       { emoji: "🍯", name: "Nectar Cosmique", icon: "fruit-10-nectar.png" },
+      // Tiers 11-14 (Loris: "pour les cases de niveau supérieur il faut
+      // faire aussi les emojis des skins") - no icon yet, same "emoji now,
+      // art later" pattern as TIERS 11-14 themselves (config.js). Names/
+      // emoji are a first pass, open to renaming.
+      { emoji: "🥭", name: "Mangue Cosmique" },
+      { emoji: "🍑", name: "Pêche Stellaire" },
+      { emoji: "🫐", name: "Myrtille Infinie" },
+      { emoji: "🥝", name: "Kiwi Primordial" },
     ] },
   { id: "legumes", name: "Légumes de l'Espace", cost: 300, currency: "gems",
     tierSkin: [
@@ -139,6 +147,11 @@ const EMOJI_SETS = [
       { emoji: "🫛", name: "Petit Pois", icon: "legume-8-pois.png" },
       { emoji: "🎃", name: "Citrouille Géante", icon: "legume-9-citrouille.png" },
       { emoji: "🌻", name: "Fleur Cosmique", icon: "legume-10-fleur.png" },
+      // Tiers 11-14 - see the matching comment on "fruits" above.
+      { emoji: "🥒", name: "Concombre Cosmique" },
+      { emoji: "🧄", name: "Ail Stellaire" },
+      { emoji: "🫘", name: "Haricots Infinis" },
+      { emoji: "🥔", name: "Patate Primordiale" },
     ] },
 ];
 
@@ -448,38 +461,42 @@ const QUEST_POOL = [
 const BONUS_AD_QUEST = { id: "watchAd", desc: "Regarde une publicité", reward: 15 };
 
 // ---- Achievements (permanent, never reset) ----
+// Rewards cut ~50% across the board (Loris: "diminue les récompenses de
+// tous les succès je trouve qu'ils rapportent trop") - a flat, consistent
+// cut rather than singling out any one category, so the relative ordering/
+// pacing between achievements is unchanged, just the absolute numbers.
 const ACHIEVEMENTS = [
-  { id: "fuse_10", cat: "fusions", target: 10, name: "Premières fusions", reward: 10 },
-  { id: "fuse_100", cat: "fusions", target: 100, name: "Artisan cosmique", reward: 25 },
-  { id: "fuse_500", cat: "fusions", target: 500, name: "Maître fusionneur", reward: 60 },
-  { id: "fuse_2000", cat: "fusions", target: 2000, name: "Légende de la fusion", reward: 150 },
-  { id: "tier_4", cat: "maxTier", target: 4, name: "Formation planétaire", reward: 10 },
-  { id: "tier_6", cat: "maxTier", target: 6, name: "Naissance d'une étoile", reward: 20 },
-  { id: "tier_8", cat: "maxTier", target: 8, name: "Horizon des événements", reward: 40 },
-  { id: "tier_9", cat: "maxTier", target: 9, name: "Voie lactée", reward: 70 },
-  { id: "tier_10", cat: "maxTier", target: 10, name: "Créateur d'univers", reward: 120 },
+  { id: "fuse_10", cat: "fusions", target: 10, name: "Premières fusions", reward: 5 },
+  { id: "fuse_100", cat: "fusions", target: 100, name: "Artisan cosmique", reward: 12 },
+  { id: "fuse_500", cat: "fusions", target: 500, name: "Maître fusionneur", reward: 30 },
+  { id: "fuse_2000", cat: "fusions", target: 2000, name: "Légende de la fusion", reward: 75 },
+  { id: "tier_4", cat: "maxTier", target: 4, name: "Formation planétaire", reward: 5 },
+  { id: "tier_6", cat: "maxTier", target: 6, name: "Naissance d'une étoile", reward: 10 },
+  { id: "tier_8", cat: "maxTier", target: 8, name: "Horizon des événements", reward: 20 },
+  { id: "tier_9", cat: "maxTier", target: 9, name: "Voie lactée", reward: 35 },
+  { id: "tier_10", cat: "maxTier", target: 10, name: "Créateur d'univers", reward: 60 },
   // Tiers 11-14 (Loris: allonger le temps de jeu après Univers - voir
   // TIERS/UNIVERSE_TIER, config.js) - fresh goals to chase once the grid
   // used to be a dead end at tier 10.
-  { id: "tier_11", cat: "maxTier", target: 11, name: "Au-delà de l'Univers", reward: 160 },
-  { id: "tier_12", cat: "maxTier", target: 12, name: "Point de singularité", reward: 220 },
-  { id: "tier_13", cat: "maxTier", target: 13, name: "Sans limites", reward: 300 },
-  { id: "tier_14", cat: "maxTier", target: 14, name: "Créateur de tout", reward: 400 },
-  { id: "bigbang_1", cat: "bigBangs", target: 1, name: "Premier Big Bang", reward: 30 },
-  { id: "bigbang_5", cat: "bigBangs", target: 5, name: "Cycle cosmique", reward: 80 },
-  { id: "bigbang_20", cat: "bigBangs", target: 20, name: "Éternel recommencement", reward: 200 },
-  { id: "lifetime_10k", cat: "lifetimeStardust", target: 10000, name: "Petit collectionneur", reward: 10 },
-  { id: "lifetime_100k", cat: "lifetimeStardust", target: 100000, name: "Riche en poussière d'étoiles", reward: 30 },
-  { id: "lifetime_1m", cat: "lifetimeStardust", target: 1000000, name: "Millionnaire stellaire", reward: 70 },
-  { id: "lifetime_100m", cat: "lifetimeStardust", target: 100000000, name: "Magnat de la galaxie", reward: 180 },
-  { id: "streak_3", cat: "streak", target: 3, name: "Habitué·e", reward: 10 },
-  { id: "streak_7", cat: "streak", target: 7, name: "Semaine complète", reward: 25 },
-  { id: "streak_30", cat: "streak", target: 30, name: "Fidèle des étoiles", reward: 100 },
-  { id: "quests_10", cat: "questsCompleted", target: 10, name: "Chasseur de quêtes", reward: 15 },
-  { id: "quests_100", cat: "questsCompleted", target: 100, name: "Expert en missions", reward: 60 },
-  { id: "unlocked_20", cat: "cellsUnlocked", target: 20, name: "Grande expansion", reward: 25 },
-  { id: "unlocked_all", cat: "cellsUnlocked", target: 30, name: "Grille complète", reward: 50 },
-  { id: "gems_1000", cat: "lifetimeGems", target: 1000, name: "Trésor de Gems", reward: 20 },
+  { id: "tier_11", cat: "maxTier", target: 11, name: "Au-delà de l'Univers", reward: 80 },
+  { id: "tier_12", cat: "maxTier", target: 12, name: "Point de singularité", reward: 110 },
+  { id: "tier_13", cat: "maxTier", target: 13, name: "Sans limites", reward: 150 },
+  { id: "tier_14", cat: "maxTier", target: 14, name: "Créateur de tout", reward: 200 },
+  { id: "bigbang_1", cat: "bigBangs", target: 1, name: "Premier Big Bang", reward: 15 },
+  { id: "bigbang_5", cat: "bigBangs", target: 5, name: "Cycle cosmique", reward: 40 },
+  { id: "bigbang_20", cat: "bigBangs", target: 20, name: "Éternel recommencement", reward: 100 },
+  { id: "lifetime_10k", cat: "lifetimeStardust", target: 10000, name: "Petit collectionneur", reward: 5 },
+  { id: "lifetime_100k", cat: "lifetimeStardust", target: 100000, name: "Riche en poussière d'étoiles", reward: 15 },
+  { id: "lifetime_1m", cat: "lifetimeStardust", target: 1000000, name: "Millionnaire stellaire", reward: 35 },
+  { id: "lifetime_100m", cat: "lifetimeStardust", target: 100000000, name: "Magnat de la galaxie", reward: 90 },
+  { id: "streak_3", cat: "streak", target: 3, name: "Habitué·e", reward: 5 },
+  { id: "streak_7", cat: "streak", target: 7, name: "Semaine complète", reward: 12 },
+  { id: "streak_30", cat: "streak", target: 30, name: "Fidèle des étoiles", reward: 50 },
+  { id: "quests_10", cat: "questsCompleted", target: 10, name: "Chasseur de quêtes", reward: 8 },
+  { id: "quests_100", cat: "questsCompleted", target: 100, name: "Expert en missions", reward: 30 },
+  { id: "unlocked_20", cat: "cellsUnlocked", target: 20, name: "Grande expansion", reward: 12 },
+  { id: "unlocked_all", cat: "cellsUnlocked", target: 30, name: "Grille complète", reward: 25 },
+  { id: "gems_1000", cat: "lifetimeGems", target: 1000, name: "Trésor de Gems", reward: 10 },
 ];
 
 // ---- Shop catalog (soft currency: stardust / gems) ----
@@ -491,15 +508,18 @@ const SHOP_GEM_ITEMS = [
   // in code) because Gems are directly purchasable with real money - Apple
   // requires disclosed odds for any randomized reward reachable that way
   // (App Review Guideline 3.1.1). Keep this string's percentages in sync
-  // with BOX_RARITY_WEIGHTS below by hand if those ever change.
-  { id: "cosmicBox", name: "Boîte Cosmique", desc: "Un Dieu au hasard - Commun 50% · Rare 30% · Épique 15% · Légendaire 5% (un doublon se change en Gems)", cost: 120 },
+  // with BOX_RARITY_WEIGHTS below by hand if those ever change. Loris: "on
+  // doit pouvoir gagner uniquement des dieux qu'on possède pas" - no more
+  // duplicates (rollCosmicBox, gods.js re-rolls the rarity until it finds
+  // one with an unowned god left), and once every god is owned the box
+  // becomes a pure Gems roll instead.
+  { id: "cosmicBox", name: "Boîte Cosmique", desc: "Un Dieu que tu ne possèdes pas encore - Commun 50% · Rare 30% · Épique 15% · Légendaire 5% (jusqu'à 200 Gems une fois tous les Dieux obtenus)", cost: 120 },
 ];
 
 // Cosmic Box odds: Commun is the most likely roll, Légendaire the rarest.
-// Rolling a god you already have converts to Gems instead (scaled by the
-// rarity rolled, so bad luck still feels worth something).
+// Never a duplicate any more (rollCosmicBox, gods.js) - re-rolls the
+// rarity until one still has an unowned god.
 const BOX_RARITY_WEIGHTS = { commun: 50, rare: 30, epique: 15, legendaire: 5 };
-const BOX_DUPLICATE_GEMS = { commun: 10, rare: 20, epique: 40, legendaire: 80 };
 
 // ---- IAP catalog (simulated at this stage) ----
 const IAP_CATALOG = [
@@ -549,10 +569,28 @@ function tierProd(tier) { return 0.5 * Math.pow(2, tier - 1); }
 function unlockCost(n) { return Math.round(50 * Math.pow(1.8, n)); }
 function invokeCost(k) { return Math.round(15 * Math.pow(1.12, k)); }
 
-function bigBangGain(stardustEarnedThisRun, maxTierReached) {
+// Loris: "on devrait gagner un peu moins de points d'ascension quand on
+// fait un bigbang (et ça augmentera selon le nombre de cases de niveau 10
+// et plus mais en comptant aussi une prime pour les niveaux supérieurs (11
+// rapporte plus que 10 mais moins que 12)". Escalating per-tile weight
+// (1.4x per tier above UNIVERSE_TIER) instead of the old flat
+// maxTierReached-based bonus - a lone Univers tile is worth slightly LESS
+// than the old formula gave for reaching tier 10 (13 vs the old flat 15),
+// but every tier-10-or-higher tile actually sitting on the grid at Big
+// Bang time now adds its own weight, summed - so several high tiles, or
+// pushing into the new 11-14 tiers (TIERS/UNIVERSE_TIER, config.js), adds
+// up fast instead of being capped at one flat number regardless of how
+// many you have.
+function bigBangTileWeight(tier) {
+  return Math.round(13 * Math.pow(1.4, tier - UNIVERSE_TIER));
+}
+function bigBangGain(stardustEarnedThisRun, grid) {
   const base = Math.floor(Math.sqrt(stardustEarnedThisRun / 500000));
-  const bonus = Math.max(0, (maxTierReached - 5) * 3);
-  return Math.max(1, base + bonus);
+  let tierBonus = 0;
+  for (const t of grid) {
+    if (t && t.tier >= UNIVERSE_TIER) tierBonus += bigBangTileWeight(t.tier);
+  }
+  return Math.max(1, base + tierBonus);
 }
 
 function formatNumber(n) {

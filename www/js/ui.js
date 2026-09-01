@@ -54,6 +54,29 @@ function tierStyle(tier) {
 function tierEmoji(tier) { const s = equippedEmojiSetDef(); return (s.tierSkin && s.tierSkin[tier - 1]) ? s.tierSkin[tier - 1].emoji : TIERS[tier - 1].emoji; }
 function tierName(tier) { const s = equippedEmojiSetDef(); return (s.tierSkin && s.tierSkin[tier - 1]) ? s.tierSkin[tier - 1].name : TIERS[tier - 1].name; }
 
+// ---------------- Cycle glow (infinite loop past the top tier) ----------------
+// Loris: "un effet lumineux d'une couleur choisie pour ce nouveau palier
+// (la couleur évolue selon le niveau des cases mais se mélange aussi avec
+// la couleur du tier) et animé sur la case [...] les tiers apportent un
+// effet animé constant sur les cases et un effet lumineux, la couleur
+// change en fonction des tiers" - "tier"/"palier" here means the new loop
+// counter (tile.cycle, performMerge in economy.js), not the existing
+// TIERS 1-14 - kept as a separate name in code to avoid colliding with
+// that. Each cycle gets its own hue (rotating through the wheel so
+// consecutive cycles read as clearly different colors); within a cycle,
+// the glow's intensity grows with the tile's own tier (1-14) - blending
+// "how far into this loop" with "which loop" as asked.
+function cycleColor(cycle) {
+  const hue = ((cycle - 1) * 47) % 360; // 47: spreads hues well before any two cycles look alike
+  return `hsl(${hue}, 75%, 60%)`;
+}
+function applyCycleGlow(tile, tier, cycle) {
+  if (!cycle) return;
+  tile.classList.add("cycled");
+  tile.style.setProperty("--cycle-color", cycleColor(cycle));
+  tile.style.setProperty("--cycle-intensity", (tier / TIERS.length).toFixed(2));
+}
+
 // Small inline <img> for tier references OUTSIDE the grid itself (the
 // tutorial, stat lines, the Big Bang summary...) so illustrated tiers read
 // consistently everywhere they're mentioned, not just on the board itself -
@@ -218,11 +241,19 @@ function renderCell(i, opts) {
   if (opts.merged) tile.classList.add("merging");
   if (opts.spawned) tile.classList.add("spawnIn");
   tile.style.cssText += tierStyle(tileData.tier);
+  applyCycleGlow(tile, tileData.tier, tileData.cycle || 0);
   const emoji = tierIconNode(tileData.tier);
   const num = document.createElement("div");
   num.className = "tierNum";
   num.textContent = tileData.tier;
   tile.appendChild(emoji); tile.appendChild(num);
+  if (tileData.cycle) {
+    const cycleBadge = document.createElement("div");
+    cycleBadge.className = "cycleBadge";
+    cycleBadge.textContent = "×" + tileData.cycle;
+    cycleBadge.style.color = cycleColor(tileData.cycle);
+    tile.appendChild(cycleBadge);
+  }
   cell.appendChild(tile);
 }
 
@@ -481,18 +512,26 @@ const METEOR_FALL_MS = 110;
 // glow plays (state.grid[idx] already holds the merged/upgraded tile by
 // this point, see performMerge()). The real tile is revealed on impact via
 // the normal renderCell(idx, {merged:true}).
-function renderMergeStandIn(idx, tier) {
+function renderMergeStandIn(idx, tier, cycle) {
   const cell = cellEls[idx];
   cell.className = "cell filled";
   cell.innerHTML = "";
   const tile = document.createElement("div");
   tile.className = "tile";
   tile.style.cssText += tierStyle(tier);
+  applyCycleGlow(tile, tier, cycle || 0);
   const emoji = tierIconNode(tier);
   const num = document.createElement("div");
   num.className = "tierNum";
   num.textContent = tier;
   tile.appendChild(emoji); tile.appendChild(num);
+  if (cycle) {
+    const cycleBadge = document.createElement("div");
+    cycleBadge.className = "cycleBadge";
+    cycleBadge.textContent = "×" + cycle;
+    cycleBadge.style.color = cycleColor(cycle);
+    tile.appendChild(cycleBadge);
+  }
   cell.appendChild(tile);
 }
 
@@ -1488,7 +1527,9 @@ function openBigBangSummaryModal({ stardustEarned, maxTier, gain }) {
   $("bbSummaryStardust").textContent = formatNumber(stardustEarned);
   $("bbSummaryTier").innerHTML = `${TIERS[maxTier - 1].name} ${tierInlineIconHtml(maxTier)}`;
   $("bbSummaryEnergy").innerHTML = `+${formatNumber(gain)} ${currencyIconHtml("energy")}`;
-  $("bbSummaryHint").textContent = nextGodMilestoneHint(state)
+  // innerHTML, not textContent - nextGodMilestoneHint() now embeds a real
+  // <img> portrait (godPortraitHtml) instead of a plain emoji character.
+  $("bbSummaryHint").innerHTML = nextGodMilestoneHint(state)
     || "Tous les Dieux à objectif direct sont éveillés - tente ta chance à la Boîte Cosmique (Boutique) pour les derniers !";
   $("bigBangSummaryModal").classList.remove("hidden");
 }
@@ -1574,14 +1615,23 @@ function openCosmicBoxRevealModal(box) {
   $("cosmicBoxClose").classList.add("hidden");
   $("cosmicBoxModal").classList.remove("hidden");
   setTimeout(() => {
-    const rarity = RARITY[box.god.rarity];
     anim.className = "cosmicBoxAnim revealed";
-    anim.style.setProperty("--rarity-color", rarity.color);
-    anim.innerHTML = godPortraitHtml(box.god, "cosmicBoxPortrait");
-    if (box.duplicate) {
-      $("cosmicBoxTitle").textContent = `${box.god.name} (déjà possédé)`;
-      $("cosmicBoxText").innerHTML = `Doublon converti en +${box.gems} ${currencyIconHtml("gems")}`;
+    // Loris: "quand le joueur a tout les dieux, la boite cosmique se
+    // transforme en une boite [...] de gemmes" - rollCosmicBox() (gods.js)
+    // never hands out a duplicate any more, so this is the only remaining
+    // non-god outcome (box.god is unset here).
+    if (box.allGodsOwned) {
+      anim.style.setProperty("--rarity-color", "#38bdf8");
+      // Plain large emoji, not currencyIconHtml's small inline glyph - this
+      // frame is sized (88x88, font-size:52px) for a portrait/emoji-scale
+      // reveal, not a 16px inline icon.
+      anim.textContent = "💎";
+      $("cosmicBoxTitle").textContent = "✨ Panthéon complet !";
+      $("cosmicBoxText").innerHTML = `Tous les Dieux sont déjà à toi - +${box.gems} ${currencyIconHtml("gems")}`;
     } else {
+      const rarity = RARITY[box.god.rarity];
+      anim.style.setProperty("--rarity-color", rarity.color);
+      anim.innerHTML = godPortraitHtml(box.god, "cosmicBoxPortrait");
       $("cosmicBoxTitle").textContent = `✨ Nouveau Dieu : ${box.god.name} !`;
       $("cosmicBoxText").textContent = `${rarity.label} - ${box.god.title}`;
     }

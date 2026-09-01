@@ -190,28 +190,53 @@ function nextGodMilestoneHint(state) {
   };
   const best = candidates.slice().sort((a, b) => progressOf(b) - progressOf(a))[0];
   const pct = Math.min(99, Math.round(progressOf(best) * 100));
-  return `Prochain Dieu en approche : ${best.emoji} ${best.name} (${pct}% - ${best.unlock.label})`;
+  // godPortraitHtml (ui.js), not best.emoji directly (Loris: "il y a
+  // plusieurs écrans quand on fait un big bang ou c'est encore les emoji
+  // qui sont utilisés") - same real-portrait-as-a-teaser convention
+  // already used for locked gods everywhere else (Progression roadmap
+  // steps, etc.) instead of falling back to the plain glyph.
+  return `Prochain Dieu en approche : ${godPortraitHtml(best, "inlineTierIcon")} ${best.name} (${pct}% - ${best.unlock.label})`;
 }
 
 // Cosmic Box: rolls any god weighted by rarity, regardless of that god's
 // normal unlock path (including the "box"-only gods, whose only path IS
-// this roll). A duplicate roll pays out Gems instead (scaled to the rarity
-// rolled) so the box never feels wasted.
+// this roll).
+// Loris: "dans les boites cosmiques on doit pouvoir gagner uniquement des
+// dieux qu'on possède pas, comme ça on enlève les doublons c'est moins
+// frustrant" - re-rolls the RARITY (not the god) until landing on one that
+// still has an unowned god, so the odds stay proportional to
+// BOX_RARITY_WEIGHTS among what's actually still obtainable, instead of
+// ever handing out a duplicate. "Et quand le joueur a tout les dieux, la
+// boite cosmique se transforme en une boite [...] de gemmes" - once
+// nothing is left to unlock, this becomes a pure Gems roll instead
+// (rollCosmicBoxGems, below).
 function rollCosmicBox(state) {
+  const unownedGods = GODS.filter(g => !isGodUnlocked(state, g.id));
+  if (unownedGods.length === 0) {
+    return { duplicate: false, allGodsOwned: true, gems: rollCosmicBoxGems(state) };
+  }
   const total = Object.values(BOX_RARITY_WEIGHTS).reduce((a, b) => a + b, 0);
-  let r = Math.random() * total;
-  let pickedRarity = "commun";
-  for (const rarity of Object.keys(BOX_RARITY_WEIGHTS)) {
-    const weight = BOX_RARITY_WEIGHTS[rarity];
-    if (r < weight) { pickedRarity = rarity; break; }
-    r -= weight;
+  let pool = [];
+  while (pool.length === 0) {
+    let r = Math.random() * total;
+    let pickedRarity = "commun";
+    for (const rarity of Object.keys(BOX_RARITY_WEIGHTS)) {
+      const weight = BOX_RARITY_WEIGHTS[rarity];
+      if (r < weight) { pickedRarity = rarity; break; }
+      r -= weight;
+    }
+    pool = unownedGods.filter(g => g.rarity === pickedRarity);
   }
-  const pool = GODS.filter(g => g.rarity === pickedRarity);
   const god = pool[Math.floor(Math.random() * pool.length)];
-  if (isGodUnlocked(state, god.id)) {
-    const gems = grantGems(state, BOX_DUPLICATE_GEMS[pickedRarity]);
-    return { duplicate: true, god, gems };
-  }
   unlockGod(state, god.id);
   return { duplicate: false, god };
+}
+
+// Loris: "un montant de gemmes aléatoires qui peut aller jusqu'à 200 (très
+// faible chance, le joueur a plus de chance de recevoir moins que 100
+// gemmes)". Math.random() squared skews the roll toward the low end
+// instead of a flat/uniform one - P(≤100) ≈ 71%, P(>180) ≈ 5%.
+function rollCosmicBoxGems(state) {
+  const amount = Math.max(10, Math.round(Math.pow(Math.random(), 2) * 200));
+  return grantGems(state, amount);
 }
