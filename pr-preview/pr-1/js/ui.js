@@ -794,7 +794,7 @@ function renderShopPanel() {
   if (pass) {
     const hero = el("div", "card iapCard iapHero");
     hero.innerHTML = `<div class="iapHeroBadge">★ Meilleure offre</div>
-      <div class="rowBetween"><h3>${pass.name}</h3><span class="iapPrice">${pass.price}</span></div>
+      <div class="rowBetween"><h3><img class="inlineCurrencyIcon" src="assets/ui/supernova.png" alt=""> ${pass.name}</h3><span class="iapPrice">${pass.price}</span></div>
       <p class="iapHeroTagline">${pass.desc}</p>`;
     const perkList = el("ul", "iapPerkList");
     (pass.perks || []).forEach(p => perkList.appendChild(el("li", null, p)));
@@ -1340,7 +1340,11 @@ function closeStardustInfoModal() { $("stardustInfoModal").classList.add("hidden
 // already read state.iap.vipUntil live the instant it's set in onBuyIAP,
 // this modal just makes that unmistakable instead of easy to doubt.
 function openPurchaseConfirmModal(product) {
-  $("purchaseConfirmTitle").textContent = `✅ ${product.name}`;
+  // No icon prefix here any more (was "✅ ...") - the big animated
+  // valide.png checkmark right above the title (.purchaseCheckAnim,
+  // index.html) already carries that, repeating a small one inline next
+  // to the text would just compete with it.
+  $("purchaseConfirmTitle").textContent = product.name;
   $("purchaseConfirmText").textContent = product.id === "vip_monthly"
     ? "Le Pass Supernova est actif dès maintenant : +100% de production, plus aucune pub, tous les skins débloqués, et tes 50 Gems quotidiennes dès demain."
     : `Achat confirmé (simulation) - ${product.desc || "profite-en !"}`;
@@ -1414,9 +1418,8 @@ function closeRemoveAdsPromptModal() { $("removeAdsPromptModal").classList.add("
 // emoji, same "falls back to emoji until art exists" pattern as
 // tierIconNode()/roadIcon() elsewhere - starterPack reuses cadeau.png (a
 // starter pack IS a bundle of starting gifts, no new art needed); vipPass
-// has no icon yet (still 🌟) - waiting on a dedicated "Pass Supernova"
-// asset, which would also fill the shop's own hero card (renderShopPanel),
-// currently icon-less too.
+// uses the dedicated supernova.png burst, also used for the shop's own
+// Pass Supernova hero card (renderShopPanel) - one asset, two spots.
 const FUSION_PROMOS = {
   starterPack: {
     title: "Bien joué !",
@@ -1425,7 +1428,8 @@ const FUSION_PROMOS = {
     productId: "starter_pack",
   },
   vipPass: {
-    title: "🌟 Tu es accroché !",
+    title: "Tu es accroché !",
+    icon: "supernova.png",
     text: "50 fusions déjà - le Pass Supernova retire les pubs pour toujours, double ta production de Stardust et t'offre 50 Gems chaque jour. Pensé pour les joueurs comme toi.",
     productId: "vip_monthly",
   },

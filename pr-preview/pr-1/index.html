@@ -37,7 +37,7 @@
     <meta name="apple-mobile-web-app-title" content="Godspark" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#0a0620" />
-    <link rel="stylesheet" href="css/style.css?v=68" />
+    <link rel="stylesheet" href="css/style.css?v=69" />
   </head>
   <body>
     <div id="starsBg"></div>
@@ -297,11 +297,8 @@
           Déclencher le Big Bang ?
         </h3>
         <p id="bigBangText"></p>
-        <p class="modalWarn">
-          La grille et le Stardust actuels seront réinitialisés. L'Énergie
-          Cosmique, les Gems, l'Ascension et vos succès sont conservés pour
-          toujours.
-        </p>
+        <!-- One line - see the white-space:pre-line note on removeAdsPromptModal above. -->
+        <p class="modalWarn">La grille et le Stardust actuels seront réinitialisés. L'Énergie Cosmique, les Gems, l'Ascension et vos succès sont conservés pour toujours.</p>
         <div class="modalBtns">
           <button class="btn" id="bigBangCancel">Annuler</button>
           <button class="btn primary" id="bigBangConfirm">Confirmer</button>
@@ -346,14 +343,9 @@
           <img class="inlineCurrencyIcon" src="assets/ui/recommencer.png" alt="" />
           Recommencer la partie ?
         </h3>
-        <p>
-          Tu vas perdre la progression de cette partie : la grille et le
-          Stardust actuels repartiront de zéro.
-        </p>
-        <p class="modalWarn">
-          L'Énergie Cosmique, les Gems, l'Ascension, les Dieux et vos succès
-          sont conservés pour toujours.
-        </p>
+        <!-- One line each - see the white-space:pre-line note on removeAdsPromptModal above. -->
+        <p>Tu vas perdre la progression de cette partie : la grille et le Stardust actuels repartiront de zéro.</p>
+        <p class="modalWarn">L'Énergie Cosmique, les Gems, l'Ascension, les Dieux et vos succès sont conservés pour toujours.</p>
         <div class="modalBtns">
           <button class="btn" id="restartCancel">Annuler</button>
           <button class="btn danger" id="restartConfirm">Recommencer</button>
@@ -396,7 +388,7 @@
     <!-- Purchase confirmation: replaces a plain toast for every IAP, so the effect (VIP especially) is unmistakable -->
     <div class="modalOverlay hidden" id="purchaseConfirmModal">
       <div class="modalCard" style="text-align: center">
-        <div class="purchaseCheckAnim">✅</div>
+        <div class="purchaseCheckAnim"><img src="assets/ui/valide.png" alt="" /></div>
         <h3 id="purchaseConfirmTitle">Achat confirmé !</h3>
         <p class="desc" id="purchaseConfirmText"></p>
         <button
@@ -478,12 +470,14 @@
     <!-- Remove-ads soft prompt: shown once, the first time the player watches a 5th rewarded ad -->
     <div class="modalOverlay hidden" id="removeAdsPromptModal">
       <div class="modalCard">
-        <h3>🚫 Marre des pubs ?</h3>
-        <p>
-          Tu as pas mal regardé de publicités ces derniers temps. Avec «
-          Suppression des pubs », tous ces bonus (boost, quête bonus...)
-          deviennent instantanés, pour toujours.
-        </p>
+        <h3>
+          <img class="inlineCurrencyIcon" src="assets/ui/shield.png" alt="" />
+          Marre des pubs ?
+        </h3>
+        <!-- One line on purpose - .modalCard p has white-space:pre-line, a
+         "harmless" source wrap here becomes an actual forced line break
+         (same bug already fixed once on #godRitualModal). -->
+        <p>Tu as pas mal regardé de publicités ces derniers temps. Avec « Suppression des pubs », tous ces bonus (boost, quête bonus...) deviennent instantanés, pour toujours.</p>
         <div class="modalBtns">
           <button class="btn" id="removeAdsPromptLater">Plus tard</button>
           <button class="btn primary" id="removeAdsPromptBuy">
@@ -571,16 +565,16 @@
       </div>
     </div>
 
-    <script src="js/config.js?v=68"></script>
-    <script src="js/state.js?v=68"></script>
-    <script src="js/audio.js?v=68"></script>
-    <script src="js/services.js?v=68"></script>
-    <script src="js/economy.js?v=68"></script>
-    <script src="js/gods.js?v=68"></script>
-    <script src="js/retention.js?v=68"></script>
-    <script src="js/ui.js?v=68"></script>
-    <script src="js/input.js?v=68"></script>
-    <script src="js/main.js?v=68"></script>
+    <script src="js/config.js?v=69"></script>
+    <script src="js/state.js?v=69"></script>
+    <script src="js/audio.js?v=69"></script>
+    <script src="js/services.js?v=69"></script>
+    <script src="js/economy.js?v=69"></script>
+    <script src="js/gods.js?v=69"></script>
+    <script src="js/retention.js?v=69"></script>
+    <script src="js/ui.js?v=69"></script>
+    <script src="js/input.js?v=69"></script>
+    <script src="js/main.js?v=69"></script>
     <script type="module" src="js/native-bridge.js"></script>
   </body>
 </html>
