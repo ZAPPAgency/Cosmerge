@@ -36,6 +36,17 @@ function requestStorageAccessBestEffort() {
 
   const state = loadState();
 
+  // TEMPORARY debug hatch so Loris can preview art (god portraits, skins...)
+  // on his own phone without grinding every unlock condition for real -
+  // visit the game with ?debugUnlockAll=1 once. No UI for it on purpose
+  // (not meant for Noah's review build) - remove this block before closing
+  // the branch.
+  if (new URLSearchParams(location.search).get("debugUnlockAll") === "1") {
+    GODS.forEach(g => { if (!state.gods.unlockedIds.includes(g.id)) state.gods.unlockedIds.push(g.id); });
+    if (!state.gods.currentGodId) state.gods.currentGodId = "selena";
+    EMOJI_SETS.forEach(s => { if (!state.ownedSkins.includes(s.id)) state.ownedSkins.push(s.id); });
+  }
+
   Object.assign(window.Game, {
     state,
     settings: state.settings,
