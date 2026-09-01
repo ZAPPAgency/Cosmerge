@@ -134,6 +134,24 @@ const GODS = [
     unlock: { type: "ritual" }, // granted automatically by the moon-merge ritual, see gods.js
     lore: "La première à avoir répondu à l'appel du rituel des lunes. Séléna veille sur chaque fragment qui tourne encore dans le noir, patiente, et guide la main du fusionneur novice.",
   },
+  // Loris: the moon-merge ritual should offer a real choice, not hand you
+  // Séléna alone with a "choisis celui qui t'accompagnera" that lied about
+  // there being anything to choose - un dieu bienveillant ET un dieu déchu,
+  // côte à côte. Rather than repurpose an existing déchu god (losing its own
+  // challenge/shop/box unlock path), Loris asked for a brand new one here -
+  // same "commun"/"ritual" shape as Séléna, exact same tier scope (2-3) so
+  // the two read as true mirror images of each other: one purely helps that
+  // range, the other trades a little of its production for a chance at Gems
+  // instead. See onFusionForGods() (gods.js) for the ritual granting both at
+  // once, and openGodPickerModal() (ui.js) for the side-by-side picker.
+  {
+    id: "zephar", name: "Zéphar", title: "Seigneur des Lunes Brisées", emoji: "🌘",
+    rarity: "commun", alignment: "dechu",
+    desc: "+15% chance de Gem bonus par fusion, mais -8% production des Lunes et Planètes naines",
+    effects: { gemChanceBonus: 0.15, tierProdBonus: { minTier: 2, maxTier: 3, mult: 0.92 } },
+    unlock: { type: "ritual" }, // granted automatically by the moon-merge ritual, alongside Séléna - see gods.js
+    lore: "Zéphar n'a jamais pardonné à la Lune d'avoir survécu presque intacte quand tout le reste s'est brisé. Il rôde parmi les fragments et offre, à qui l'écoute, la richesse cachée dans chaque éclat - contre un peu de la lumière qu'ils portaient encore.",
+  },
   {
     id: "astreos", name: "Astréos", title: "Gardien des Astéroïdes", emoji: "☄️",
     rarity: "commun", alignment: "bienveillant",

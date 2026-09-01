@@ -741,10 +741,23 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .godPower{margin-top:10px;padding-top:10px;border-top:1px solid #2a2450;}
 .godPowerLabel{font-size:11px;color:var(--text-dim);}
 
-.godRitualList{display:flex;flex-direction:column;gap:10px;margin-top:12px;max-height:50vh;overflow-y:auto;}
-.godRitualCard{background:var(--bg-card);border:1px solid var(--accent2);border-radius:14px;padding:12px;
-  display:flex;align-items:center;gap:12px;text-align:left;appearance:none;color:var(--text);width:100%;}
+/* Side-by-side (un dieu bienveillant, un dieu déchu) rather than the old
+   vertical single-column list - the ritual now always grants exactly 2
+   gods at once (Séléna + Zéphar, see openGodPickerModal/ui.js), so this is
+   a real left/right choice, not a scrollable list. */
+.godRitualList{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+.godRitualCard{background:var(--bg-card);border:1px solid var(--accent2);border-radius:14px;padding:14px 10px;
+  display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;appearance:none;color:var(--text);width:100%;}
 .godRitualCard:active{transform:scale(.98);}
+/* Tints matching the same blue/red used for the two camps in the Histoire
+   panel (renderStoryPanel) - the choice should read at a glance, not just
+   via the emoji. */
+.godRitualCard.bienveillant{border-color:#93c5fd88;box-shadow:0 0 14px #93c5fd22;}
+.godRitualCard.dechu{border-color:#fca5a588;box-shadow:0 0 14px #fca5a522;}
+.godRitualCard .godEmoji{width:44px;height:44px;font-size:24px;margin-bottom:2px;}
+.godRitualCard .godName{font-size:14px;font-weight:800;}
+.godRitualCard .godTitle{font-size:10.5px;color:var(--text-dim);}
+.godRitualCard .godDesc{font-size:11px;color:#c9c3f0;margin:4px 0 0;line-height:1.35;}
 
 .progressCard .rowBetween,.modalCard .rowBetween{margin-bottom:4px;}
 .roadmap{position:relative;padding:4px;}

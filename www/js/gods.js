@@ -86,8 +86,13 @@ function checkGodMilestones(state) {
 function onFusionForGods(state, newTier) {
   if (newTier === 2) {
     state.moonMergesThisRun += 1;
+    // Both ritual gods (Séléna, Zéphar) unlock together, so the picker modal
+    // that opens next render (openGodPickerModal, ui.js) shows an actual
+    // choice - un dieu bienveillant, un dieu déchu - instead of a single
+    // card that had nothing to choose between (Loris).
     if (state.moonMergesThisRun === MOON_MERGES_TO_CHOOSE_GOD && !state.gods.currentGodId) {
       unlockGod(state, "selena");
+      unlockGod(state, "zephar");
       Game.pendingGodRitual = true; // main loop opens the picker modal next render
     }
   }
