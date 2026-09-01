@@ -930,21 +930,37 @@ function wireEvents() {
   $("restartCancel").addEventListener("click", closeRestartModal);
   $("restartConfirm").addEventListener("click", onRestartConfirm);
 
+  $("confirmActionCancel").addEventListener("click", closeConfirmModal);
+  $("confirmActionConfirm").addEventListener("click", onConfirmActionConfirm);
+
   $("saveCodeCancel").addEventListener("click", closeSaveCodeModal);
   $("saveCodeAction").addEventListener("click", onSaveCodeAction);
 
   $("bbSummaryClose").addEventListener("click", closeBigBangSummaryModal);
 
   $("removeAdsPromptLater").addEventListener("click", closeRemoveAdsPromptModal);
-  $("removeAdsPromptBuy").addEventListener("click", async () => {
+  $("removeAdsPromptBuy").addEventListener("click", () => {
     closeRemoveAdsPromptModal();
-    await onBuyIAP("remove_ads");
+    const product = IAP_CATALOG.find(p => p.id === "remove_ads");
+    openConfirmModal({
+      title: product.name,
+      text: `${product.desc} — ${product.price}`,
+      confirmLabel: "Acheter",
+      onConfirm: () => onBuyIAP("remove_ads"),
+    });
   });
 
   $("fusionPromoLater").addEventListener("click", closeFusionPromoModal);
-  $("fusionPromoBuy").addEventListener("click", async () => {
+  $("fusionPromoBuy").addEventListener("click", () => {
     const id = fusionPromoProductId;
     closeFusionPromoModal();
-    if (id) await onBuyIAP(id);
+    const product = id && IAP_CATALOG.find(p => p.id === id);
+    if (!product) return;
+    openConfirmModal({
+      title: product.name,
+      text: `${product.desc || ""} — ${product.price}`,
+      confirmLabel: product.type === "subscription" ? "S'abonner" : "Acheter",
+      onConfirm: () => onBuyIAP(id),
+    });
   });
 }

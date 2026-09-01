@@ -343,22 +343,29 @@ function updateHeader() {
 }
 
 // Loris: "je pense que le bouton boost x2 et case gratuite et 10 gems [...]
-// devrait apparaître petit à petit lors des premières fusions, d'abord on
-// laisse un peu le joueur découvrir le jeu, ensuite une animation fait
-// apparaître le bouton [...] alchimie et cadeau et [le fab dieu] je pense
-// qu'ils devraient aussi apparaître petit à petit" - a fresh save now
-// starts every one of these fabs hidden (index.html) and they trickle in
-// here, gated on state.lifetime.fusions (persists across Big Bangs, never
-// resets - a one-time onboarding trickle, not something that re-hides
-// later). fabCurrentGod isn't in this table: it already only exists once a
-// god is equipped, which itself only happens a good few merges in - it
-// just gets the same reveal animation the first time that happens.
+// devrait apparaître petit à petit lors des premières fusions [...] alchimie
+// et cadeau et [le fab dieu] je pense qu'ils devraient aussi apparaître
+// petit à petit" - a fresh save now starts every one of these fabs hidden
+// (index.html) and they trickle in here, gated on state.lifetime.fusions
+// (persists across Big Bangs, never resets - a one-time onboarding trickle,
+// not something that re-hides later).
+//
+// Order revised after a second round of feedback - Loris: "c'est le bouton
+// cadeau qui devrait apparaître en premier [...] le bouton boost apparait
+// en même temps que le choix des dieux ce qui est mauvais [...] l'ordre
+// serait : Cadeau -> Dieux choisi (4 lunes fusionnées) -> Alchimie -> Case
+// gratuite -> Boost x2 -> +10 Gems". fabCurrentGod isn't in this table - it
+// already only exists once a god is equipped, itself gated by 4 fusions
+// that each produce a tier-2 tile (MOON_MERGES_TO_CHOOSE_GOD, gods.js) -
+// which, since almost every early fusion IS a tier-1-into-tier-2 one, lands
+// well before fabRunUpgrades' own threshold in normal play. fabCurrentGod
+// just gets the same reveal animation the first time it appears.
 const FAB_DISCOVERY_FUSIONS = {
-  fabUnlockCellAd: 2,
-  fabBoost: 4,
-  fabGemsAd: 6,
-  fabRunUpgrades: 8,
-  fabDailyLogin: 10,
+  fabDailyLogin: 1,
+  fabRunUpgrades: 6,
+  fabUnlockCellAd: 9,
+  fabBoost: 12,
+  fabGemsAd: 15,
 };
 // Shows/hides one fab, playing its one-shot pop-in animation (.fabReveal,
 // style.css) only on the actual hidden->visible transition, and only once
@@ -372,8 +379,11 @@ function revealFab(id, shouldShow) {
   elDom.classList.remove("hidden");
   if (wasHidden && !Game.fabRevealed.has(id)) {
     Game.fabRevealed.add(id);
-    elDom.classList.add("fabReveal");
-    setTimeout(() => elDom.classList.remove("fabReveal"), 500);
+    // Cadeau (the very first fab a new player sees) gets its own richer
+    // "gift" pop - see .fab.fabReveal.gift, style.css.
+    const revealCls = id === "fabDailyLogin" ? "fabReveal gift" : "fabReveal";
+    elDom.classList.add(...revealCls.split(" "));
+    setTimeout(() => elDom.classList.remove(...revealCls.split(" ")), 700);
   }
 }
 
@@ -395,6 +405,10 @@ function updateFabs() {
   const dailyIcon = dom.fabDailyLogin.querySelector(".fabIcon");
   dailyIcon.innerHTML = claimedToday ? '<img class="uiIcon" src="assets/ui/flamme.png" alt="">' : '<img class="uiIcon" src="assets/ui/cadeau.png" alt="">';
   dom.fabDailyLogin.querySelector(".fabLabel").textContent = claimedToday ? `Série ${state.dailyLogin.streak}` : "Cadeau";
+  // Loris: the Série state read as flat/plain - reuses the same warm-gold
+  // "active" treatment .fab.active already has for the Boost fab, instead
+  // of only the icon+text changing.
+  dom.fabDailyLogin.classList.toggle("active", claimedToday);
   ensureDailySpin(state);
   dom.fabWheel.classList.toggle("hidden", state.dailySpin.freeUsed && state.dailySpin.bonusUsed);
   const allUnlocked = unlockedCount(state) >= TOTAL;
@@ -763,7 +777,18 @@ function renderCosmeticGrid(list, equippedId, onAfterAction) {
       : (owned ? el("span", "tag owned", "Possédé") : el("span", "tag", "Non possédé"));
     const btn = el("button", "btn" + (equipped ? "" : " primary"), equipped ? "Équipé" : (owned ? "Équiper" : `${item.cost} ${currencyIconHtml("gems")}`));
     btn.disabled = equipped || (!owned && state.gems < item.cost);
-    btn.addEventListener("click", () => { onCosmeticAction(item.id, owned); if (onAfterAction) onAfterAction(); });
+    const runAction = () => { onCosmeticAction(item.id, owned); if (onAfterAction) onAfterAction(); };
+    // Confirmation only guards the actual Gems purchase - just equipping an
+    // already-owned set isn't a spend, no need to gate that behind a modal.
+    btn.addEventListener("click", () => {
+      if (owned) { runAction(); return; }
+      openConfirmModal({
+        title: item.name,
+        text: `Débloquer ce set d'icônes — ${item.cost} ${currencyIconHtml("gems")}`,
+        confirmLabel: "Acheter",
+        onConfirm: runAction,
+      });
+    });
     // "Aperçu" (Loris): a way to see a set's tiles on an actual mini grid
     // before spending Gems on it or switching away from the one equipped.
     const previewBtn = el("button", "btn ghost cosmeticPreviewBtn", "👁 Aperçu");
@@ -794,7 +819,10 @@ function renderShopPanel() {
   const boostReady = Date.now() >= state.cooldowns.prodBoostUntil;
   const boostActive = state.cooldowns.prodBoostActiveUntil > Date.now();
   const boostCard = el("div", "card compact");
-  boostCard.innerHTML = `<div class="rowBetween"><h3>🚀 Boost x2 production (10 min)</h3></div>
+  // Loris: "il y a toujours l'emoji fusée et pas l'illustration" - this
+  // card's own header was still hardcoded to the plain 🚀 glyph, unrelated
+  // to the fab's own icon (which already uses boost.png).
+  boostCard.innerHTML = `<div class="rowBetween"><h3><img class="inlineCurrencyIcon" src="assets/ui/boost.png" alt=""> Boost x2 production (10 min)</h3></div>
     <p class="desc">${boostActive ? `Actif encore ${formatDuration(state.cooldowns.prodBoostActiveUntil - Date.now())}` :
       (boostReady ? "Disponible maintenant." : `Disponible dans ${formatDuration(state.cooldowns.prodBoostUntil - Date.now())}`)}</p>`;
   const boostBtn = el("button", "btn primary full", adsRemoved(state) ? "Activer" : "Regarder une pub");
@@ -822,7 +850,12 @@ function renderShopPanel() {
       <p class="desc">${item.desc}</p>`;
     const btn = el("button", "btn primary full", "Acheter");
     btn.disabled = state.gems < item.cost;
-    btn.addEventListener("click", () => onBuyGemItem(item.id));
+    btn.addEventListener("click", () => openConfirmModal({
+      title: item.name,
+      text: `${item.desc} — ${item.cost} ${currencyIconHtml("gems")}`,
+      confirmLabel: "Acheter",
+      onConfirm: () => onBuyGemItem(item.id),
+    }));
     card.appendChild(btn);
     gemGrid.appendChild(card);
   });
@@ -855,8 +888,14 @@ function renderShopPanel() {
   const plain = visibleProducts.filter(p => p.id !== "vip_monthly" && !featuredSet.has(p.id));
 
   const buyBtn = (product, cls) => {
-    const btn = el("button", cls, product.type === "subscription" ? "S'abonner" : "Acheter");
-    btn.addEventListener("click", () => onBuyIAP(product.id));
+    const label = product.type === "subscription" ? "S'abonner" : "Acheter";
+    const btn = el("button", cls, label);
+    btn.addEventListener("click", () => openConfirmModal({
+      title: product.name,
+      text: `${product.desc || ""} — ${product.price}`,
+      confirmLabel: label,
+      onConfirm: () => onBuyIAP(product.id),
+    }));
     return btn;
   };
 
@@ -1191,14 +1230,23 @@ function openGodPickerModal() {
       <div class="godName">${god.name}</div>
       <div class="godTitle">${god.title}</div>
       <p class="godDesc">${god.desc}</p>`;
-    card.addEventListener("click", () => {
-      chooseGod(state, god.id);
-      Sfx.purchase();
-      toast(`${god.name} t'accompagne désormais !`);
-      $("godRitualModal").classList.add("hidden");
-      saveState(state);
-      renderAll();
-    });
+    // Loris: "demande de confirmation lors du choix du premier dieu [...]
+    // sinon c'est trop simple de faire une erreur sans faire exprès" - a
+    // single tap used to commit immediately. Now it opens the shared
+    // confirm modal (openConfirmModal, above) on top of this one instead.
+    card.addEventListener("click", () => openConfirmModal({
+      title: `Choisir ${god.name} ?`,
+      text: `${god.title} — ${god.desc}`,
+      confirmLabel: "Confirmer",
+      onConfirm: () => {
+        chooseGod(state, god.id);
+        Sfx.purchase();
+        toast(`${god.name} t'accompagne désormais !`);
+        $("godRitualModal").classList.add("hidden");
+        saveState(state);
+        renderAll();
+      },
+    }));
     list.appendChild(card);
   });
   $("godRitualModal").classList.remove("hidden");
@@ -1446,6 +1494,27 @@ function closeBigBangSummaryModal() { $("bigBangSummaryModal").classList.add("hi
 function openRestartModal() { $("restartModal").classList.remove("hidden"); }
 function closeRestartModal() { $("restartModal").classList.add("hidden"); }
 
+// ---------------- Generic purchase/action confirmation ----------------
+// Loris: every purchase should ask for confirmation before spending
+// anything - too easy to tap "Acheter" by accident otherwise. Wired at
+// every real buy button (Boutique Gems items, IAP cards, fusion/remove-ads
+// promo popups - see wireEvents(), input.js) instead of a bespoke confirm
+// step per call site.
+let pendingConfirmAction = null;
+function openConfirmModal({ title, text, confirmLabel, onConfirm }) {
+  $("confirmActionTitle").textContent = title;
+  $("confirmActionText").innerHTML = text; // some callers embed an inline currency icon (currencyIconHtml)
+  $("confirmActionConfirm").textContent = confirmLabel || "Confirmer";
+  pendingConfirmAction = onConfirm;
+  $("confirmActionModal").classList.remove("hidden");
+}
+function closeConfirmModal() { $("confirmActionModal").classList.add("hidden"); pendingConfirmAction = null; }
+function onConfirmActionConfirm() {
+  const action = pendingConfirmAction;
+  closeConfirmModal();
+  if (action) action();
+}
+
 // ---------------- Stardust info popup (tapping the Stardust pill) ----------------
 function openStardustInfoModal() {
   const state = Game.state;
@@ -1453,9 +1522,18 @@ function openStardustInfoModal() {
   const runElapsedMs = Date.now() - state.runStartedAt;
   $("stardustInfoRunTime").textContent = formatDuration(runElapsedMs);
   $("stardustInfoToday").textContent = "+" + formatNumber(state.lifetime.stardustEarned - state.dailyStats.stardustAtDayStart);
-  $("stardustInfoBest").textContent = state.lifetime.bestBigBangMs === null
-    ? "Pas encore de record - termine ton premier Big Bang !"
+  // Loris: "le texte du pop up [...] n'est pas aligné avec le texte à
+  // gauche". .rowBetween lays the label/value side by side on one line
+  // (fine for a short duration like "12:34"), but the no-record fallback is
+  // a full sentence that wraps to several lines and threw off the
+  // side-by-side alignment against the label. Switches that one row to a
+  // stacked layout (.rowBetween.stack, style.css) only when showing that
+  // sentence instead.
+  const noRecord = state.lifetime.bestBigBangMs === null;
+  $("stardustInfoBest").textContent = noRecord
+    ? "Termine ton premier Big Bang pour établir un record !"
     : formatDuration(state.lifetime.bestBigBangMs);
+  $("stardustInfoBestRow").classList.toggle("stack", noRecord);
   $("stardustInfoModal").classList.remove("hidden");
 }
 function closeStardustInfoModal() { $("stardustInfoModal").classList.add("hidden"); }
