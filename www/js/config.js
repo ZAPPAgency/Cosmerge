@@ -327,34 +327,40 @@ const DAILY_REWARDS = [
 const SKIN_FRAGMENTS_REQUIRED = 3;
 
 // ---- Daily quest pool (templates); 3 drawn per day + 1 bonus "watch ad" ----
+// Rewards trimmed ~30% (Loris: quests were the biggest source of "free"
+// Gems - easily 35-40/day just from normal play, no ad ever watched -
+// undercutting the incentive to actually watch a rewarded ad. Loris wants
+// Gems kept as the reward type here, just smaller amounts; BONUS_AD_QUEST
+// below is untouched on purpose - that one's reward IS gated behind an ad
+// already, so it doesn't compete with the ad-watching incentive).
 const QUEST_POOL = [
-  { id: "fuse15", desc: "Fusionne 15 fois", type: "fusions", target: 15, reward: 10 },
-  { id: "fuse30", desc: "Fusionne 30 fois", type: "fusions", target: 30, reward: 15 },
-  { id: "reachStar", desc: "Atteins le palier Étoile", type: "reachTier", target: 6, reward: 15 },
-  { id: "reachPlanet", desc: "Atteins le palier Planète", type: "reachTier", target: 4, reward: 8 },
-  { id: "reachBlackHole", desc: "Atteins le palier Trou noir", type: "reachTier", target: 8, reward: 20 },
-  { id: "earn5000", desc: "Gagne 5000 Stardust", type: "earnStardust", target: 5000, reward: 10 },
-  { id: "earn20000", desc: "Gagne 20000 Stardust", type: "earnStardust", target: 20000, reward: 18 },
-  { id: "unlock1", desc: "Débloque 1 case", type: "unlockCells", target: 1, reward: 8 },
-  { id: "unlock3", desc: "Débloque 3 cases", type: "unlockCells", target: 3, reward: 16 },
-  { id: "spend500", desc: "Dépense 500 Stardust", type: "spendStardust", target: 500, reward: 8 },
-  { id: "invoke5", desc: "Invoque 5 Météorites", type: "invokes", target: 5, reward: 10 },
-  { id: "tapBonus10", desc: "Récupère 10 bonus manuels", type: "tapBonuses", target: 10, reward: 8 },
-  { id: "spawnAuto5", desc: "Laisse apparaître 5 Météorites automatiques", type: "autoSpawns", target: 5, reward: 6 },
-  { id: "fuse5tier5", desc: "Fusionne jusqu'à Géante gazeuse", type: "reachTier", target: 5, reward: 12 },
-  { id: "fuse50", desc: "Fusionne 50 fois", type: "fusions", target: 50, reward: 22 },
-  { id: "fuse8", desc: "Fusionne 8 fois", type: "fusions", target: 8, reward: 6 },
-  { id: "reachGalaxy", desc: "Atteins le palier Galaxie", type: "reachTier", target: 9, reward: 25 },
-  { id: "reachNeutronStar", desc: "Atteins le palier Étoile à neutrons", type: "reachTier", target: 7, reward: 17 },
-  { id: "earn100000", desc: "Gagne 100 000 Stardust", type: "earnStardust", target: 100000, reward: 25 },
-  { id: "earn1500", desc: "Gagne 1500 Stardust", type: "earnStardust", target: 1500, reward: 6 },
-  { id: "unlock5", desc: "Débloque 5 cases", type: "unlockCells", target: 5, reward: 20 },
-  { id: "spend2000", desc: "Dépense 2000 Stardust", type: "spendStardust", target: 2000, reward: 15 },
-  { id: "invoke10", desc: "Invoque 10 Météorites", type: "invokes", target: 10, reward: 15 },
-  { id: "invoke3", desc: "Invoque 3 Météorites", type: "invokes", target: 3, reward: 6 },
-  { id: "tapBonus20", desc: "Récupère 20 bonus manuels", type: "tapBonuses", target: 20, reward: 14 },
-  { id: "tapBonus5", desc: "Récupère 5 bonus manuels", type: "tapBonuses", target: 5, reward: 5 },
-  { id: "spawnAuto10", desc: "Laisse apparaître 10 Météorites automatiques", type: "autoSpawns", target: 10, reward: 10 },
+  { id: "fuse15", desc: "Fusionne 15 fois", type: "fusions", target: 15, reward: 7 },
+  { id: "fuse30", desc: "Fusionne 30 fois", type: "fusions", target: 30, reward: 11 },
+  { id: "reachStar", desc: "Atteins le palier Étoile", type: "reachTier", target: 6, reward: 11 },
+  { id: "reachPlanet", desc: "Atteins le palier Planète", type: "reachTier", target: 4, reward: 6 },
+  { id: "reachBlackHole", desc: "Atteins le palier Trou noir", type: "reachTier", target: 8, reward: 14 },
+  { id: "earn5000", desc: "Gagne 5000 Stardust", type: "earnStardust", target: 5000, reward: 7 },
+  { id: "earn20000", desc: "Gagne 20000 Stardust", type: "earnStardust", target: 20000, reward: 13 },
+  { id: "unlock1", desc: "Débloque 1 case", type: "unlockCells", target: 1, reward: 6 },
+  { id: "unlock3", desc: "Débloque 3 cases", type: "unlockCells", target: 3, reward: 11 },
+  { id: "spend500", desc: "Dépense 500 Stardust", type: "spendStardust", target: 500, reward: 6 },
+  { id: "invoke5", desc: "Invoque 5 Météorites", type: "invokes", target: 5, reward: 7 },
+  { id: "tapBonus10", desc: "Récupère 10 bonus manuels", type: "tapBonuses", target: 10, reward: 6 },
+  { id: "spawnAuto5", desc: "Laisse apparaître 5 Météorites automatiques", type: "autoSpawns", target: 5, reward: 4 },
+  { id: "fuse5tier5", desc: "Fusionne jusqu'à Géante gazeuse", type: "reachTier", target: 5, reward: 8 },
+  { id: "fuse50", desc: "Fusionne 50 fois", type: "fusions", target: 50, reward: 15 },
+  { id: "fuse8", desc: "Fusionne 8 fois", type: "fusions", target: 8, reward: 4 },
+  { id: "reachGalaxy", desc: "Atteins le palier Galaxie", type: "reachTier", target: 9, reward: 18 },
+  { id: "reachNeutronStar", desc: "Atteins le palier Étoile à neutrons", type: "reachTier", target: 7, reward: 12 },
+  { id: "earn100000", desc: "Gagne 100 000 Stardust", type: "earnStardust", target: 100000, reward: 18 },
+  { id: "earn1500", desc: "Gagne 1500 Stardust", type: "earnStardust", target: 1500, reward: 4 },
+  { id: "unlock5", desc: "Débloque 5 cases", type: "unlockCells", target: 5, reward: 14 },
+  { id: "spend2000", desc: "Dépense 2000 Stardust", type: "spendStardust", target: 2000, reward: 11 },
+  { id: "invoke10", desc: "Invoque 10 Météorites", type: "invokes", target: 10, reward: 11 },
+  { id: "invoke3", desc: "Invoque 3 Météorites", type: "invokes", target: 3, reward: 4 },
+  { id: "tapBonus20", desc: "Récupère 20 bonus manuels", type: "tapBonuses", target: 20, reward: 10 },
+  { id: "tapBonus5", desc: "Récupère 5 bonus manuels", type: "tapBonuses", target: 5, reward: 4 },
+  { id: "spawnAuto10", desc: "Laisse apparaître 10 Météorites automatiques", type: "autoSpawns", target: 10, reward: 7 },
 ];
 const BONUS_AD_QUEST = { id: "watchAd", desc: "Regarde une publicité", reward: 15 };
 
