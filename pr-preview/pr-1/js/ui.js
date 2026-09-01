@@ -666,6 +666,7 @@ const PANEL_RENDERERS = {
   shop: { title: "Boutique", render: renderShopPanel },
   gods: { title: "Dieux du Cosmos", render: renderGodsPanel },
   skills: { title: `Ascension ${currencyIconHtml("energy")}`, render: renderSkillsPanel },
+  runUpgrades: { title: `Investissement ${currencyIconHtml("stardust")}`, render: renderRunUpgradesPanel },
   quests: { title: "Quêtes quotidiennes", render: renderQuestsPanel },
   achievements: { title: "Succès", render: renderAchievementsPanel },
   progression: { title: "Progression", render: renderProgressionPanel },
@@ -858,6 +859,31 @@ function renderSkillsPanel() {
     const btn = el("button", "btn primary full", maxed ? "Niveau maximum" : `Améliorer — ${cost} ${currencyIconHtml("energy")}`);
     btn.disabled = maxed || state.cosmicEnergy < cost;
     if (!maxed) btn.addEventListener("click", () => onBuySkill(key));
+    card.appendChild(btn);
+    dom.panelBody.appendChild(card);
+  });
+}
+
+// ---------------- Run upgrades panel ----------------
+// Mirrors renderSkillsPanel() above, but priced in Stardust and reset to 0
+// every Big Bang (RUN_UPGRADE_TREE, config.js - see the design comment
+// there for why this is a separate tree from SKILL_TREE).
+function renderRunUpgradesPanel() {
+  const state = Game.state;
+  dom.panelBody.innerHTML = "";
+  dom.panelBody.appendChild(el("p", "desc", `Investis ton Stardust (${currencyIconHtml("stardust")} ${formatNumber(state.stardust)}) de cette grille dans des bonus qui durent jusqu'au prochain Big Bang.`));
+  Object.keys(RUN_UPGRADE_TREE).forEach(key => {
+    const branch = RUN_UPGRADE_TREE[key];
+    const level = state.runUpgrades[key];
+    const maxed = level >= branch.maxLevel;
+    const cost = maxed ? null : runUpgradeCost(key, level + 1);
+    const card = el("div", "card skillRow");
+    card.innerHTML = `<div class="rowBetween"><h3>${branch.name}</h3><span class="skillLevel">Niv. ${level}/${branch.maxLevel}</span></div>
+      <p class="desc">${branch.desc}</p>
+      <div class="progressBar"><div class="fill" style="width:${(level / branch.maxLevel * 100).toFixed(1)}%"></div></div>`;
+    const btn = el("button", "btn primary full", maxed ? "Niveau maximum" : `Améliorer — ${cost} ${currencyIconHtml("stardust")}`);
+    btn.disabled = maxed || state.stardust < cost;
+    if (!maxed) btn.addEventListener("click", () => onBuyRunUpgrade(key));
     card.appendChild(btn);
     dom.panelBody.appendChild(card);
   });

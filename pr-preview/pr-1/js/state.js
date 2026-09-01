@@ -73,6 +73,10 @@ function defaultState() {
     dailyStats: { date: null, stardustAtDayStart: 0 }, // see ensureDailyStats() - powers the Stardust info popup's "today" figure
 
     skills: { prod: 0, swarm: 0, gravity: 0, echo: 0, luck: 0 },
+    // Run upgrades (RUN_UPGRADE_TREE, config.js) - Stardust-priced, reset to
+    // 0 at every Big Bang (performBigBang, economy.js), unlike `skills`
+    // above which is permanent.
+    runUpgrades: { catalyst: 0, resonance: 0, surge: 0, cadence: 0 },
     ownedSkins: ["classic"], // "classic" emoji set - the free starting cosmetic (the ambiance/color-skin slot was removed entirely)
     equippedEmojiSet: "classic",
     // Independent of which set (classic/fruits/legumes) is equipped above -
@@ -202,7 +206,10 @@ function productionMultiplier(state) {
   const boostMult = (state.cooldowns.prodBoostActiveUntil > Date.now()) ? 2 : 1;
   const godMult = getGodEffects(state).prodMult || 1;
   const iapBoostMult = state.iap.stardustBoost ? 1.5 : 1;
-  return skillMult * vipMult * boostMult * godMult * iapBoostMult;
+  // "Catalyseur Stellaire" run upgrade (RUN_UPGRADE_TREE, config.js) - resets
+  // to 0 at every Big Bang, unlike every other factor here.
+  const runUpgradeMult = 1 + (state.runUpgrades.catalyst || 0) * 0.04;
+  return skillMult * vipMult * boostMult * godMult * iapBoostMult * runUpgradeMult;
 }
 function tierGodMultiplier(state, tier) {
   const bonus = getGodEffects(state).tierProdBonus;
@@ -242,7 +249,12 @@ function offlineCapHours(state) {
 function autoSpawnIntervalMs(state) {
   const reduction = Math.min(state.skills.gravity * 0.05, 0.4);
   const godMult = getGodEffects(state).spawnSpeedMult || 1;
-  return Math.max(MIN_AUTO_SPAWN_MS, BASE_AUTO_SPAWN_MS * (1 - reduction) * godMult);
+  // "Cadence Stellaire" run upgrade (RUN_UPGRADE_TREE, config.js) - a
+  // separate multiplier rather than folded into `reduction`'s own 0.4 cap,
+  // same pattern as godMult - MIN_AUTO_SPAWN_MS is still the real floor
+  // regardless of how many speed sources stack.
+  const runUpgradeMult = Math.max(0.4, 1 - (state.runUpgrades.cadence || 0) * 0.04);
+  return Math.max(MIN_AUTO_SPAWN_MS, BASE_AUTO_SPAWN_MS * (1 - reduction) * godMult * runUpgradeMult);
 }
 
 function emptyUnlockedIndices(state) {
