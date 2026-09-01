@@ -195,6 +195,7 @@ function handleLockedTap(idx) {
     if (result.ok) { Sfx.unlock(); toast("Case débloquée avec des Gems !"); }
     else { Sfx.error(); toast(result.reason === "funds" ? "Pas assez de Gems." : "Impossible de débloquer cette case."); }
     renderAll();
+    if (result.ok) renderCell(idx, { justUnlocked: true }); // layer the unlock-pop animation on top of the plain renderAll() paint
     saveState(state);
     return;
   }
@@ -296,7 +297,7 @@ function tryUnlock(idx) {
   checkAchievements(state);
   Sfx.unlock();
   toast("Case débloquée !");
-  renderCell(idx);
+  renderCell(idx, { justUnlocked: true });
   refreshLockedCellPrices(); // every other locked cell's price just changed too
   updateHeader();
   // Loris: "Case gratuite" fab should disappear once the grid is fully
@@ -570,7 +571,7 @@ async function onUnlockCellAd() {
   if (!ok) return;
   const result = grantFreeCellUnlock(state);
   if (result.ok) {
-    renderCell(result.idx);
+    renderCell(result.idx, { justUnlocked: true });
     refreshLockedCellPrices();
     Sfx.unlock();
     toast("🔓 Case débloquée gratuitement !");

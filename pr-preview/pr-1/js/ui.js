@@ -168,6 +168,11 @@ function renderCell(i, opts) {
 
   if (!tileData) {
     cell.classList.add("empty");
+    // One-shot "just unlocked" pop (Loris) - passed explicitly by the
+    // unlock call sites (tryUnlock/onUnlockCellAd in input.js) right after
+    // a locked cell becomes available, not on every re-render of an
+    // already-empty cell.
+    if (opts.justUnlocked) cell.classList.add("unlockPop");
     if (Game.selectedIdx === i) cell.classList.add("selectableEmpty");
     return;
   }

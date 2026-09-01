@@ -73,9 +73,15 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
   background:radial-gradient(circle at 35% 30%,#2a2452,#181433 70%);
   box-shadow:inset 0 1px 2px rgba(255,255,255,.06);
   border-radius:13px;width:38px;height:38px;font-size:16px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
   transition:transform .1s ease, border-color .15s ease;}
 .iconBtn:active{transform:scale(.92);border-color:#4a3f94;}
-.iconBtn img.uiIcon{width:66%;height:66%;object-fit:contain;}
+/* Loris: the restart icon looked off-center and a bit small - it wasn't
+   the artwork (verified near-perfectly centered in its own canvas), it
+   was .iconBtn having no flex/centering at all, so an <img> inside just
+   fell into normal inline flow instead of being centered like the
+   button's text content (☰/✕) roughly was by happenstance. */
+.iconBtn img.uiIcon{width:76%;height:76%;object-fit:contain;}
 
 .toolbar{display:flex;align-items:center;gap:8px;margin-bottom:8px;min-height:40px;flex-wrap:wrap;}
 .btn{appearance:none;border:1px solid #322a5e;border-radius:var(--radius);padding:10px 14px;font-size:14px;font-weight:700;
@@ -172,6 +178,17 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .cell.impactHero{z-index:20;}
 .tile.spawnIn{animation:spawnIn .25s ease;}
 @keyframes spawnIn{0%{transform:scale(0)}100%{transform:scale(1)}}
+
+/* Cell-unlock pop (Loris: "quand on débloque une case... une animation") -
+   a one-shot pop + gold glow flash on the newly-empty cell, echoing the
+   cadenas/stardust unlock theme. See opts.justUnlocked in renderCell()
+   (ui.js) - only fires on the actual unlock moment, not every re-render. */
+.cell.unlockPop{animation:unlockPop .6s cubic-bezier(.16,1,.3,1);}
+@keyframes unlockPop{
+  0%{transform:scale(.55);box-shadow:0 0 0 0 #fbbf2400;border-color:#fbbf24;}
+  45%{box-shadow:0 0 20px 6px #fbbf2488;}
+  100%{transform:scale(1);box-shadow:0 0 0 0 transparent;}
+}
 
 .ghostTile{position:fixed;z-index:50;pointer-events:none;width:56px;height:56px;border-radius:10px;
   display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.5);
