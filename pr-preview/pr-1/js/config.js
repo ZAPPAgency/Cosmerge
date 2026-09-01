@@ -99,11 +99,20 @@ const EMOJI_SETS = [
     ] },
   { id: "legumes", name: "Légumes de l'Espace", cost: 300, currency: "gems",
     tierSkin: [
-      { emoji: "🥕", name: "Carotte" }, { emoji: "🍅", name: "Tomate" },
-      { emoji: "🌽", name: "Maïs" }, { emoji: "🫑", name: "Poivron" },
-      { emoji: "🍆", name: "Aubergine" }, { emoji: "🥦", name: "Brocoli" },
-      { emoji: "🧅", name: "Oignon" }, { emoji: "🫛", name: "Petit Pois" },
-      { emoji: "🎃", name: "Citrouille Géante" }, { emoji: "🌻", name: "Fleur Cosmique" },
+      // iconScale bump: source art is a tall/narrow crop (133x300) - object-
+      // fit:contain sizes to the limiting dimension, so a narrow image reads
+      // visibly thinner/smaller than a squarer one at the same box size, same
+      // "non-square source art" correction as TIERS[6]/TIERS[7] (ui.js).
+      { emoji: "🥕", name: "Carotte", icon: "legume-1-carotte.png", iconScale: 1.3 },
+      { emoji: "🍅", name: "Tomate", icon: "legume-2-tomate.png" },
+      { emoji: "🌽", name: "Maïs", icon: "legume-3-mais.png" },
+      { emoji: "🫑", name: "Poivron", icon: "legume-4-poivron.png" },
+      { emoji: "🍆", name: "Aubergine", icon: "legume-5-aubergine.png" },
+      { emoji: "🥦", name: "Brocoli", icon: "legume-6-brocoli.png" },
+      { emoji: "🧅", name: "Oignon", icon: "legume-7-oignon.png" },
+      { emoji: "🫛", name: "Petit Pois", icon: "legume-8-pois.png" },
+      { emoji: "🎃", name: "Citrouille Géante", icon: "legume-9-citrouille.png" },
+      { emoji: "🌻", name: "Fleur Cosmique", icon: "legume-10-fleur.png" },
     ] },
 ];
 
