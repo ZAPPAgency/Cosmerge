@@ -1026,13 +1026,18 @@ function renderProgressionPanel() {
   // deliberate Stardust sink) before Erebus (épique, a deliberate hidden
   // challenge most players won't stumble into by accident).
   const godById = (id) => GODS.find(g => g.id === id);
-  const godStep = (id) => { const g = godById(id); return { emoji: g.emoji, done: isGodUnlocked(state, id), text: g.name, sub: g.unlock.label }; };
+  // Was `g.emoji` (plain glyph) for every god step here except Thanatos/
+  // Chronos, which got a generic stand-in icon (mort.png/sablier.png)
+  // before their own portraits existed - Loris: "tu dois changer les
+  // icones de dieux partout ou c'est necessaire... dans l'onglet
+  // progression c'est pas le cas". Now that every god in GODS has its own
+  // `icon` (assets/gods/), godPortraitHtml() gives each step its actual
+  // portrait, Thanatos/Chronos included - no more generic stand-ins.
   // .inlineTierIcon already has a dedicated size rule for .roadIconGlyph
   // context (see style.css) from the "Atteindre l'Univers" step below, so
   // these custom-icon steps reuse that same class rather than needing a
-  // new one. Only the steps Loris specifically flagged (Dieux/Big Bang/
-  // Thanatos/Succès) get a custom icon here - the other gods keep their
-  // plain emoji until their own portraits exist (a later, separate batch).
+  // new one.
+  const godStep = (id) => { const g = godById(id); return { emoji: godPortraitHtml(g, "inlineTierIcon"), done: isGodUnlocked(state, id), text: g.name, sub: g.unlock.label }; };
   const roadIcon = (src) => `<img class="inlineTierIcon" src="assets/ui/${src}" alt="">`;
   const steps = [];
   steps.push({ emoji: roadIcon("dieux.png"), done: !!state.gods.currentGodId, text: "Éveiller ton premier Dieu" });
@@ -1042,8 +1047,8 @@ function renderProgressionPanel() {
   steps.push(godStep("erebus"));
   steps.push({ emoji: tierInlineIconHtml(TIERS.length), done: state.lifetime.maxTierEver >= TIERS.length, text: "Atteindre l'Univers" });
   steps.push({ emoji: roadIcon("bigbang.png"), done: state.lifetime.bigBangCount >= 1, text: "Premier Big Bang" });
-  steps.push({ ...godStep("thanatos"), emoji: roadIcon("mort.png") });
-  steps.push({ ...godStep("chronos"), emoji: roadIcon("sablier.png") });
+  steps.push(godStep("thanatos"));
+  steps.push(godStep("chronos"));
   steps.push({ emoji: roadIcon("succes.png"), done: state.achievements.unlockedIds.length >= ACHIEVEMENTS.length,
     text: "Tous les succès", sub: `${state.achievements.unlockedIds.length}/${ACHIEVEMENTS.length}` });
 
