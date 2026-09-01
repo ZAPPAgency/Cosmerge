@@ -538,7 +538,10 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
   50%{box-shadow:0 0 10px 2px #8b5cf655;transform:scale(1.04);}
 }
 
-.purchaseCheckAnim{font-size:48px;line-height:1;margin:6px auto 10px;animation:cosmicBoxReveal .4s ease-out;}
+/* Was a plain ✅ emoji sized via font-size - now the valide.png crystal
+   checkmark, sized explicitly on the <img> itself instead. */
+.purchaseCheckAnim{line-height:1;margin:6px auto 10px;animation:cosmicBoxReveal .4s ease-out;}
+.purchaseCheckAnim img{width:56px;height:56px;object-fit:contain;}
 .cosmicBoxCard{text-align:center;}
 .cosmicBoxAnim{font-size:52px;line-height:1;margin:10px auto 16px;width:88px;height:88px;
   display:flex;align-items:center;justify-content:center;border-radius:20px;
