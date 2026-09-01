@@ -837,6 +837,7 @@ function wireEvents() {
   dom.fabWheel.addEventListener("click", openWheelModal);
   $("fabBoost").addEventListener("click", onWatchProdBoostAd);
   $("fabUnlockCellAd").addEventListener("click", onUnlockCellAd);
+  dom.fabSwapCells.addEventListener("click", () => onBuyGemItem("swapCells"));
   $("fabCurrentGod").addEventListener("click", () => openPanel("gods"));
   $("fabRestart").addEventListener("click", openRestartModal);
   $("fabGemsAd").addEventListener("click", onWatchGemsAd);

@@ -14,6 +14,7 @@ const dom = {
   invokeBtnStardust: $("invokeBtnStardust"),
   invokeBtnGems: $("invokeBtnGems"),
   invokeCost: $("invokeCost"),
+  fabSwapCells: $("fabSwapCells"),
   bigBangBtn: $("bigBangBtn"),
   selectionHint: $("selectionHint"),
   toastContainer: $("toastContainer"),
@@ -296,10 +297,14 @@ function updateHeader() {
   const costStr = formatNumber(cost);
   if (costStr !== lastHeaderRender.cost) { dom.invokeCost.textContent = costStr; lastHeaderRender.cost = costStr; }
   if (!lastHeaderRender.gemsCostSet) { $("invokeCostGems").textContent = GEMS_INVOKE_COST; lastHeaderRender.gemsCostSet = true; }
+  if (!lastHeaderRender.swapCostSet) { $("swapCellsCost").textContent = SHOP_GEM_ITEMS.find(i => i.id === "swapCells").cost; lastHeaderRender.swapCostSet = true; }
   const disabled = state.stardust < cost;
   if (disabled !== lastHeaderRender.disabled) { dom.invokeBtnStardust.classList.toggle("disabled", disabled); lastHeaderRender.disabled = disabled; }
   const gemsDisabled = state.gems < GEMS_INVOKE_COST;
   if (gemsDisabled !== lastHeaderRender.gemsDisabled) { dom.invokeBtnGems.classList.toggle("disabled", gemsDisabled); lastHeaderRender.gemsDisabled = gemsDisabled; }
+  const swapCost = SHOP_GEM_ITEMS.find(i => i.id === "swapCells").cost;
+  const swapDisabled = state.gems < swapCost || Game.swapArmed;
+  if (swapDisabled !== lastHeaderRender.swapDisabled) { dom.fabSwapCells.classList.toggle("disabled", swapDisabled); lastHeaderRender.swapDisabled = swapDisabled; }
 
   const canBB = hasUniverseTile(state);
   if (canBB !== lastHeaderRender.canBB) { dom.bigBangBtn.classList.toggle("hidden", !canBB); lastHeaderRender.canBB = canBB; }
