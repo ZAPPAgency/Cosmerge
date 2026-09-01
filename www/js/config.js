@@ -130,6 +130,42 @@ function skillCost(branchKey, nextLevel) {
   return Math.ceil(b.base * Math.pow(b.growth, nextLevel - 1));
 }
 
+// ---- Run upgrades (temporary, spent with Stardust, reset every Big Bang)
+// ----
+// Loris: wanted a real reason to think about a run's Stardust beyond just
+// tapping Invoquer/unlocking cells on autopilot - "un systeme
+// d'investissement de poussiere d'etoile pour des ameliorations avec
+// niveau qui sont propres a la grille en cours". Distinct from SKILL_TREE
+// above in every way that matters: priced in Stardust (not Cosmic Energy),
+// levels live in state.runUpgrades (not state.skills), and reset to 0 at
+// every Big Bang (performBigBang, economy.js) instead of surviving it -
+// same "this cycle only" contract as state.moonMergesThisRun/
+// usedShortcutThisRun elsewhere. This also gives leftover Stardust sitting
+// right before a Big Bang somewhere useful to go, instead of just being
+// discarded by the reset.
+// - catalyst: state.js productionMultiplier()
+// - resonance: economy.js maybeTriggerResonance(), rolled after every
+//   single-cell unlock (tryUnlock/grantFreeCellUnlock/skipCell - NOT the
+//   starter pack's bulk 3-cell IAP grant, that's a one-time perk rather
+//   than "the unlock action" this is meant to reward)
+// - surge: economy.js previewBigBangGain() (also what performBigBang()
+//   actually grants, since it calls previewBigBangGain() internally) -
+//   named "surge" rather than "echo" specifically to avoid colliding with
+//   SKILL_TREE's own unrelated "Écho Temporel" (offline cap) branch
+// - cadence: state.js autoSpawnIntervalMs(), stacks with the permanent
+//   Gravité Rapide skill and any god spawnSpeedMult as its own independent
+//   multiplier
+const RUN_UPGRADE_TREE = {
+  catalyst: { name: "Catalyseur Stellaire", desc: "+4% production de Stardust de chaque case / niveau", maxLevel: 15, base: 30, growth: 1.35 },
+  resonance: { name: "Résonance des Cases", desc: "+3% de chance de débloquer une case supplémentaire gratuite à chaque déblocage / niveau", maxLevel: 10, base: 60, growth: 1.4 },
+  surge: { name: "Surcharge du Big Bang", desc: "+5% d'Énergie Cosmique gagnée au prochain Big Bang / niveau", maxLevel: 10, base: 80, growth: 1.45 },
+  cadence: { name: "Cadence Stellaire", desc: "-4% cooldown de spawn auto / niveau (plancher 3s, cumulable avec Gravité Rapide)", maxLevel: 8, base: 40, growth: 1.35 },
+};
+function runUpgradeCost(branchKey, nextLevel) {
+  const b = RUN_UPGRADE_TREE[branchKey];
+  return Math.ceil(b.base * Math.pow(b.growth, nextLevel - 1));
+}
+
 // ---- Gods of the Cosmos ----
 // One god is equipped per run (chosen the first time you reach
 // MOON_MERGES_TO_CHOOSE_GOD, changeable anytime but only takes effect on the

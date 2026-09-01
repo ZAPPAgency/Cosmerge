@@ -4,8 +4,16 @@
 function hasUniverseTile(state) {
   return state.grid.some(t => t && t.tier === TIERS.length);
 }
+// "Surcharge du Big Bang" run upgrade (RUN_UPGRADE_TREE, config.js) applies
+// here rather than inside the pure bigBangGain() formula (config.js) so
+// that stays a plain function of (stardust, tier) with no state coupling -
+// this is also what performBigBang() below actually calls to grant the
+// real gain, so the number shown in the pre-Big-Bang preview (Loris:
+// openBigBangModal, ui.js) is always exactly what gets paid out.
 function previewBigBangGain(state) {
-  return bigBangGain(state.runStardustEarned, state.maxTierThisRun);
+  const base = bigBangGain(state.runStardustEarned, state.maxTierThisRun);
+  const surgeMult = 1 + (state.runUpgrades.surge || 0) * 0.05;
+  return Math.round(base * surgeMult);
 }
 
 function performBigBang(state) {
@@ -32,6 +40,10 @@ function performBigBang(state) {
   state.manualSpawnCount = 0;
   state.extraUnlockedCount = 0;
   state.runStartedAt = Date.now();
+  // Run upgrades (RUN_UPGRADE_TREE) are scoped to the grid that just ended -
+  // reset alongside every other per-run field above, same lifecycle as
+  // moonMergesThisRun/usedShortcutThisRun.
+  for (const key in state.runUpgrades) state.runUpgrades[key] = 0;
 
   checkAchievements(state);
   return gain;
@@ -58,6 +70,7 @@ function restartRun(state) {
   state.manualSpawnCount = 0;
   state.extraUnlockedCount = 0;
   state.runStartedAt = Date.now();
+  for (const key in state.runUpgrades) state.runUpgrades[key] = 0;
 }
 
 function buySkill(state, key) {
@@ -69,6 +82,41 @@ function buySkill(state, key) {
   state.cosmicEnergy -= cost;
   state.skills[key] += 1;
   return { ok: true, cost, newLevel: state.skills[key] };
+}
+
+// Run-scoped upgrade tree (RUN_UPGRADE_TREE, config.js), Stardust-priced,
+// mirrors buySkill() above but spends state.stardust instead of
+// state.cosmicEnergy and resets to 0 on every Big Bang/restart (see the
+// resets in performBigBang/restartRun above).
+function buyRunUpgrade(state, key) {
+  const branch = RUN_UPGRADE_TREE[key];
+  const level = state.runUpgrades[key];
+  if (level >= branch.maxLevel) return { ok: false, reason: "max" };
+  const cost = runUpgradeCost(key, level + 1);
+  if (state.stardust < cost) return { ok: false, reason: "funds", cost };
+  state.stardust -= cost;
+  state.runUpgrades[key] += 1;
+  return { ok: true, cost, newLevel: state.runUpgrades[key] };
+}
+
+// "Résonance" run upgrade: each level adds a flat chance that unlocking a
+// cell (by tap, ad, or Gems shortcut) resonates and frees one extra random
+// locked cell for free. Called from the 3 real unlock paths in input.js
+// (tryUnlock, onUnlockCellAd, the skipCell gem-shop purchase) - NOT from the
+// starter-pack bulk 3-cell grant, which is a store-bought convenience, not
+// gameplay progress. Returns the bonus cell's index, or null if it didn't
+// trigger / there was nothing left to unlock.
+function maybeTriggerResonance(state) {
+  const level = state.runUpgrades.resonance || 0;
+  if (level <= 0) return null;
+  if (Math.random() >= level * 0.03) return null;
+  const locked = [];
+  for (let i = 0; i < TOTAL; i++) if (!state.unlocked[i]) locked.push(i);
+  if (locked.length === 0) return null;
+  const idx = locked[Math.floor(Math.random() * locked.length)];
+  state.unlocked[idx] = true;
+  state.extraUnlockedCount += 1;
+  return idx;
 }
 
 function buyGemShopItem(state, itemId, opts) {

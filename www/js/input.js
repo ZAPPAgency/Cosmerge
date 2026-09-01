@@ -195,7 +195,10 @@ function handleLockedTap(idx) {
     if (result.ok) { Sfx.unlock(); toast("Case débloquée avec des Gems !"); }
     else { Sfx.error(); toast(result.reason === "funds" ? "Pas assez de Gems." : "Impossible de débloquer cette case."); }
     renderAll();
-    if (result.ok) renderCell(idx, { justUnlocked: true }); // layer the unlock-pop animation on top of the plain renderAll() paint
+    if (result.ok) {
+      renderCell(idx, { justUnlocked: true }); // layer the unlock-pop animation on top of the plain renderAll() paint
+      triggerResonanceIfLucky(state);
+    }
     saveState(state);
     return;
   }
@@ -285,6 +288,23 @@ function grantTapBonus(idx) {
   return true;
 }
 
+// "Résonance des Cases" run upgrade (RUN_UPGRADE_TREE, config.js) - rolled
+// after every real unlock (tryUnlock, onUnlockCellAd, the skipCell Gems
+// shortcut), never after the starter-pack's one-time bulk grant. Shared
+// here so all 3 call sites show the same toast/animation/haptic when it
+// hits, and so the bonus cell counts toward quests/achievements exactly
+// like a normal unlock would.
+function triggerResonanceIfLucky(state) {
+  const idx = maybeTriggerResonance(state);
+  if (idx === null) return;
+  updateQuestProgress(state, "unlockCells", 1);
+  checkAchievements(state);
+  Sfx.unlock();
+  toast("Résonance ! Une case bonus s'est débloquée ✨");
+  renderCell(idx, { justUnlocked: true });
+  updateFabs();
+}
+
 function tryUnlock(idx) {
   const state = Game.state;
   if (state.unlocked[idx]) return;
@@ -298,6 +318,7 @@ function tryUnlock(idx) {
   Sfx.unlock();
   toast("Case débloquée !");
   renderCell(idx, { justUnlocked: true });
+  triggerResonanceIfLucky(state);
   refreshLockedCellPrices(); // every other locked cell's price just changed too
   updateHeader();
   // Loris: "Case gratuite" fab should disappear once the grid is fully
@@ -593,6 +614,7 @@ async function onUnlockCellAd() {
   const result = grantFreeCellUnlock(state);
   if (result.ok) {
     renderCell(result.idx, { justUnlocked: true });
+    triggerResonanceIfLucky(state);
     refreshLockedCellPrices();
     Sfx.unlock();
     toast("🔓 Case débloquée gratuitement !");
@@ -778,6 +800,15 @@ function onBuySkill(key) {
   if (!result.ok) { Sfx.error(); toast(result.reason === "max" ? "Niveau maximum atteint." : "Pas assez d'Énergie Cosmique."); return; }
   Sfx.purchase();
   toast(SKILL_TREE[key].name + " amélioré !");
+  refreshCurrentPanel();
+  updateHeader();
+  saveState(Game.state);
+}
+function onBuyRunUpgrade(key) {
+  const result = buyRunUpgrade(Game.state, key);
+  if (!result.ok) { Sfx.error(); toast(result.reason === "max" ? "Niveau maximum atteint." : "Pas assez de Stardust."); return; }
+  Sfx.purchase();
+  toast(RUN_UPGRADE_TREE[key].name + " amélioré !");
   refreshCurrentPanel();
   updateHeader();
   saveState(Game.state);
