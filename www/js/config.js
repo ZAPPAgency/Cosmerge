@@ -413,12 +413,20 @@ const IAP_CATALOG = [
 
 // ---- Formulas ----
 function tierProd(tier) { return 0.5 * Math.pow(2, tier - 1); }
-// Growth bumped 1.5 -> 1.65 (Loris: "on arrive trop vite à la dernière
-// ligne") - barely changes the first few unlocks (n small), but compounds
-// into a much steeper wall by the last row: at n=19 (the 20th and final
+// Growth bumped 1.5 -> 1.65 -> 1.8, in two separate passes. First pass
+// (Loris: "on arrive trop vite à la dernière ligne") predates the tap-bonus
+// "clicker" rework in this same branch (grantTapBonus, input.js -
+// TAP_COOLDOWN_MS dropped 1000ms -> 150ms so chaining taps across many
+// cells reads as a real clicker). That rework meaningfully raises how much
+// Stardust an active player can generate above pure idle production, which
+// ate into the 1.65 pass's own point - Loris: "le déblocage des cases...
+// un peu trop rapide étant donné qu'on a un cliqueur maintenant". Second
+// pass barely moves the first few unlocks (n small - a new player's very
+// first purchases are what most needs to stay cheap/frictionless) but
+// compounds hard by the last row: at n=19 (the 20th and final
 // manually-unlocked cell, TOTAL 30 minus the 10 INITIAL_UNLOCKED), cost
-// goes from ~111K Stardust to ~677K.
-function unlockCost(n) { return Math.round(50 * Math.pow(1.65, n)); }
+// goes 1.5->111K, 1.65->677K, 1.8->~3.8M Stardust.
+function unlockCost(n) { return Math.round(50 * Math.pow(1.8, n)); }
 function invokeCost(k) { return Math.round(15 * Math.pow(1.12, k)); }
 
 function bigBangGain(stardustEarnedThisRun, maxTierReached) {
