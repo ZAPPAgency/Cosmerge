@@ -236,20 +236,30 @@ function renderCell(i, opts) {
 // see/pick between the two modes right there). `onChange` re-renders
 // whichever container the toggle lives in, so the effect is visible
 // immediately without closing anything.
-function renderIconStyleToggle(onChange) {
+// `set` (optional): which set's tier-1 to demonstrate the two styles with -
+// defaults to whatever's actually equipped. Bug (Loris: "il y a encore la
+// météorite emoji et la météorite illustrée... dans le mode gestion de
+// skin et dans l'aperçu et dans la boutique"): this always showed the
+// classic Météorite regardless of context, so previewing Fruits/Légumes
+// (via "Aperçu", reachable from both the Boutique and the skin manager -
+// same modal, same bug) still demonstrated the toggle with an unrelated
+// meteorite instead of that set's own tier 1. openSkinPreviewModal now
+// passes the set actually being previewed; openSkinManagerModal (no one
+// specific set on screen there) still falls back to whatever's equipped.
+function renderIconStyleToggle(onChange, set) {
   const state = Game.state;
   const wrap = el("div", "iconStyleToggle");
-  // Each button shows Météorite (tier 1) rendered in the style it picks -
-  // the plain emoji glyph vs its actual artwork - so the toggle
-  // illustrates its own two options directly, instead of generic
-  // unrelated icons (Loris). Uses TIERS[0] directly rather than the
-  // currently-equipped set, since this is demonstrating the STYLE choice
-  // itself, not any particular category.
-  const meteorite = TIERS[0];
+  const s = set || equippedEmojiSetDef();
+  const skin = (s.tierSkin && s.tierSkin[0]) || TIERS[0];
+  // Falls back to the classic meteorite's own art if this set has none yet
+  // for tier 1 (e.g. Légumes before its icons exist) - still a real
+  // "Illustré" example, just not from this specific set, better than a
+  // broken image.
+  const artSrc = skin.icon || TIERS[0].icon;
   const emojiBtn = el("button", "btn" + (state.iconStyle === "emoji" ? " primary" : " ghost"),
-    `<span class="emoji">${meteorite.emoji}</span> Emoji`);
+    `<span class="emoji">${skin.emoji}</span> Emoji`);
   const artBtn = el("button", "btn" + (state.iconStyle !== "emoji" ? " primary" : " ghost"),
-    `<img class="inlineCurrencyIcon" src="assets/tiles/${meteorite.icon}" alt=""> Illustré`);
+    `<img class="inlineCurrencyIcon" src="assets/tiles/${artSrc}" alt=""> Illustré`);
   emojiBtn.addEventListener("click", () => { onSetIconStyle("emoji"); onChange(); });
   artBtn.addEventListener("click", () => { onSetIconStyle("illustrated"); onChange(); });
   wrap.appendChild(emojiBtn);
@@ -263,7 +273,7 @@ function openSkinPreviewModal(setId) {
   $("skinPreviewTitle").textContent = set.name;
   const toggleHost = $("skinPreviewToggle");
   toggleHost.innerHTML = "";
-  toggleHost.appendChild(renderIconStyleToggle(() => openSkinPreviewModal(setId)));
+  toggleHost.appendChild(renderIconStyleToggle(() => openSkinPreviewModal(setId), set));
   const grid = $("skinPreviewGrid");
   grid.innerHTML = "";
   for (let t = 1; t <= TIERS.length; t++) {
