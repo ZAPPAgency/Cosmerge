@@ -57,6 +57,12 @@ function requestStorageAccessBestEffort() {
     lastMergeAt: 0,
     pendingOfflineGain: null,
     bigBangPromptShown: hasUniverseTile(state), // don't re-prompt on reload if a Universe tile already existed last save
+    // Which fabs have already played their one-shot discovery pop
+    // animation this session (revealFab/FAB_DISCOVERY_FUSIONS, ui.js) -
+    // intentionally in-memory only, not saved: a returning player whose
+    // fusions count already clears every threshold just sees them all pop
+    // in once on this load, rather than the animation never playing again.
+    fabRevealed: new Set(),
   });
 
   buildStars();

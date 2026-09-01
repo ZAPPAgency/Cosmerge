@@ -37,7 +37,7 @@
     <meta name="apple-mobile-web-app-title" content="Godspark" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#0a0620" />
-    <link rel="stylesheet" href="css/style.css?v=83" />
+    <link rel="stylesheet" href="css/style.css?v=84" />
   </head>
   <body>
     <div id="starsBg"></div>
@@ -57,6 +57,14 @@
           /></span>
           <span class="value" id="gemsValue">0</span>
         </div>
+        <!-- Loris: "le bouton boutique [...] pourrait être en réalité dans
+         la barre tout en haut a gauche du bouton recommencer" - moved out
+         of the fab stack below into the topbar itself, icon-only like
+         fabRestart/menuBtn (no room for a label up here). Same id, same
+         click handler (wireEvents(), input.js) - only the markup moved. -->
+        <button class="iconBtn" id="fabShop" aria-label="Boutique">
+          <img class="uiIcon" src="assets/ui/boutique.png" alt="" />
+        </button>
         <button
           class="iconBtn"
           id="fabRestart"
@@ -79,12 +87,13 @@
             ><img class="uiIcon" src="assets/ui/dieux.png" alt=""
           /></span><span class="fabLabel" id="fabGodName">-</span>
         </button>
-        <button class="fab" id="fabShop">
-          <span class="fabIcon"
-            ><img class="uiIcon" src="assets/ui/boutique.png" alt=""
-          /></span><span class="fabLabel">Boutique</span>
-        </button>
-        <button class="fab" id="fabRunUpgrades">
+        <!-- Loris: fabs below should "apparaître petit à petit lors des
+         premières fusions" instead of all being visible on a fresh save -
+         each starts hidden here and updateFabs() (ui.js) reveals it (with
+         a one-shot pop animation, see .fabReveal in style.css) once
+         state.lifetime.fusions clears its own discovery threshold
+         (FAB_DISCOVERY_FUSIONS, ui.js). -->
+        <button class="fab hidden" id="fabRunUpgrades">
           <span class="fabIcon"
             ><img class="uiIcon" src="assets/ui/investir.png" alt=""
           /></span><span class="fabLabel">Alchimie</span>
@@ -99,25 +108,20 @@
             ><img class="uiIcon" src="assets/ui/roue.png" alt=""
           /></span><span class="fabLabel">Roue</span>
         </button>
-        <button class="fab" id="fabUnlockCellAd">
+        <button class="fab hidden" id="fabUnlockCellAd">
           <span class="fabIcon"
             ><img class="uiIcon" src="assets/ui/case_gratuite.png" alt=""
           /></span><span class="fabLabel">Case gratuite</span>
         </button>
-        <button class="fab featured" id="fabBoost">
+        <button class="fab featured hidden" id="fabBoost">
           <span class="fabIcon"
             ><img class="uiIcon" src="assets/ui/boost.png" alt=""
           /></span><span class="fabLabel" id="fabBoostLabel">Boost x2</span>
         </button>
-        <button class="fab featured" id="fabGemsAd">
+        <button class="fab featured hidden" id="fabGemsAd">
           <span class="fabIcon"
             ><img class="uiIcon" src="assets/ui/gems_ad.png" alt=""
           /></span><span class="fabLabel" id="fabGemsAdLabel">Pub</span>
-        </button>
-        <button class="fab muted" id="fabSkins" aria-label="Gérer les skins">
-          <span class="fabIcon"
-            ><img class="uiIcon" src="assets/ui/palette.png" alt=""
-          /></span>
         </button>
       </div>
 
@@ -143,9 +147,18 @@
          wireEvents() (input.js). -->
         <div class="swapSection">
           <div class="invokeSectionLabel">Échanger</div>
-          <button class="btn swapCellsBtn" id="fabSwapCells" aria-label="Échanger deux cases">
-            <img class="inlineCurrencyIcon" src="assets/ui/gems_ad.png" alt="Gems" /><span id="swapCellsCost">50</span>
-          </button>
+          <div class="invokeSectionRow">
+            <button class="btn swapCellsBtn" id="fabSwapCells" aria-label="Échanger deux cases">
+              <img class="inlineCurrencyIcon" src="assets/ui/gems_ad.png" alt="Gems" /><span id="swapCellsCost">50</span>
+            </button>
+            <!-- Loris: "le bouton de gestion des skins devrait se trouver a
+             droite du bouton échanger" - moved out of the fab stack, same
+             id/click handler (wireEvents(), input.js), now a plain iconBtn
+             matching fabShop/fabRestart's style. -->
+            <button class="iconBtn" id="fabSkins" aria-label="Gérer les skins">
+              <img class="uiIcon" src="assets/ui/palette.png" alt="" />
+            </button>
+          </div>
         </div>
         <button class="btn bigbang hidden" id="bigBangBtn">
           <img class="inlineCurrencyIcon" src="assets/ui/bigbang.png" alt="" />
@@ -575,16 +588,16 @@
       </div>
     </div>
 
-    <script src="js/config.js?v=83"></script>
-    <script src="js/state.js?v=83"></script>
-    <script src="js/audio.js?v=83"></script>
-    <script src="js/services.js?v=83"></script>
-    <script src="js/economy.js?v=83"></script>
-    <script src="js/gods.js?v=83"></script>
-    <script src="js/retention.js?v=83"></script>
-    <script src="js/ui.js?v=83"></script>
-    <script src="js/input.js?v=83"></script>
-    <script src="js/main.js?v=83"></script>
+    <script src="js/config.js?v=84"></script>
+    <script src="js/state.js?v=84"></script>
+    <script src="js/audio.js?v=84"></script>
+    <script src="js/services.js?v=84"></script>
+    <script src="js/economy.js?v=84"></script>
+    <script src="js/gods.js?v=84"></script>
+    <script src="js/retention.js?v=84"></script>
+    <script src="js/ui.js?v=84"></script>
+    <script src="js/input.js?v=84"></script>
+    <script src="js/main.js?v=84"></script>
     <script type="module" src="js/native-bridge.js"></script>
   </body>
 </html>
