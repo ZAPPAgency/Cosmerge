@@ -37,7 +37,7 @@
     <meta name="apple-mobile-web-app-title" content="Godspark" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#0a0620" />
-    <link rel="stylesheet" href="css/style.css?v=58" />
+    <link rel="stylesheet" href="css/style.css?v=60" />
   </head>
   <body>
     <div id="starsBg"></div>
@@ -326,7 +326,10 @@
     <!-- Voluntary restart (no Universe tile required, unlike Big Bang) -->
     <div class="modalOverlay hidden" id="restartModal">
       <div class="modalCard">
-        <h3>🔄 Recommencer la partie ?</h3>
+        <h3>
+          <img class="inlineCurrencyIcon" src="assets/ui/recommencer.png" alt="" />
+          Recommencer la partie ?
+        </h3>
         <p>
           Tu vas perdre la progression de cette partie : la grille et le
           Stardust actuels repartiront de zéro.
@@ -418,7 +421,10 @@
     <div class="modalOverlay hidden" id="skinManagerModal">
       <div class="modalCard">
         <div class="rowBetween">
-          <h3>🎨 Skins</h3>
+          <h3>
+            <img class="inlineCurrencyIcon" src="assets/ui/palette.png" alt="" />
+            Skins
+          </h3>
           <button class="iconBtn" id="skinManagerClose">✕</button>
         </div>
         <div id="skinManagerList" class="skinManagerList"></div>
@@ -542,16 +548,16 @@
       </div>
     </div>
 
-    <script src="js/config.js?v=58"></script>
-    <script src="js/state.js?v=58"></script>
-    <script src="js/audio.js?v=58"></script>
-    <script src="js/services.js?v=58"></script>
-    <script src="js/economy.js?v=58"></script>
-    <script src="js/gods.js?v=58"></script>
-    <script src="js/retention.js?v=58"></script>
-    <script src="js/ui.js?v=58"></script>
-    <script src="js/input.js?v=58"></script>
-    <script src="js/main.js?v=58"></script>
+    <script src="js/config.js?v=60"></script>
+    <script src="js/state.js?v=60"></script>
+    <script src="js/audio.js?v=60"></script>
+    <script src="js/services.js?v=60"></script>
+    <script src="js/economy.js?v=60"></script>
+    <script src="js/gods.js?v=60"></script>
+    <script src="js/retention.js?v=60"></script>
+    <script src="js/ui.js?v=60"></script>
+    <script src="js/input.js?v=60"></script>
+    <script src="js/main.js?v=60"></script>
     <script type="module" src="js/native-bridge.js"></script>
   </body>
 </html>
