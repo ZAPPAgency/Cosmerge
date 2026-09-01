@@ -80,13 +80,22 @@ const EMOJI_SETS = [
   { id: "classic", name: "Cases classiques", cost: 0, currency: "gems" },
   // Tier 1 used to be Cerise/Petit Pois - both unrecognizable at tile size
   // (tiny red blob / tiny green blob), swapped for something unmistakable.
+  // `icon` (all 10): custom AI-generated artwork (Midjourney, background
+  // removed), assets/tiles/ - same field tierIconNode() (ui.js) already
+  // reads off TIERS[], just per-tierSkin-entry here instead. Falls back to
+  // the plain emoji while state.iconStyle === "emoji", same as classic.
   { id: "fruits", name: "Fruits du Cosmos", cost: 300, currency: "gems",
     tierSkin: [
-      { emoji: "🍓", name: "Fraise" }, { emoji: "🍒", name: "Cerise" },
-      { emoji: "🍇", name: "Raisin" }, { emoji: "🍊", name: "Orange" },
-      { emoji: "🍎", name: "Pomme" }, { emoji: "🍍", name: "Ananas" },
-      { emoji: "🍉", name: "Pastèque" }, { emoji: "🥥", name: "Noix de Coco" },
-      { emoji: "🍈", name: "Melon Géant" }, { emoji: "🍯", name: "Nectar Cosmique" },
+      { emoji: "🍓", name: "Fraise", icon: "fruit-1-fraise.png" },
+      { emoji: "🍒", name: "Cerise", icon: "fruit-2-cerise.png" },
+      { emoji: "🍇", name: "Raisin", icon: "fruit-3-raisin.png" },
+      { emoji: "🍊", name: "Orange", icon: "fruit-4-orange.png" },
+      { emoji: "🍎", name: "Pomme", icon: "fruit-5-pomme.png" },
+      { emoji: "🍍", name: "Ananas", icon: "fruit-6-ananas.png" },
+      { emoji: "🍉", name: "Pastèque", icon: "fruit-7-pasteque.png" },
+      { emoji: "🥥", name: "Noix de Coco", icon: "fruit-8-coco.png" },
+      { emoji: "🍈", name: "Melon Géant", icon: "fruit-9-melon.png" },
+      { emoji: "🍯", name: "Nectar Cosmique", icon: "fruit-10-nectar.png" },
     ] },
   { id: "legumes", name: "Légumes de l'Espace", cost: 300, currency: "gems",
     tierSkin: [
