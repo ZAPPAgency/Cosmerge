@@ -515,28 +515,49 @@ function scheduleWheelTicks(totalMs) {
   }
   tick();
 }
-// Bug: "la roue ne tourne pas [...] pas le meme effet visuel" when spinning
-// a second time (free spin, then immediately the ad-bonus spin) without
-// closing the modal in between. Root cause: this used to set an ABSOLUTE
-// target (`rotate(1440-1800deg)`) every time, but the wheel's rotation
-// persists across spins within the same modal session (only reset to 0deg
-// on openWheelModal) - so the 2nd spin's fixed 1440-1800 target could
-// easily be behind (or barely past) wherever the 1st spin left it, making
-// the wheel barely move. Now tracks a running total and always adds a
-// fresh 1440-1800deg turn ON TOP of the current rotation, so every spin
-// visibly spins forward regardless of how many happened before it.
+// Bug (Loris): "je suis tombé sur le rouge mais j'ai pas eu la bonne
+// récompense". Root cause - this used to pick a completely RANDOM landing
+// angle (1440 + random 360deg) with zero connection to which prize
+// spinWheel() actually awarded a few lines below in the caller's callback -
+// two independent random rolls, so the wheel visually landing on a given
+// color had nothing to do with the reward you actually got, most of the
+// time. Fixed by determining the prize FIRST (onWheelSpinFree/Ad below now
+// call spinWheel() before starting the animation, not after), then
+// computing the exact rotation that lands the pointer (fixed at the top,
+// 0deg) on THAT prize's own slice - see wheelSegmentBounds() (retention.js,
+// shared with buildWheelSegments' rendering so the two can never disagree
+// on where a slice actually is). A small random jitter within the slice
+// (60% of its width, centered) keeps every spin looking a little different
+// without ever landing close enough to a boundary to read as the wrong
+// color.
+//
+// Also still fixes the earlier bug: "la roue ne tourne pas [...] pas le
+// meme effet visuel" when spinning a second time (free spin, then
+// immediately the ad-bonus spin) without closing the modal - the wheel's
+// rotation persists across spins within the same modal session (only reset
+// to 0deg on openWheelModal), so a naive fixed target could land behind (or
+// barely past) wherever the previous spin left it. Still tracks a running
+// total and always adds a forward delta on top of the current rotation.
 let wheelRotation = 0;
-function spinVisual(cb) {
+function spinVisual(prizeIndex, cb) {
   const wheel = $("wheelEl");
-  wheelRotation += 1440 + Math.floor(Math.random() * 360);
+  const { startDeg, endDeg } = wheelSegmentBounds(prizeIndex);
+  const span = endDeg - startDeg;
+  const jitter = (Math.random() - 0.5) * span * 0.6;
+  const midDeg = (startDeg + endDeg) / 2 + jitter;
+  const desiredMod = (360 - midDeg + 360) % 360; // wheelRotation mod 360 that puts this slice's midDeg under the fixed top pointer
+  const currentMod = ((wheelRotation % 360) + 360) % 360;
+  const forwardDelta = (desiredMod - currentMod + 360) % 360; // shortest forward-only rotation from here to the target orientation
+  const extraSpins = (4 + Math.floor(Math.random() * 2)) * 360; // a few full turns on top, purely visual
+  wheelRotation += extraSpins + forwardDelta;
   wheel.style.transform = `rotate(${wheelRotation}deg)`;
   scheduleWheelTicks(WHEEL_SPIN_MS);
   setTimeout(cb, WHEEL_SPIN_MS);
 }
 function onWheelSpinFree() {
   $("wheelSpinFree").disabled = true; $("wheelSpinAd").disabled = true;
-  spinVisual(() => {
-    const prize = spinWheel(Game.state, false);
+  const prize = spinWheel(Game.state, false);
+  spinVisual(prize ? WHEEL_PRIZES.indexOf(prize) : 0, () => {
     $("wheelResult").innerHTML = prize ? `Gagné : ${withCurrencyIcons(prize.label)}` : "Déjà utilisé aujourd'hui.";
     Sfx.wheelWin();
     refreshWheelButtons();
@@ -548,8 +569,8 @@ async function onWheelSpinAd() {
   $("wheelSpinFree").disabled = true; $("wheelSpinAd").disabled = true;
   const ok = await watchRewardedAd(Game.state, "wheel_bonus");
   if (!ok) { refreshWheelButtons(); return; }
-  spinVisual(() => {
-    const prize = spinWheel(Game.state, true);
+  const prize = spinWheel(Game.state, true);
+  spinVisual(prize ? WHEEL_PRIZES.indexOf(prize) : 0, () => {
     $("wheelResult").innerHTML = prize ? `Gagné : ${withCurrencyIcons(prize.label)}` : "Déjà utilisé aujourd'hui.";
     Sfx.wheelWin();
     refreshWheelButtons();

@@ -254,6 +254,21 @@ const WHEEL_PRIZES = [
   { type: "cosmicEnergy", amount: 1, weight: 5, label: "1 ⚡" },
   { type: "stardust", amount: 1500, weight: 5, label: "1500 ✨" },
 ];
+// Cumulative angular bounds (degrees, matching buildWheelSegments'
+// conic-gradient convention: 0deg = 12 o'clock, clockwise) for WHEEL_PRIZES[
+// index] - shared by the wheel's rendering (buildWheelSegments, ui.js) and
+// its landing-spin math (spinVisual, input.js), which used to each compute
+// this independently, or - before this fix - not at all in spinVisual's
+// case (see the bug note there). One shared source of the real boundaries
+// means the two can't drift apart.
+function wheelSegmentBounds(index) {
+  const total = WHEEL_PRIZES.reduce((s, p) => s + p.weight, 0);
+  let acc = 0;
+  for (let i = 0; i < index; i++) acc += WHEEL_PRIZES[i].weight;
+  const startDeg = (acc / total) * 360;
+  const endDeg = ((acc + WHEEL_PRIZES[index].weight) / total) * 360;
+  return { startDeg, endDeg };
+}
 function ensureDailySpin(state) {
   if (state.dailySpin.date !== todayStr()) {
     state.dailySpin = { date: todayStr(), freeUsed: false, bonusUsed: false };

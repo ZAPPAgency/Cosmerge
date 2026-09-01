@@ -1536,15 +1536,11 @@ function buildWheelSegments() {
   const legendEl = $("wheelLegend");
   wheelEl.innerHTML = "";
   legendEl.innerHTML = "";
-  const total = WHEEL_PRIZES.reduce((s, p) => s + p.weight, 0);
   const colors = ["#3730a3", "#7c3aed", "#2563eb", "#0891b2", "#be185d", "#f59e0b", "#dc2626"];
-  let acc = 0;
   const stops = [];
   const boundaries = [];
   WHEEL_PRIZES.forEach((p, i) => {
-    const startDeg = (acc / total) * 360;
-    acc += p.weight;
-    const endDeg = (acc / total) * 360;
+    const { startDeg, endDeg } = wheelSegmentBounds(i);
     boundaries.push(startDeg);
     const color = colors[i % colors.length];
     stops.push(`${color} ${startDeg}deg ${endDeg}deg`);
