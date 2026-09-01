@@ -354,7 +354,19 @@ function updateFabs() {
   const god = state.gods.currentGodId ? getGod(state.gods.currentGodId) : null;
   $("fabCurrentGod").classList.toggle("hidden", !god);
   if (god) {
-    $("fabGodEmoji").textContent = god.emoji;
+    // Bug (Loris: "l'icone qui ressort... c'est l'emoji iOS, alors que ca
+    // devrait etre l'illustration") - this used to be `.textContent =
+    // god.emoji`, which (1) wiped out the <img class="uiIcon"
+    // src="assets/ui/dieux.png"> baked into index.html on every single
+    // updateFabs() call, replacing it with the equipped god's own plain
+    // iOS emoji glyph (e.g. Sélena -> 🌙), and (2) even if it hadn't, no
+    // per-god portrait artwork exists yet (GODS entries have no `icon`
+    // field - see the Fruits/Légumes/god-portraits backlog) so there'd be
+    // nothing to show but that same emoji anyway. Leaving fabGodEmoji's
+    // content untouched keeps the shared "Dieux du Cosmos" trident artwork
+    // showing for every god - same fallback tierIconNode() uses elsewhere
+    // for anything without its own custom art yet. Revisit once individual
+    // god portraits exist.
     $("fabGodName").textContent = god.name;
   }
 }
@@ -1450,36 +1462,26 @@ function buildStars() {
 }
 
 // Loris: the wheel had zero information on it - 7 flat conic-gradient
-// slices with no labels at all, just color. Also, while at it: those 7
-// slices' angles (51/103/154/206/257/283/360deg boundaries, hand-picked
-// in the CSS) didn't actually match WHEEL_PRIZES' real weights (30/20/
-// 20/10/10/5/5) - a 5-weight prize had the same visual slice size as a
-// 20-weight one. Both are fixed here together: the conic-gradient is now
-// computed from the real weights (so slice size = real odds), and each
-// slice gets an upright label (via withCurrencyIcons so it picks up the
-// custom currency icons) positioned at its middle angle. Static content -
-// built once at boot, not on every modal open.
-// Redone twice per Loris feedback. Round 1 (chord-based width clamp) still
-// let "1500 ✨"/"1 ⚡" (the two 18°-wide, 5%-weight slices) spill past their
-// own color, so round 2 adds: (1) the leading amount is wrapped in a no-wrap
-// span (wsAmt) so "1500" can't itself break across lines while the icon
-// after it still can, and the narrow font-size (7px) was picked from real
-// canvas.measureText() widths against that slice's actual chord, not
-// guessed; (2) a dark pill background behind every label, both for contrast
-// against the lighter wedge colors (f59e0b, 0891b2) - Loris: "on les voit
-// toujours pas très bien" - and so a label reads as clearly "in" one slice
-// - Loris: "le 500 il est entre 2-3 cases". Bumped R (label radius) and the
-// per-label width cap both went through a few iterations checked against
-// getBoundingClientRect() math (each label's farthest corner from the wheel
-// center vs. the wheel's own radius) to land on values that neither spill
-// past their slice NOR get clipped by .wheel's overflow:hidden at the rim -
-// see the width/R values below, not just the ~64/70 first tried.
+// slices with no labels at all, just color. Fixed in two steps: first, the
+// conic-gradient's boundary angles are computed from WHEEL_PRIZES' real
+// weights (30/20/20/10/10/5/5) instead of hand-picked CSS values that didn't
+// actually match the real odds. Second, prize info went ON the wheel itself
+// as text labels directly on the slices - through two rounds of trying to
+// keep those labels from spilling past their own (sometimes very narrow)
+// slice, still not clean enough (Loris: "on les voit toujours pas très
+// bien", "le 500 il est entre 2-3 cases", "le 1500 sort toujours de sa
+// couleur"). Round 3 drops on-wheel labels entirely - the wheel now only
+// carries color + dividers + hub, and every prize (full label, no
+// space-driven truncation any more, plus a color swatch matching its slice)
+// lists in #wheelLegend next to it instead, built here in the same pass.
+// Static content - built once at boot, not on every modal open.
 function buildWheelSegments() {
   const wheelEl = $("wheelEl");
+  const legendEl = $("wheelLegend");
   wheelEl.innerHTML = "";
+  legendEl.innerHTML = "";
   const total = WHEEL_PRIZES.reduce((s, p) => s + p.weight, 0);
   const colors = ["#3730a3", "#7c3aed", "#2563eb", "#0891b2", "#be185d", "#f59e0b", "#dc2626"];
-  const R = 64; // label radius (px) - wheel is 180px wide, keeps labels well inside the border
   let acc = 0;
   const stops = [];
   const boundaries = [];
@@ -1487,29 +1489,16 @@ function buildWheelSegments() {
     const startDeg = (acc / total) * 360;
     acc += p.weight;
     const endDeg = (acc / total) * 360;
-    const spanDeg = endDeg - startDeg;
     boundaries.push(startDeg);
-    stops.push(`${colors[i % colors.length]} ${startDeg}deg ${endDeg}deg`);
-    const midDeg = (startDeg + endDeg) / 2;
-    const rad = (midDeg - 90) * Math.PI / 180; // conic-gradient's 0deg is 12 o'clock, clockwise - align label math the same way
-    const x = R * Math.cos(rad);
-    const y = R * Math.sin(rad);
+    const color = colors[i % colors.length];
+    stops.push(`${color} ${startDeg}deg ${endDeg}deg`);
 
-    const narrow = spanDeg < 25;
-    // Fixed width for narrow slices (sized for the widest case, "1500" at
-    // 7px - see comment above) rather than a per-slice chord computation:
-    // at this point the chord (~22px) is barely bigger than the text itself,
-    // so a formula has no real slack left to work with anyway.
-    const chord = 2 * R * Math.sin((spanDeg / 2) * Math.PI / 180);
-    const width = narrow ? 24 : Math.max(26, Math.min(32, Math.round(chord * 0.6)));
-    const text = p.shortLabel || p.label;
-    const m = text.match(/^(\S+)(.*)$/s);
-    const html = m ? `<span class="wsAmt">${m[1]}</span>${withCurrencyIcons(m[2])}` : withCurrencyIcons(text);
-    const label = el("div", "wheelSegLabel" + (narrow ? " narrow" : ""), html);
-    label.style.left = `calc(50% + ${x.toFixed(1)}px)`;
-    label.style.top = `calc(50% + ${y.toFixed(1)}px)`;
-    label.style.width = width + "px";
-    wheelEl.appendChild(label);
+    const item = el("div", "wheelLegendItem");
+    const swatch = el("span", "wheelLegendSwatch");
+    swatch.style.background = color;
+    item.appendChild(swatch);
+    item.appendChild(el("span", null, withCurrencyIcons(p.label)));
+    legendEl.appendChild(item);
   });
   wheelEl.style.background =
     `radial-gradient(circle at 34% 24%, rgba(255,255,255,.20), transparent 45%), ` +
