@@ -214,11 +214,15 @@ const MERGE_STREAK_WINDOW_MS = 900;
 function attemptMerge(fromIdx, toIdx) {
   const state = Game.state;
   const before = state.grid[fromIdx];
-  // Generic tier name instead of a hardcoded "L'Univers" - Univers (tier
-  // 10) is no longer the actual ceiling now that TIERS extends past it
-  // (UNIVERSE_TIER, config.js) - this guard only fires on the TRUE top
-  // tier now (currently Genèse).
-  if (before && before.tier >= TIERS.length) { Sfx.error(); toast(`${tierName(before.tier)} ne peut pas fusionner davantage.`); return; }
+  if (!before) return;
+  // Loris: "a partir du niveau 14, si on fusionne deux cases de niveau 14
+  // elles redeviennent des cases de niveau 1 [...] comme ça on pourrait
+  // reproduire cela à l'infini" - merging two tiles at the true top tier
+  // (currently Genèse) used to be blocked outright (toast + refuse); now
+  // performMerge() (economy.js) loops them back to tier 1 with the cycle
+  // counter (tile.cycle) bumped instead, so this early-exit is gone -
+  // performMerge's own a.tier!==b.tier / cycle-mismatch checks are the
+  // only remaining guards.
   const result = performMerge(state, fromIdx, toIdx);
   if (!result) return;
   const now = performance.now();
@@ -229,18 +233,24 @@ function attemptMerge(fromIdx, toIdx) {
   // hold every reward/reveal cue (tile swap, toast, haptic, god-ritual
   // popup) until the impact fires - it's ~110ms later, so this is still
   // effectively instant, just synced to the visual/audio landing.
-  renderMergeStandIn(toIdx, before.tier);
+  renderMergeStandIn(toIdx, before.tier, before.cycle || 0);
   playMeteorMerge(toIdx, () => {
     renderCell(toIdx, { merged: true });
     HapticService.impact(result.newTier >= 8 ? "heavy" : "medium");
     if (result.gemBonus) toast("+1 💎 Gem bonus !");
-    // "Univers créé" stays tied to UNIVERSE_TIER specifically (config.js) -
-    // that's still the real Big-Bang-eligibility milestone, whether or not
-    // the run pushes further. The true new ceiling (TIERS.length) gets its
-    // own separate milestone toast instead of silently losing its moment.
-    if (result.newTier === UNIVERSE_TIER) toast("Univers créé ! 💥");
-    else if (result.newTier === TIERS.length) toast(`${tierName(result.newTier)} atteint(e) - le sommet de la Création ! 🌟`);
-    else toast(tierName(result.newTier) + " " + tierEmoji(result.newTier) + " !");
+    if (result.looped) {
+      toast(`✨ Nouvelle boucle amorcée - palier ×${result.newCycle} !`);
+    } else if (result.newTier === UNIVERSE_TIER) {
+      // "Univers créé" stays tied to UNIVERSE_TIER specifically (config.js)
+      // - that's still the real Big-Bang-eligibility milestone, whether or
+      // not the run pushes further, and replays identically on every later
+      // cycle's climb back up to it.
+      toast("Univers créé ! 💥");
+    } else if (result.newTier === TIERS.length) {
+      toast(`${tierName(result.newTier)} atteint(e) - le sommet de la Création ! 🌟`);
+    } else {
+      toast(tierName(result.newTier) + " " + tierEmoji(result.newTier) + " !");
+    }
     maybeOpenGodRitual();
   }, Game.mergeStreak, result.newTier);
   Sfx.meteorImpact(result.newTier, Game.mergeStreak);
@@ -421,7 +431,17 @@ function tickAutoSpawn(now) {
 async function watchRewardedAd(state, placementId) {
   if (adsRemoved(state)) return true;
   const ok = await AdService.showRewarded(placementId);
-  if (ok && trackRewardedAdWatched(state)) openRemoveAdsPromptModal();
+  // Loris: this promo used to fire on the ad-watch count alone, with no
+  // floor on how early that could happen - an active player binging ads
+  // could hit it well before the fabs (Boost/Pub contre Gems) even exist to
+  // watch ads from in the first place in some edge cases. Now also needs
+  // FUSIONS_BEFORE_REMOVE_ADS_PROMO fusions AND the shared promo-gap floor
+  // (promoGapElapsed, retention.js), same as the other two promos.
+  if (ok && trackRewardedAdWatched(state) && state.lifetime.fusions >= FUSIONS_BEFORE_REMOVE_ADS_PROMO && promoGapElapsed(state)) {
+    state.promptsShown.removeAdsPrompt = true;
+    markPromoShown(state);
+    openRemoveAdsPromptModal();
+  }
   return ok;
 }
 

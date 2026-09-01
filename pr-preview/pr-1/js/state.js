@@ -93,7 +93,14 @@ function defaultState() {
     // fusion count that would trigger it is somehow reached twice (it
     // can't be, lifetime.fusions only grows, but the flag is the actual
     // guarantee either way).
-    promptsShown: { starterPack: false, vipPass: false },
+    promptsShown: { starterPack: false, vipPass: false, removeAdsPrompt: false },
+    // Loris: promos (starter pack, suppression des pubs, Pass Supernova)
+    // "devrait[ent] tous arrivée[s] bien plus tard [...] avec un peu plus
+    // de temps entre chaque promo" - a real-time floor between any two
+    // promo popups, on top of their own individual fusion-count gates
+    // (checkFusionPromo, retention.js) and the ad-watch-count gate
+    // (trackRewardedAdWatched) - see PROMO_MIN_GAP_MS, retention.js.
+    lastPromoShownAt: 0,
 
     dailyLogin: { lastClaimDay: null, streak: 0, cycleDay: 1, streakFreezeCharges: 0 },
     skinFragments: 0,

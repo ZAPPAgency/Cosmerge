@@ -18,7 +18,11 @@ function hasUniverseTile(state) {
 // real gain, so the number shown in the pre-Big-Bang preview (Loris:
 // openBigBangModal, ui.js) is always exactly what gets paid out.
 function previewBigBangGain(state) {
-  const base = bigBangGain(state.runStardustEarned, state.maxTierThisRun);
+  // Was state.maxTierThisRun (a single number) - bigBangGain() now sums a
+  // weight per actual tier-10+ tile on the grid (Loris: "ça augmentera
+  // selon le nombre de cases de niveau 10 et plus"), so it needs the real
+  // grid, not just the highest tier ever reached this run.
+  const base = bigBangGain(state.runStardustEarned, state.grid);
   const surgeMult = 1 + (state.runUpgrades.surge || 0) * 0.05;
   return Math.round(base * surgeMult);
 }
@@ -165,12 +169,26 @@ function buyGemShopItem(state, itemId, opts) {
 }
 
 // Single pair merge used by tap/drag input.
+// Loris: "a partir du niveau 14, si on fusionne deux cases de niveau 14
+// elles redeviennent des cases de niveau 1 [...] on pourrait reproduire
+// cela à l'infini avec des couleurs différentes" - merging two tiles at
+// the true top tier (TIERS.length) used to just be refused; now it loops
+// back to tier 1 with `cycle` (a fresh field on the tile, defaults to 0/
+// unset for every tile from before this feature - see `|| 0` below) bumped
+// by one instead. Two tiles can only merge if both their tier AND their
+// cycle match - merging across cycles isn't meaningful (what color would
+// the result even be?). maxTierThisRun/maxTierEver (below) stay correct
+// with no special-casing: Math.max against a fresh tier-1 tile never
+// lowers them, so they keep reflecting the true historical peak (still
+// capped at TIERS.length) even as individual tiles keep looping.
 function performMerge(state, fromIdx, toIdx) {
   const a = state.grid[fromIdx], b = state.grid[toIdx];
-  if (!a || !b || a.tier !== b.tier || a.tier >= TIERS.length) return null;
-  const newTier = a.tier + 1;
+  if (!a || !b || a.tier !== b.tier || (a.cycle || 0) !== (b.cycle || 0)) return null;
+  const looped = a.tier >= TIERS.length;
+  const newTier = looped ? 1 : a.tier + 1;
+  const newCycle = looped ? (a.cycle || 0) + 1 : (a.cycle || 0);
   state.grid[fromIdx] = null;
-  state.grid[toIdx] = { tier: newTier };
+  state.grid[toIdx] = { tier: newTier, cycle: newCycle };
   state.lifetime.fusions += 1;
   state.maxTierThisRun = Math.max(state.maxTierThisRun, newTier);
   state.lifetime.maxTierEver = Math.max(state.lifetime.maxTierEver, newTier);
@@ -182,7 +200,7 @@ function performMerge(state, fromIdx, toIdx) {
   }
 
   trackFusionEvent(state, newTier);
-  return { newTier, gemBonus };
+  return { newTier, newCycle, looped, gemBonus };
 }
 
 // Was shared between two cosmetic slots (ambiance/background + emoji-set),
