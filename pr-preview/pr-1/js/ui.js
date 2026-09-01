@@ -1407,13 +1407,20 @@ function openRemoveAdsPromptModal() {
 }
 function closeRemoveAdsPromptModal() { $("removeAdsPromptModal").classList.add("hidden"); }
 
-// Fusion-milestone soft-prompts (10 -> starter pack, 50 -> Pass Supernova),
+// Fusion-milestone soft-prompts (25 -> starter pack, 80 -> Pass Supernova),
 // see checkFusionPromo()/Game.pendingPromo in retention.js and
 // maybeOpenFusionPromo() in input.js. One shared modal, content picked by
-// `kind`.
+// `kind`. `icon` (optional): custom artwork replacing the title's plain
+// emoji, same "falls back to emoji until art exists" pattern as
+// tierIconNode()/roadIcon() elsewhere - starterPack reuses cadeau.png (a
+// starter pack IS a bundle of starting gifts, no new art needed); vipPass
+// has no icon yet (still 🌟) - waiting on a dedicated "Pass Supernova"
+// asset, which would also fill the shop's own hero card (renderShopPanel),
+// currently icon-less too.
 const FUSION_PROMOS = {
   starterPack: {
-    title: "🎉 Bien joué !",
+    title: "Bien joué !",
+    icon: "cadeau.png",
     text: "Tu commences à prendre le rythme. Le Pack de démarrage te donne 500 Gems, 3 cases débloquées et un boost d'1h - un vrai coup de pouce pour la suite.",
     productId: "starter_pack",
   },
@@ -1429,7 +1436,9 @@ function openFusionPromoModal(kind) {
   const product = promo && IAP_CATALOG.find(p => p.id === promo.productId);
   if (!product) return; // defensive - e.g. the offer expired/was already bought between the trigger and this firing
   fusionPromoProductId = product.id;
-  $("fusionPromoTitle").textContent = promo.title;
+  $("fusionPromoTitle").innerHTML = promo.icon
+    ? `<img class="inlineCurrencyIcon" src="assets/ui/${promo.icon}" alt=""> ${promo.title}`
+    : promo.title;
   $("fusionPromoText").textContent = promo.text;
   $("fusionPromoBuy").textContent = product.type === "subscription" ? `S'abonner — ${product.price}` : `${product.name} — ${product.price}`;
   $("fusionPromoModal").classList.remove("hidden");
