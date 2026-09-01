@@ -18,6 +18,20 @@
   --safe-bottom:env(safe-area-inset-bottom,0px);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;}
+/* Bug (Loris, mobile): long-pressing a tile's custom artwork (or any other
+   <img> icon) opened the OS-level "save/share image" menu - a plain emoji
+   glyph (what these all used to be, see tierIconNode() etc. in ui.js) never
+   did that, since it's just text, not an image the browser treats as
+   savable media. -webkit-touch-callout is the actual iOS Safari/WKWebView
+   switch for that long-press callout; -webkit-user-drag stops the same
+   image being dragged out on iPad/desktop Safari. pointer-events:none is
+   safe here specifically because NO <img> in this app is ever a click/tap
+   target on its own - every one sits inside a button/cell whose own
+   listener is what actually handles the tap (checked: no code anywhere
+   attaches a listener to an <img> directly) - so removing the img from hit
+   -testing entirely, rather than just suppressing its own long-press menu,
+   is the most robust fix and costs nothing. */
+img{-webkit-touch-callout:none;-webkit-user-drag:none;pointer-events:none;}
 html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--text);
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
   overflow:hidden;overscroll-behavior:none;touch-action:none;}
