@@ -895,7 +895,7 @@ function renderStoryPanel() {
   intro.innerHTML = `
     <div class="storyMark">☄️</div>
     <h3>La Rupture</h3>
-    <p class="desc">Autrefois, le Cosmos ne connaissait pas le chaos. Neuf Dieux le
+    <p class="desc">Autrefois, le Cosmos ne connaissait pas le chaos. Treize Dieux le
     façonnaient dans un ordre parfait. Puis, un jour, cet ordre s'est brisé.
     <strong>Personne ne sait pourquoi.</strong> Il n'en reste qu'une poussière
     infinie d'astéroïdes muets, dispersée dans le vide.</p>
@@ -1045,17 +1045,25 @@ function renderProgressionPanel() {
 }
 
 // ---------------- God ritual & selection actions ----------------
+// The moon-merge ritual now grants Séléna AND Zéphar at once (see
+// onFusionForGods, gods.js) specifically so this is a real side-by-side
+// choice - un dieu bienveillant, un dieu déchu - matching the modal's own
+// "choisis celui qui t'accompagnera" text, which used to show a single
+// card with nothing to actually choose between (Loris). .bienveillant/
+// .dechu (below) tint each card toward the same blue/red used for the two
+// camps in the Histoire panel (renderStoryPanel), so the choice reads
+// visually, not just via the tiny 🕊️/🔥 elsewhere.
 function openGodPickerModal() {
   const state = Game.state;
   const list = $("godRitualList");
   list.innerHTML = "";
   const available = GODS.filter(g => isGodUnlocked(state, g.id));
   available.forEach(god => {
-    const card = el("button", "godRitualCard");
+    const card = el("button", "godRitualCard " + god.alignment);
     card.innerHTML = `<div class="godEmoji">${god.emoji}</div>
-      <div class="godNames"><div class="godName">${god.name}</div>
+      <div class="godName">${god.name}</div>
       <div class="godTitle">${god.title}</div>
-      <p class="godDesc" style="margin:4px 0 0;">${god.desc}</p></div>`;
+      <p class="godDesc">${god.desc}</p>`;
     card.addEventListener("click", () => {
       chooseGod(state, god.id);
       Sfx.purchase();
