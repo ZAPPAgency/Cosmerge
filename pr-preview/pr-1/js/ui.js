@@ -81,6 +81,18 @@ function currencyIconHtml(type) {
   return "";
 }
 
+// "#3a3550" -> "58, 53, 80" - lets style.css plug a TIERS[].from/to color
+// straight into rgba(var(--x), a) / rgb(var(--x)) without baking a fixed
+// alpha in JS. Used by playMeteorMerge() to make the merge impact effect
+// (burst rays, ring, debris, flash) match the landed tile's own colors.
+function hexRgbTriplet(hex) {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.substring(0, 2), 16);
+  const g = parseInt(h.substring(2, 4), 16);
+  const b = parseInt(h.substring(4, 6), 16);
+  return `${r}, ${g}, ${b}`;
+}
+
 // Reward labels in config.js (DAILY_LOGIN_REWARDS) and retention.js
 // (WHEEL_PRIZES) are plain strings with the emoji baked in ("100 ✨",
 // "20 💎"...) - both files load BEFORE this one, so they can't call
@@ -435,6 +447,21 @@ function playMeteorMerge(idx, onImpact, streak, newTier) {
   // genuinely stays small instead of still blooming out a fixed amount.
   const power = Math.min(0.4 + Math.min(newTier || 1, 10) * 0.19 + Math.min(streak, 5) * 0.02, 2.3);
   const cell = cellEls[idx];
+
+  // Impact colors now match the landed tile's own gradient (TIERS[].from/to)
+  // instead of a fixed gold/amber palette - Loris: "les couleurs devraient
+  // pas être les couleurs de la case ?". --mergeBright/--mergeDark carry the
+  // "r, g, b" triplets consumed by style.css (rgba(var(--mergeBright), a)),
+  // set on `cell` (parent of every impact element except screenFlash, which
+  // lives on <body> and gets its own copy below) so a merge landing on a
+  // DIFFERENT cell moments later - or an older effect from this same cell
+  // still fading out - never has its colors swapped mid-animation.
+  const tier = TIERS[Math.min(Math.max((newTier || 1) - 1, 0), TIERS.length - 1)];
+  const mergeBright = hexRgbTriplet(tier.from);
+  const mergeDark = hexRgbTriplet(tier.to);
+  cell.style.setProperty("--mergeBright", mergeBright);
+  cell.style.setProperty("--mergeDark", mergeDark);
+
   const glow = document.createElement("div");
   glow.className = "chargeGlow";
   cell.appendChild(glow);
@@ -461,6 +488,7 @@ function playMeteorMerge(idx, onImpact, streak, newTier) {
     flash.style.setProperty("--fx", (rect.left + rect.width / 2) + "px");
     flash.style.setProperty("--fy", (rect.top + rect.height / 2) + "px");
     flash.style.setProperty("--fpower", power.toFixed(2));
+    flash.style.setProperty("--mergeBright", mergeBright);
     document.body.appendChild(flash);
     setTimeout(() => flash.remove(), 420);
 
@@ -723,7 +751,7 @@ function renderShopPanel() {
   });
   dom.panelBody.appendChild(gemGrid);
 
-  dom.panelBody.appendChild(el("h3", null, "🖼️ Sets d'icônes"));
+  dom.panelBody.appendChild(el("h3", null, `<img class="inlineCurrencyIcon" src="assets/ui/palette.png" alt=""> Sets d'icônes`));
   // Emoji/Illustré switch moved to the skin MANAGER popup (openSkinManagerModal)
   // per Loris - it's a display preference, not a shop purchase, it doesn't
   // belong in the boutique. See renderIconStyleToggle() below.
@@ -1346,7 +1374,7 @@ function openSkinManagerModal() {
   const state = Game.state;
   const list = $("skinManagerList");
   list.innerHTML = "";
-  list.appendChild(el("h3", null, "🖼️ Set d'icônes"));
+  list.appendChild(el("h3", null, `<img class="inlineCurrencyIcon" src="assets/ui/palette.png" alt=""> Set d'icônes`));
   // Emoji/Illustré switch lives here (Loris), not in the shop.
   list.appendChild(renderIconStyleToggle(openSkinManagerModal));
   list.appendChild(renderCosmeticGrid(EMOJI_SETS, state.equippedEmojiSet, openSkinManagerModal));
@@ -1443,29 +1471,58 @@ function buildStars() {
 // slice gets an upright label (via withCurrencyIcons so it picks up the
 // custom currency icons) positioned at its middle angle. Static content -
 // built once at boot, not on every modal open.
+// Redone per Loris feedback: the 3 lowest-weight prizes (Fragment de skin
+// 10%, 1500 ✨ 5%, 1 ⚡ 5%) got such thin slices that the label spilled
+// well past their own color into the neighboring ones. Each label's width
+// is now clamped to the actual chord length of ITS slice at radius R (2 *
+// R * sin(halfAngle)), not a fixed 52px for every slice regardless of how
+// wide it is - narrow slices also drop to a smaller font/icon (.narrow) so
+// the text has a real chance of fitting on one or two short lines instead
+// of overflowing sideways. Also added thin radial dividers between slices
+// and a center hub, plus a soft glossy highlight layered under the color
+// wedges - "améliorer le design" - purely decorative, doesn't touch the
+// weight-accurate slice math below.
 function buildWheelSegments() {
   const wheelEl = $("wheelEl");
   wheelEl.innerHTML = "";
   const total = WHEEL_PRIZES.reduce((s, p) => s + p.weight, 0);
   const colors = ["#3730a3", "#7c3aed", "#2563eb", "#0891b2", "#be185d", "#f59e0b", "#dc2626"];
-  const R = 62; // label radius (px) - wheel is 180px wide, keeps labels well inside the border
+  const R = 64; // label radius (px) - wheel is 180px wide, keeps labels well inside the border
   let acc = 0;
   const stops = [];
+  const boundaries = [];
   WHEEL_PRIZES.forEach((p, i) => {
     const startDeg = (acc / total) * 360;
     acc += p.weight;
     const endDeg = (acc / total) * 360;
+    const spanDeg = endDeg - startDeg;
+    boundaries.push(startDeg);
     stops.push(`${colors[i % colors.length]} ${startDeg}deg ${endDeg}deg`);
     const midDeg = (startDeg + endDeg) / 2;
     const rad = (midDeg - 90) * Math.PI / 180; // conic-gradient's 0deg is 12 o'clock, clockwise - align label math the same way
     const x = R * Math.cos(rad);
     const y = R * Math.sin(rad);
-    const label = el("div", "wheelSegLabel", withCurrencyIcons(p.label));
+
+    const chord = 2 * R * Math.sin((spanDeg / 2) * Math.PI / 180);
+    const width = Math.max(20, Math.min(52, Math.round(chord * 0.86)));
+    const narrow = spanDeg < 25;
+    const label = el("div", "wheelSegLabel" + (narrow ? " narrow" : ""),
+      withCurrencyIcons(p.shortLabel || p.label));
     label.style.left = `calc(50% + ${x.toFixed(1)}px)`;
     label.style.top = `calc(50% + ${y.toFixed(1)}px)`;
+    label.style.width = width + "px";
     wheelEl.appendChild(label);
   });
-  wheelEl.style.background = `conic-gradient(from 0deg, ${stops.join(", ")})`;
+  wheelEl.style.background =
+    `radial-gradient(circle at 34% 24%, rgba(255,255,255,.20), transparent 45%), ` +
+    `conic-gradient(from 0deg, ${stops.join(", ")})`;
+
+  boundaries.forEach((deg) => {
+    const line = el("div", "wheelDivider");
+    line.style.transform = `translateX(-50%) rotate(${deg}deg)`;
+    wheelEl.appendChild(line);
+  });
+  wheelEl.appendChild(el("div", "wheelHub"));
 }
 
 // Occasional shooting star crossing the background, behind the grid

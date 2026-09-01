@@ -216,9 +216,16 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
    the payoff (tile pop, flash, starburst, ring, shake, sparks) has to feel
    INSTANT since this fires on every single merge, often several per
    second. Nothing here should read as "waiting". Pure opacity+scale on a
-   blurred radial gradient - no shape/rotation to read as a "thing". */
+   blurred radial gradient - no shape/rotation to read as a "thing".
+   --mergeBright/--mergeDark (below, throughout this block) are the landed
+   tile's own TIERS[].from/to colors, set on `cell` (and copied onto
+   .screenFlash, which lives on <body>) by playMeteorMerge() - Loris: "les
+   couleurs devraient pas être les couleurs de la case ?". Was a fixed
+   gold/amber palette regardless of tier; the fallback values after each
+   var() are that old palette, kept only so nothing breaks if a color is
+   somehow never set. */
 .chargeGlow{position:absolute;top:50%;left:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;
-  background:radial-gradient(circle,rgba(255,247,227,.95),rgba(251,191,36,.55) 55%,transparent 75%);
+  background:radial-gradient(circle,rgba(255,247,227,.95),rgba(var(--mergeBright,251,191,36),.55) 55%,transparent 75%);
   filter:blur(1.5px);animation:chargeGlow .11s cubic-bezier(.4,0,.2,1) forwards;
   z-index:6;pointer-events:none;}
 @keyframes chargeGlow{0%{transform:scale(.15);opacity:0;}100%{transform:scale(3.2);opacity:.95;}}
@@ -235,7 +242,7 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .screenFlash{position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:80;pointer-events:none;
   background:radial-gradient(circle at var(--fx,50%) var(--fy,45%),
     rgba(255,247,227,calc(.7 * var(--fpower,1))),
-    rgba(251,191,36,calc(.3 * var(--fpower,1))) calc(13% * var(--fpower,1)),
+    rgba(var(--mergeBright,251,191,36),calc(.3 * var(--fpower,1))) calc(13% * var(--fpower,1)),
     transparent calc(34% * var(--fpower,1)));
   animation:screenFlash .38s ease-out forwards;}
 @keyframes screenFlash{0%{opacity:0;}10%{opacity:1;}100%{opacity:0;}}
@@ -252,7 +259,7 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
    (streak/tier, see playMeteorMerge in ui.js). */
 .burstRay{position:absolute;left:50%;top:50%;width:3.5px;height:36px;margin:-36px -1.75px 0 -1.75px;
   transform-origin:50% 100%;border-radius:2px;pointer-events:none;z-index:2;
-  background:linear-gradient(to top,rgba(255,213,120,1),rgba(255,236,190,.6) 45%,transparent 100%);
+  background:linear-gradient(to top,rgba(var(--mergeBright,255,213,120),1),rgba(255,255,255,.6) 45%,transparent 100%);
   animation:burstRay .32s cubic-bezier(.16,1,.3,1) forwards;}
 .burstRay.short{height:21px;margin-top:-21px;opacity:.8;}
 @keyframes burstRay{
@@ -262,13 +269,13 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 }
 
 .impactFlash{position:absolute;inset:0;border-radius:12px;pointer-events:none;z-index:3;
-  background:radial-gradient(circle,rgba(255,247,227,1),rgba(251,146,36,.45) 45%,transparent 72%);
+  background:radial-gradient(circle,rgba(255,247,227,1),rgba(var(--mergeBright,251,146,36),.45) 45%,transparent 72%);
   animation:impactFlash .26s ease-out forwards;}
 @keyframes impactFlash{0%{opacity:0;transform:scale(.3);}20%{opacity:1;}100%{opacity:0;transform:scale(1.4);}}
 
 .impactRing{position:absolute;left:50%;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;
-  border-radius:50%;border:3px solid rgba(255,213,120,1);pointer-events:none;z-index:8;
-  box-shadow:0 0 14px 2px rgba(251,191,36,.6);
+  border-radius:50%;border:3px solid rgba(var(--mergeBright,255,213,120),1);pointer-events:none;z-index:8;
+  box-shadow:0 0 14px 2px rgba(var(--mergeBright,251,191,36),.6);
   animation:impactRing .42s ease-out forwards;}
 @keyframes impactRing{0%{transform:scale(.3);opacity:1;}100%{transform:scale(calc(10.5 * var(--ringPower,1)));opacity:0;}}
 
@@ -287,7 +294,7 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 /* Mixed rock chips + bright star sparkles, sized per-chip via --chipScale -
    reads as "the impact released stardust", not just a plain rock explosion. */
 .debrisChip{position:absolute;left:50%;top:50%;width:6px;height:6px;border-radius:1px;pointer-events:none;z-index:9;
-  background:linear-gradient(135deg,#ffcf85,#7c3e0f);
+  background:linear-gradient(135deg,rgb(var(--mergeBright,255,207,133)),rgb(var(--mergeDark,124,62,15)));
   animation:debrisFly .52s cubic-bezier(.2,.7,.4,1) forwards;}
 .debrisChip.spark{width:5px;height:5px;border-radius:50%;background:radial-gradient(circle,#fff9e6,var(--stardust));
   box-shadow:0 0 5px 1px rgba(251,191,36,.75);}
@@ -649,14 +656,34 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .wheelWrap{position:relative;width:180px;height:180px;margin:10px auto;}
 /* Background is now set inline via buildWheelSegments() (ui.js), computed
    from WHEEL_PRIZES' real weights - a slice's visual size now actually
-   matches its real odds, which the old hand-picked CSS angles didn't. */
+   matches its real odds, which the old hand-picked CSS angles didn't. A
+   radial highlight is layered under the conic-gradient there too, for a
+   bit of glossy shine (Loris: "améliore un peu le design de la roue").
+   overflow:hidden clips the dividers/labels to the circle so nothing pokes
+   out past the rim; .wheelPointer is a sibling in .wheelWrap, unaffected. */
 .wheel{width:100%;height:100%;border-radius:50%;border:4px solid var(--accent);
-  position:relative;box-shadow:0 0 0 2px #05040a, 0 4px 20px rgba(0,0,0,.5);
+  position:relative;overflow:hidden;box-shadow:0 0 0 2px #05040a, 0 4px 20px rgba(0,0,0,.5);
   transition:transform 3.5s cubic-bezier(.17,.67,.2,1);display:flex;align-items:center;justify-content:center;font-size:11px;}
+/* Per-label width is set inline by buildWheelSegments() (ui.js) - clamped to
+   that slice's own chord length so a narrow slice's text can't spill past
+   its color into the next one any more. .narrow (span < 25°, the 3
+   lowest-weight prizes) drops to a smaller font/icon on top of that so short
+   labels ("1 ⚡", "1500 ✨", "Skin") still have a real chance of fitting. */
 .wheelSegLabel{position:absolute;transform:translate(-50%,-50%);font-size:10px;font-weight:700;
   color:#fff;text-align:center;text-shadow:0 1px 3px rgba(0,0,0,.8);line-height:1.15;
-  width:52px;pointer-events:none;}
+  pointer-events:none;}
 .wheelSegLabel .inlineCurrencyIcon{width:12px;height:12px;vertical-align:-2px;}
+.wheelSegLabel.narrow{font-size:8.5px;line-height:1.05;}
+.wheelSegLabel.narrow .inlineCurrencyIcon{width:9px;height:9px;vertical-align:-1.5px;}
+/* Thin radial divider "clock hands" between slices - one per boundary
+   angle, rotated to that angle via inline style in buildWheelSegments().
+   transform-origin:top center keeps the pivot pinned at the wheel's exact
+   center regardless of rotation (standard pie-chart-divider trick). */
+.wheelDivider{position:absolute;left:50%;top:50%;width:1px;height:50%;
+  background:rgba(5,4,10,.5);transform-origin:top center;pointer-events:none;z-index:1;}
+.wheelHub{position:absolute;left:50%;top:50%;width:22px;height:22px;margin:-11px 0 0 -11px;
+  border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff8e6,var(--accent2) 55%,var(--accent) 100%);
+  box-shadow:0 0 0 2px #05040a,0 2px 8px rgba(0,0,0,.5);pointer-events:none;z-index:3;}
 .wheelPointer{position:absolute;top:-14px;left:50%;transform:translateX(-50%);font-size:20px;color:var(--accent2);}
 
 /* Ad / IAP simulation overlay */
