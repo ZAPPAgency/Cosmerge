@@ -155,11 +155,21 @@ function skillCost(branchKey, nextLevel) {
 // - cadence: state.js autoSpawnIntervalMs(), stacks with the permanent
 //   Gravité Rapide skill and any god spawnSpeedMult as its own independent
 //   multiplier
+//
+// Costs (base/growth): first pass badly under-priced this - it was
+// calibrated against a made-up ~20K total-to-max figure with no relation to
+// the game's actual Stardust economy. unlockCost() alone (config.js) totals
+// ~83M Stardust to unlock all 30 cells of a grid, so a tree that's fully
+// maxed for ~20K was essentially free pocket change (Loris: maxed it all
+// out at "peut-être dix mille" Stardust). Repriced so the total to max all
+// 4 branches lands around ~1.1M - a real fraction of a run's income, early
+// levels still reachable through normal play, but maxing everything is a
+// deliberate, costly commitment rather than a rounding error.
 const RUN_UPGRADE_TREE = {
-  catalyst: { name: "Catalyseur Stellaire", desc: "+4% production de Stardust de chaque case / niveau", maxLevel: 15, base: 30, growth: 1.35 },
-  resonance: { name: "Résonance des Cases", desc: "+3% de chance de débloquer une case supplémentaire gratuite à chaque déblocage / niveau", maxLevel: 10, base: 60, growth: 1.4 },
-  surge: { name: "Surcharge du Big Bang", desc: "+5% d'Énergie Cosmique gagnée au prochain Big Bang / niveau", maxLevel: 10, base: 80, growth: 1.45 },
-  cadence: { name: "Cadence Stellaire", desc: "-4% cooldown de spawn auto / niveau (plancher 3s, cumulable avec Gravité Rapide)", maxLevel: 8, base: 40, growth: 1.35 },
+  catalyst: { name: "Catalyseur Stellaire", desc: "+4% production de Stardust de chaque case / niveau", maxLevel: 15, base: 600, growth: 1.55 },
+  resonance: { name: "Résonance des Cases", desc: "+3% de chance de débloquer une case supplémentaire gratuite à chaque déblocage / niveau", maxLevel: 10, base: 1000, growth: 1.5 },
+  surge: { name: "Surcharge du Big Bang", desc: "+5% d'Énergie Cosmique gagnée au prochain Big Bang / niveau", maxLevel: 10, base: 1500, growth: 1.55 },
+  cadence: { name: "Cadence Stellaire", desc: "-4% cooldown de spawn auto / niveau (plancher 3s, cumulable avec Gravité Rapide)", maxLevel: 8, base: 400, growth: 1.5 },
 };
 function runUpgradeCost(branchKey, nextLevel) {
   const b = RUN_UPGRADE_TREE[branchKey];
