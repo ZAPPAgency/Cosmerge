@@ -659,7 +659,23 @@ function tierProd(tier) { return 0.5 * Math.pow(2, tier - 1); }
 // manually-unlocked cell, TOTAL 30 minus the 10 INITIAL_UNLOCKED), cost
 // goes 1.5->111K, 1.65->677K, 1.8->~3.8M Stardust.
 function unlockCost(n) { return Math.round(50 * Math.pow(1.8, n)); }
-function invokeCost(k) { return Math.round(15 * Math.pow(1.12, k)); }
+// Loris: "la croissance du cout d'invocation est correct au début mais
+// après c'est un peu trop violent" - a flat 1.12^k never stops compounding,
+// so however reasonable it feels for the first invokes, it necessarily
+// keeps accelerating forever (k=15 -> 82, k=25 -> 255, k=40 -> ~1396 - a
+// 93x jump from the base 15, for a currency you're also spending on
+// unlockCost above and can't stockpile between manual spawns without it
+// idling in reserve). Left untouched below INVOKE_COST_SOFTCAP_K (still
+// literally the same numbers Loris already approved) and switched to a
+// gentler 1.06 growth past it, continuous at the seam (no visible jump):
+// k=20 -> 110 (was 145), k=30 -> 197 (was 449), k=40 -> 352 (was 1396).
+// Late invokes stay a real, escalating sink - just not a runaway one.
+const INVOKE_COST_SOFTCAP_K = 15;
+function invokeCost(k) {
+  const capped = Math.min(k, INVOKE_COST_SOFTCAP_K);
+  const beyond = Math.max(0, k - INVOKE_COST_SOFTCAP_K);
+  return Math.round(15 * Math.pow(1.12, capped) * Math.pow(1.06, beyond));
+}
 
 // Loris: "on devrait gagner un peu moins de points d'ascension quand on
 // fait un bigbang (et ça augmentera selon le nombre de cases de niveau 10

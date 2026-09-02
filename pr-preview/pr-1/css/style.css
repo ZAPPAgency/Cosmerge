@@ -938,6 +938,17 @@ body.eggFinaleShake{animation:eggFinaleShake .55s cubic-bezier(.36,.07,.19,.97);
    30px emoji glyph used to occupy - given real character art now, this
    gets to be noticeably bigger without unbalancing the tile. */
 .godTilePortrait{width:54px;height:54px;object-fit:contain;}
+/* Loris: "l'illustration de dieu inconnu [...] devrait démarrer dès le bas
+   de la case [...] il y a un vide entre le bas de l'illustration [...] et
+   le bas de la case" - unknown-v2.png has more headroom above the bust
+   than the real god portraits (a deliberate framing choice on that one
+   asset, not a bad crop), so at the same size it reads as floating/
+   smaller instead of anchored to the tile like every unlocked god.
+   Scales it up, growing from the bottom edge only (transform-origin) so
+   the bust fills down to where the real portraits already sit - .godTile
+   already clips overflow, so the extra headroom this crops into simply
+   disappears instead of spilling past the tile. */
+.godTilePortrait.godPortraitUnknown{transform:scale(1.25);transform-origin:center bottom;}
 .godTileName{font-size:11px;font-weight:700;text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
 .godTileTitle{font-size:9px;color:var(--text-dim);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
 .godTileBadge{position:absolute;top:4px;right:4px;font-size:11px;background:#0d2a30;color:var(--accent2);
