@@ -65,11 +65,23 @@ function describeGodEffect(god, level) {
 }
 function isGodUnlocked(state, godId) { return state.gods.unlockedIds.includes(godId); }
 
-function unlockGod(state, godId) {
+// Loris: "il n'y a pas de pop up quand on débloque un nouveau dieu hormis
+// pour les deux premiers" - a plain toast (2s, easy to miss mid-merge) was
+// the only feedback for every unlock except the moon-ritual pair, which get
+// the picker modal as their own reveal. Every unlock now queues a real
+// modal (Game.pendingGodReveals, consumed by maybeOpenGodRevealModal() in
+// ui.js/input.js at the next safe moment - same "queue now, show after the
+// current animation/modal settles" pattern as unlockEasterEgg/
+// Game.pendingGodRitual). `opts.silent` is for the two unlocks that already
+// have their own dedicated fanfare and would otherwise double up with this
+// one: the ritual pair (the picker modal opens right after) and the Cosmic
+// Box (openCosmicBoxRevealModal already shows the exact same portrait/name).
+function unlockGod(state, godId, opts) {
   if (isGodUnlocked(state, godId)) return;
   state.gods.unlockedIds.push(godId);
+  if (opts && opts.silent) return;
   Sfx.chest();
-  toast(`Nouveau Dieu débloqué : ${getGod(godId).name} ${getGod(godId).emoji}`);
+  Game.pendingGodReveals.push(godId);
 }
 
 // Loris: "4 easter eggs [...] débloquer 4 easter eggs pour recevoir une
@@ -110,9 +122,9 @@ function onFusionForGods(state, newTier) {
     // choice - un dieu bienveillant, un dieu déchu - instead of a single
     // card that had nothing to choose between (Loris).
     if (state.moonMergesThisRun === MOON_MERGES_TO_CHOOSE_GOD && !state.gods.currentGodId) {
-      unlockGod(state, "selena");
-      unlockGod(state, "zephar");
-      Game.pendingGodRitual = true; // main loop opens the picker modal next render
+      unlockGod(state, "selena", { silent: true });
+      unlockGod(state, "zephar", { silent: true });
+      Game.pendingGodRitual = true; // main loop opens the picker modal next render - that IS their reveal
     }
   }
 
@@ -253,7 +265,7 @@ function rollCosmicBox(state) {
     pool = unownedGods.filter(g => g.rarity === pickedRarity);
   }
   const god = pool[Math.floor(Math.random() * pool.length)];
-  unlockGod(state, god.id);
+  unlockGod(state, god.id, { silent: true }); // openCosmicBoxRevealModal (ui.js) is this one's reveal
   return { duplicate: false, god };
 }
 

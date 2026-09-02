@@ -54,6 +54,17 @@ function requestStorageAccessBestEffort() {
     skipCellArmed: false,
     swapArmed: false,
     swapFirstIdx: null,
+    // Set when the current armed swap was earned by watching an ad (Loris:
+    // offer that instead of a dead-end "Pas assez de Gems." when clicking
+    // Échanger without enough Gems) - handleSwapTap (input.js) reads this to
+    // skip the Gems cost entirely for this one swap.
+    swapFree: false,
+    // Queued god ids awaiting their unlock-reveal modal (Loris: "il n'y a
+    // pas de pop up quand on débloque un nouveau dieu hormis pour les deux
+    // premiers") - unlockGod() (gods.js) pushes here, maybeOpenGodRevealModal()
+    // (ui.js) consumes one at the next safe moment, same pattern as
+    // Game.pendingGodRitual/pendingPromo below.
+    pendingGodReveals: [],
     // How many merges have landed within MERGE_STREAK_WINDOW_MS of each
     // other (see attemptMerge in input.js) - scales the impact effect and
     // raises the reward chime's pitch a step each time, so chaining merges
@@ -96,6 +107,12 @@ function requestStorageAccessBestEffort() {
     showTutStep(0);
   } else if (gainInfo.gain >= 1) {
     openOfflineModal(gainInfo, spawnedAtBoot);
+  } else {
+    // Safety net: checkGodMilestones(state) above could in principle have
+    // just queued a reveal (e.g. an imported save code that already clears
+    // a milestone) - in the ordinary case (unlocks happen mid-merge/mid-run)
+    // this is a no-op, the queue is still empty at boot.
+    maybeOpenGodRevealModal();
   }
 
   let lastFrame = performance.now();

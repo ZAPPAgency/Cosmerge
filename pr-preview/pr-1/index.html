@@ -37,7 +37,7 @@
     <meta name="apple-mobile-web-app-title" content="Godspark" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#0a0620" />
-    <link rel="stylesheet" href="css/style.css?v=107" />
+    <link rel="stylesheet" href="css/style.css?v=108" />
   </head>
   <body>
     <div id="starsBg"></div>
@@ -631,6 +631,21 @@
       <div class="modalCard" id="godDetailCard"></div>
     </div>
 
+    <!-- New god unlocked - Loris: "il n'y a pas de pop up quand on débloque
+     un nouveau dieu hormis pour les deux premiers" (Séléna/Zéphar get the
+     rituel-des-lunes picker modal above as their own reveal; every other
+     god - milestone, challenge, or bought with Gems - only ever got a
+     small 2s toast, easy to miss). This is the shared reveal for all of
+     those, see maybeOpenGodRevealModal()/unlockGod() (ui.js/gods.js). -->
+    <div class="modalOverlay hidden" id="godUnlockModal">
+      <div class="modalCard" style="text-align: center">
+        <div class="godEmoji" id="godUnlockPortrait" style="width:88px;height:88px;border-radius:18px;margin:0 auto 10px;"></div>
+        <h3 id="godUnlockTitle">Nouveau Dieu éveillé</h3>
+        <p class="desc" id="godUnlockText"></p>
+        <button class="btn primary full" id="godUnlockClose">Continuer</button>
+      </div>
+    </div>
+
     <!-- Manual save backup (export/import) - see state.js exportSaveCode/importSaveCode -->
     <div class="modalOverlay hidden" id="saveCodeModal">
       <div class="modalCard">
@@ -671,16 +686,16 @@
       </div>
     </div>
 
-    <script src="js/config.js?v=107"></script>
-    <script src="js/state.js?v=107"></script>
-    <script src="js/audio.js?v=107"></script>
-    <script src="js/services.js?v=107"></script>
-    <script src="js/economy.js?v=107"></script>
-    <script src="js/gods.js?v=107"></script>
-    <script src="js/retention.js?v=107"></script>
-    <script src="js/ui.js?v=107"></script>
-    <script src="js/input.js?v=107"></script>
-    <script src="js/main.js?v=107"></script>
+    <script src="js/config.js?v=108"></script>
+    <script src="js/state.js?v=108"></script>
+    <script src="js/audio.js?v=108"></script>
+    <script src="js/services.js?v=108"></script>
+    <script src="js/economy.js?v=108"></script>
+    <script src="js/gods.js?v=108"></script>
+    <script src="js/retention.js?v=108"></script>
+    <script src="js/ui.js?v=108"></script>
+    <script src="js/input.js?v=108"></script>
+    <script src="js/main.js?v=108"></script>
     <script type="module" src="js/native-bridge.js"></script>
   </body>
 </html>

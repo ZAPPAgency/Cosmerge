@@ -156,9 +156,10 @@ function handleSwapTap(idx) {
     return;
   }
   const idxA = Game.swapFirstIdx, idxB = idx;
-  const result = buyGemShopItem(state, "swapCells", { idxA, idxB });
+  const result = buyGemShopItem(state, "swapCells", { idxA, idxB, free: Game.swapFree });
   Game.swapArmed = false;
   Game.swapFirstIdx = null;
+  Game.swapFree = false;
   clearSelection();
   if (result.ok) { Sfx.purchase(); toast("Cases échangées !"); }
   else { Sfx.error(); toast(result.reason === "funds" ? "Pas assez de Gems." : "Échange impossible."); }
@@ -261,6 +262,7 @@ function attemptMerge(fromIdx, toIdx) {
       toast(tierName(result.newTier) + " " + tierEmoji(result.newTier) + " !");
     }
     maybeOpenGodRitual();
+    maybeOpenGodRevealModal();
     if (result.eggResult) revealEasterEgg(result.eggResult);
     if (chainEggResult) revealEasterEgg(chainEggResult);
   }, Game.mergeStreak, result.newTier);
@@ -287,6 +289,23 @@ function maybeOpenGodRitual() {
     Game.pendingGodRitual = false;
     openGodPickerModal();
   }
+}
+
+// Loris: "il n'y a pas de pop up quand on débloque un nouveau dieu hormis
+// pour les deux premiers" - shows the reveal for every god unlockGod()
+// (gods.js) queued (milestone/challenge/shop unlocks - the ritual pair and
+// Cosmic Box unlocks push nothing here, see unlockGod's `silent` option,
+// they already have their own reveal). Skips while the ritual picker modal
+// is up rather than stacking on top of it - called again once that closes
+// (onChooseGod, below) so anything queued during it still gets shown.
+// One at a time: closeGodUnlockModal (ui.js) calls this again on close, so
+// a rare double-unlock in the same moment reveals as two modals in a row
+// instead of overwriting each other.
+function maybeOpenGodRevealModal() {
+  if (Game.pendingGodReveals.length === 0) return;
+  if (!$("godRitualModal").classList.contains("hidden")) return;
+  const godId = Game.pendingGodReveals.shift();
+  openGodUnlockModal(godId);
 }
 
 // Set by checkFusionPromo() (retention.js, via trackFusionEvent) the
@@ -482,6 +501,7 @@ function onBigBangConfirm() {
   // After the summary, not instead of it - Loris's easter egg reveal
   // shouldn't replace the normal Big Bang recap the player is expecting.
   if (eggResult) revealEasterEgg(eggResult);
+  maybeOpenGodRevealModal(); // e.g. Thanatos - checkThanatosChallenge runs inside performBigBang above
 }
 
 function onRestartConfirm() {
@@ -739,8 +759,33 @@ function onWatchProdBoostAd() {
 // openConfirmModal via buyBtn() (ui.js) like every other purchase there.
 function onSwapCellsClick() {
   const state = Game.state;
-  if (state.dontAskAgain.swapConfirm) { onBuyGemItem("swapCells"); return; }
   const cost = SHOP_GEM_ITEMS.find(i => i.id === "swapCells").cost;
+  // Loris: "si on a pas assez de gemmes ça devrait nous offrir la
+  // possibilité de regarder une pub [...] pour pouvoir échanger deux cases
+  // sans débourser de gemmes" - checked before the normal paid-confirm flow
+  // below, same confirmThenWatchAd pattern already used by "Case gratuite"
+  // (onUnlockCellAd) instead of a dead-end "Pas assez de Gems." toast.
+  if (state.gems < cost) {
+    if (Date.now() < state.cooldowns.swapAdUntil) {
+      toast("Disponible dans " + formatDuration(state.cooldowns.swapAdUntil - Date.now()));
+      return;
+    }
+    confirmThenWatchAd(state, "Pas assez de Gems",
+      `Il te manque des Gems pour échanger deux cases (${cost} ${currencyIconHtml("gems")} nécessaires). Regarder une publicité pour échanger gratuitement à la place ?`,
+      async () => {
+        if (!adsRemoved(state)) toast("📺 Chargement de la publicité...");
+        const ok = await watchRewardedAd(state, "swap_cells_free");
+        if (!ok) return;
+        state.cooldowns.swapAdUntil = Date.now() + SWAP_AD_COOLDOWN_MS;
+        Game.swapArmed = true;
+        Game.swapFree = true;
+        toast("Choisis deux cases à échanger.");
+        renderAll();
+        saveState(state);
+      });
+    return;
+  }
+  if (state.dontAskAgain.swapConfirm) { onBuyGemItem("swapCells"); return; }
   openConfirmModal({
     title: "Échanger deux cases",
     text: `Dépenser ${cost} ${currencyIconHtml("gems")} pour échanger le contenu de deux cases ?`,
@@ -856,6 +901,7 @@ function onBuyGod(godId) {
   refreshCurrentPanel();
   updateHeader();
   saveState(Game.state);
+  maybeOpenGodRevealModal();
 }
 function onBuyGodPower(godId) {
   const result = buyGodPowerLevel(Game.state, godId);
@@ -992,6 +1038,7 @@ function wireEvents() {
   $("secretsClose").addEventListener("click", closeSecretsModal);
   $("eggFoundClose").addEventListener("click", closeEggFoundModal);
   $("eggFinaleClose").addEventListener("click", closeEggFinaleModal);
+  $("godUnlockClose").addEventListener("click", closeGodUnlockModal);
 
   dom.energyPill.addEventListener("click", () => openPanel("skills"));
   $("gemsPill").addEventListener("click", openGemsMenuModal);
