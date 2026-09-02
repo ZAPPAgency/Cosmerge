@@ -81,9 +81,13 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
    l'onglet des gemmes" - stardust needs room for icon+value+the "+X/s"
    rate suffix, gems only ever shows icon+value (no rate of its own), so
    giving stardust a bigger share of the space they split lets the rate
-   actually fit instead of ellipsizing to "+…". */
-.currency.stardust{flex:2;}
-.currency.gems{flex:1;}
+   actually fit instead of ellipsizing to "+…".
+   Later feedback (screenshot): 2:1 gave stardust too much - the gems pill
+   itself now reads as visibly cramped against its own icon+value. Nudged
+   back a little toward gems (still comfortably enough for the rate at
+   realistic production values, just less lopsided than a straight 2:1). */
+.currency.stardust{flex:1.6;}
+.currency.gems{flex:1.2;}
 .currency.gems,.currency.energy,.currency.stardust{cursor:pointer;}
 /* The owned amount (.value) must never truncate - it's the number that
    actually matters. If the pill runs out of room, the secondary "+X/s"
