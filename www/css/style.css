@@ -242,6 +242,20 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
   45%{box-shadow:0 0 20px 6px #fbbf2488;}
   100%{transform:scale(1);box-shadow:0 0 0 0 transparent;}
 }
+/* "Clicker automatique" (Loris) - .autoClickTarget is the persistent marker
+   on whichever cell it's currently targeting, kept in sync every frame from
+   tickAutoClicker() (input.js, a plain classList.toggle - simpler than
+   threading a re-render hook through every place the grid can change).
+   .autoClickPulse is the brief flash on each actual tap-bonus grant,
+   throttled in JS to well below the real grant rate (Loris: "une animation
+   à chaque clic [...] pas trop agressif mais de quand même visible"). */
+.cell.autoClickTarget{box-shadow:0 0 0 2px #22d3ee88, 0 0 14px 2px #22d3ee33 inset;}
+.cell.autoClickPulse{animation:autoClickPulse .5s ease-out;}
+@keyframes autoClickPulse{
+  0%{box-shadow:0 0 0 2px #22d3ee88, 0 0 0 0 #22d3ee66;}
+  40%{box-shadow:0 0 0 2px #22d3eecc, 0 0 22px 8px #22d3ee55;}
+  100%{box-shadow:0 0 0 2px #22d3ee88, 0 0 0 0 #22d3ee00;}
+}
 
 .ghostTile{position:fixed;z-index:50;pointer-events:none;width:56px;height:56px;border-radius:10px;
   display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.5);
@@ -378,7 +392,7 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
    fab's own width changes every tick, which in a flex-wrap row can bump it
    to a different line each time the digit count changes (the "ça bouge,
    deuxième ligne, troisième ligne" bug). */
-#fabBoostLabel,#fabGemsAdLabel{display:inline-block;min-width:52px;text-align:center;font-variant-numeric:tabular-nums;}
+#fabAutoClickerLabel,#fabGemsAdLabel{display:inline-block;min-width:52px;text-align:center;font-variant-numeric:tabular-nums;}
 .fab.ready{border-color:var(--accent2);box-shadow:0 0 0 2px #22d3ee44, 0 3px 10px rgba(0,0,0,.35);animation:fabPulse 1.6s ease-in-out infinite;}
 @keyframes fabPulse{0%,100%{box-shadow:0 0 0 2px #22d3ee44, 0 3px 10px rgba(0,0,0,.35)}50%{box-shadow:0 0 0 4px #22d3ee66, 0 3px 10px rgba(0,0,0,.35)}}
 .fab.active{border-color:var(--stardust);background:linear-gradient(180deg,#3a2a0d,#241f52);}

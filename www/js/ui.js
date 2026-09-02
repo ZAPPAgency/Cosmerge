@@ -399,17 +399,20 @@ const FAB_DISCOVERY_FUSIONS = {
   fabDailyLogin: 1,
   fabRunUpgrades: 6,
   fabUnlockCellAd: 9,
-  fabBoost: 12,
+  fabAutoClicker: 12,
   fabGemsAd: 15,
 };
 // Shows/hides one fab, playing its one-shot pop-in animation (.fabReveal,
 // style.css) only on the actual hidden->visible transition, and only once
 // per fab per session (Game.fabRevealed) - updateFabs() runs on nearly
 // every action, so without that guard the animation would replay on every
-// single call once a fab is already visible.
+// single call once a fab is already visible. Returns true only on that
+// exact transition, so a caller (updateFabs, for fabAutoClicker) can hook
+// a one-time action - like opening its intro modal - onto the real reveal
+// moment rather than re-checking Game.fabRevealed itself.
 function revealFab(id, shouldShow) {
   const elDom = $(id);
-  if (!shouldShow) { elDom.classList.add("hidden"); return; }
+  if (!shouldShow) { elDom.classList.add("hidden"); return false; }
   const wasHidden = elDom.classList.contains("hidden");
   elDom.classList.remove("hidden");
   if (wasHidden && !Game.fabRevealed.has(id)) {
@@ -419,7 +422,9 @@ function revealFab(id, shouldShow) {
     const revealCls = id === "fabDailyLogin" ? "fabReveal gift" : "fabReveal";
     elDom.classList.add(...revealCls.split(" "));
     setTimeout(() => elDom.classList.remove(...revealCls.split(" ")), 700);
+    return true;
   }
+  return false;
 }
 
 function updateFabs() {
@@ -447,22 +452,34 @@ function updateFabs() {
   ensureDailySpin(state);
   dom.fabWheel.classList.toggle("hidden", state.dailySpin.freeUsed && state.dailySpin.bonusUsed);
   const allUnlocked = unlockedCount(state) >= TOTAL;
-  revealFab("fabUnlockCellAd", fusions >= FAB_DISCOVERY_FUSIONS.fabUnlockCellAd && !allUnlocked);
-  $("fabUnlockCellAd").classList.toggle("ready", !allUnlocked && Date.now() >= state.cooldowns.unlockCellAdUntil);
-  const now = Date.now();
-  const boostActive = state.cooldowns.prodBoostActiveUntil > now;
-  const boostReady = now >= state.cooldowns.prodBoostUntil && !boostActive;
-  revealFab("fabBoost", fusions >= FAB_DISCOVERY_FUSIONS.fabBoost);
-  $("fabBoost").classList.toggle("ready", boostReady);
-  $("fabBoost").classList.toggle("active", boostActive);
-  const boostLabel = boostActive ? formatDuration(state.cooldowns.prodBoostActiveUntil - now)
-    : (boostReady ? "Boost x2" : formatDuration(state.cooldowns.prodBoostUntil - now));
-  if ($("fabBoostLabel").textContent !== boostLabel) $("fabBoostLabel").textContent = boostLabel;
+  // Loris: "le bouton case gratuite ne doit être présent que quand il peut
+  // être utilisé [...] même logique que la roue [...] tout simplement
+  // disparaître." Used to stay visible through its cooldown with just a
+  // dimmer, non-"ready" style - now folded straight into the reveal
+  // condition, same as fabWheel above.
+  const unlockCellAdReady = !allUnlocked && Date.now() >= state.cooldowns.unlockCellAdUntil;
+  revealFab("fabUnlockCellAd", fusions >= FAB_DISCOVERY_FUSIONS.fabUnlockCellAd && unlockCellAdReady);
 
-  const gemsAdReady = now >= state.cooldowns.gemsAdUntil;
+  const now = Date.now();
+  const ac = state.autoClicker;
+  const autoClickerActive = ac.activeUntil > now;
+  const autoClickerFree = !autoClickerActive && isAutoClickerFreeAvailable(state);
+  const justRevealedAutoClicker = revealFab("fabAutoClicker", fusions >= FAB_DISCOVERY_FUSIONS.fabAutoClicker);
+  $("fabAutoClicker").classList.toggle("ready", autoClickerFree);
+  $("fabAutoClicker").classList.toggle("active", autoClickerActive);
+  const autoClickerLabel = autoClickerActive ? formatDuration(ac.activeUntil - now)
+    : (autoClickerFree ? "Clicker Auto" : "📺 Clicker Auto");
+  if ($("fabAutoClickerLabel").textContent !== autoClickerLabel) $("fabAutoClickerLabel").textContent = autoClickerLabel;
+  // Loris: "un pop up [...] pour proposer et guider le joueur à utiliser
+  // cette fonctionnalité pour la première fois" - fires once, ever
+  // (tutorialShown persists in the save, unlike Game.fabRevealed which is
+  // session-only), the exact moment the fab first becomes visible for real.
+  if (justRevealedAutoClicker && !state.autoClicker.tutorialShown) openAutoClickerIntroModal();
+
   revealFab("fabGemsAd", fusions >= FAB_DISCOVERY_FUSIONS.fabGemsAd);
-  $("fabGemsAd").classList.toggle("ready", gemsAdReady);
-  const gemsAdLabel = gemsAdReady ? `+${GEMS_AD_REWARD} Gems` : formatDuration(state.cooldowns.gemsAdUntil - now);
+  const gemsAdFree = isGemsAdFreeAvailable(state);
+  $("fabGemsAd").classList.toggle("ready", gemsAdFree);
+  const gemsAdLabel = gemsAdFree ? `+${GEMS_AD_REWARD} Gems` : `📺 +${GEMS_AD_REWARD} Gems`;
   if ($("fabGemsAdLabel").textContent !== gemsAdLabel) $("fabGemsAdLabel").textContent = gemsAdLabel;
   revealFab("fabRunUpgrades", fusions >= FAB_DISCOVERY_FUSIONS.fabRunUpgrades);
   // Not gated by FAB_DISCOVERY_FUSIONS like the fabs above - a true secret,
@@ -901,29 +918,24 @@ function renderShopPanel() {
   // taking a full row each felt like wasted space now that shopGrid2 (see
   // "Cases & boosts" below) already proved the compact 2-column layout works.
   const adGrid = el("div", "shopGrid2");
-  const boostReady = Date.now() >= state.cooldowns.prodBoostUntil;
-  const boostActive = state.cooldowns.prodBoostActiveUntil > Date.now();
-  const boostCard = el("div", "card compact");
-  // Loris: "il y a toujours l'emoji fusée et pas l'illustration" - this
-  // card's own header was still hardcoded to the plain 🚀 glyph, unrelated
-  // to the fab's own icon (which already uses boost.png).
-  boostCard.innerHTML = `<div class="rowBetween"><h3><img class="inlineCurrencyIcon" src="assets/ui/boost.png" alt=""> Boost x2 production (10 min)</h3></div>
-    <p class="desc">${boostActive ? `Actif encore ${formatDuration(state.cooldowns.prodBoostActiveUntil - Date.now())}` :
-      (boostReady ? "Disponible maintenant." : `Disponible dans ${formatDuration(state.cooldowns.prodBoostUntil - Date.now())}`)}</p>`;
-  const boostBtn = el("button", "btn primary full", adsRemoved(state) ? "Activer" : "Regarder une pub");
-  boostBtn.disabled = !boostReady || boostActive;
-  boostBtn.addEventListener("click", onWatchProdBoostAd);
-  boostCard.appendChild(boostBtn);
-  adGrid.appendChild(boostCard);
+  const ac = state.autoClicker;
+  const autoClickerActive = ac.activeUntil > Date.now();
+  const autoClickerFree = !autoClickerActive && isAutoClickerFreeAvailable(state);
+  const autoClickerCard = el("div", "card compact");
+  autoClickerCard.innerHTML = `<div class="rowBetween"><h3><img class="inlineCurrencyIcon" src="assets/ui/boost.png" alt=""> Clicker Automatique (10 min)</h3></div>
+    <p class="desc">${autoClickerActive ? `Actif encore ${formatDuration(ac.activeUntil - Date.now())}` :
+      (autoClickerFree ? "Gratuit aujourd'hui - choisis une case sur la grille." : "Déjà utilisé aujourd'hui - regarde une publicité pour le relancer.")}</p>`;
+  const autoClickerBtn = el("button", "btn primary full", autoClickerActive ? "Actif" : (autoClickerFree || adsRemoved(state) ? "Choisir ma case" : "Regarder une pub"));
+  autoClickerBtn.disabled = autoClickerActive;
+  autoClickerBtn.addEventListener("click", onAutoClickerClick);
+  autoClickerCard.appendChild(autoClickerBtn);
+  adGrid.appendChild(autoClickerCard);
 
-  const gemsAdReady = Date.now() >= state.cooldowns.gemsAdUntil;
-  ensureGemsAdStreak(state);
-  const streakLeft = GEMS_AD_STREAK_SIZE - (state.gemsAdStreak.count % GEMS_AD_STREAK_SIZE);
+  const gemsAdFree = isGemsAdFreeAvailable(state);
   const gemsAdCard = el("div", "card compact");
   gemsAdCard.innerHTML = `<div class="rowBetween"><h3>${currencyIconHtml("gems")} Pub contre Gems (+${GEMS_AD_REWARD})</h3></div>
-    <p class="desc">${gemsAdReady ? `Disponible maintenant (encore ${streakLeft} avant une pause de ${GEMS_AD_COOLDOWN_MS / 60000} min).` : `Disponible dans ${formatDuration(state.cooldowns.gemsAdUntil - Date.now())}`}</p>`;
-  const gemsAdBtn = el("button", "btn primary full", adsRemoved(state) ? "Recevoir" : "Regarder une pub");
-  gemsAdBtn.disabled = !gemsAdReady;
+    <p class="desc">${gemsAdFree ? "Gratuit aujourd'hui." : "Déjà reçues aujourd'hui - regarde une publicité pour en recevoir plus."}</p>`;
+  const gemsAdBtn = el("button", "btn primary full", gemsAdFree || adsRemoved(state) ? "Recevoir" : "Regarder une pub");
   gemsAdBtn.addEventListener("click", onWatchGemsAd);
   gemsAdCard.appendChild(gemsAdBtn);
   adGrid.appendChild(gemsAdCard);
@@ -1483,6 +1495,18 @@ function openGodUnlockModal(godId) {
 function closeGodUnlockModal() {
   $("godUnlockModal").classList.add("hidden");
   maybeOpenGodRevealModal(); // shows the next queued reveal, if any (rare double-unlock in the same moment)
+}
+
+// ---------------- Auto-clicker intro (first-time guide) ----------------
+function openAutoClickerIntroModal() {
+  const state = Game.state;
+  // Set immediately on open, not on close/confirm - guarantees this never
+  // shows a 2nd time regardless of what the player does with it (closing
+  // via the backdrop bypasses the "Choisir ma case" button entirely, see
+  // wireModalBackdropClose, input.js).
+  state.autoClicker.tutorialShown = true;
+  saveState(state);
+  $("autoClickerIntroModal").classList.remove("hidden");
 }
 
 function renderSettingsPanel() {

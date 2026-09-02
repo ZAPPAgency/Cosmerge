@@ -237,27 +237,36 @@ function equipCosmetic(state, id) {
   return true;
 }
 
-function activateProdBoost(state) {
-  const now = Date.now();
-  state.cooldowns.prodBoostActiveUntil = now + PROD_BOOST_DURATION_MS;
-  state.cooldowns.prodBoostUntil = now + PROD_BOOST_COOLDOWN_MS;
+// "Clicker automatique" (Loris) - replaces the old Boost x2. Targets a
+// specific grid cell instead of a flat production multiplier; the actual
+// per-frame auto-tap loop is tickAutoClicker() (input.js), this just starts
+// the window. Setting freeUsedDate here (not only at the free-activation
+// call site) means both the free and the ad-gated reactivation path can
+// call this one function - by the time either reaches here, today's free
+// use is spent either way.
+function activateAutoClicker(state, targetIdx) {
+  state.autoClicker.targetIdx = targetIdx;
+  state.autoClicker.activeUntil = Date.now() + AUTO_CLICKER_DURATION_MS;
+  state.autoClicker.freeUsedDate = todayStr();
+}
+function isAutoClickerFreeAvailable(state) {
+  return state.autoClicker.freeUsedDate !== todayStr();
 }
 
-// Ad-based Gems source, meant to be grindable toward a specific shop item
-// rather than a big one-off (see GEMS_AD_COOLDOWN_MS/GEMS_AD_REWARD).
-// Loris: watch up to GEMS_AD_STREAK_SIZE ads back-to-back with no
-// cooldown between them; only the Nth one (and every following multiple)
-// sets the cooldown, unlocking another full streak once it elapses. The
-// streak's own count resets at midnight (ensureGemsAdStreak, retention.js)
-// independently of the cooldown itself.
+// Ad-based Gems source. Loris: "le bouton +20 gemmes une fois par jour il
+// devrait être gratuit aussi (reset à minuit) [...] offre la possibilité
+// [...] de regarder une publicité pour passer outre cette restriction" -
+// same pattern as the auto-clicker above: the day's first grant is free
+// (onWatchGemsAd, input.js skips the ad for it entirely), every grant after
+// that needs its own ad watch, uncapped. Marking the day's free flag "used"
+// here regardless of which path led here keeps both call sites this simple.
 function grantGemsFromAd(state) {
-  ensureGemsAdStreak(state);
-  const granted = grantGems(state, GEMS_AD_REWARD);
-  state.gemsAdStreak.count += 1;
-  if (state.gemsAdStreak.count % GEMS_AD_STREAK_SIZE === 0) {
-    state.cooldowns.gemsAdUntil = Date.now() + GEMS_AD_COOLDOWN_MS;
-  }
-  return granted;
+  state.gemsAdFree.date = todayStr();
+  state.gemsAdFree.used = true;
+  return grantGems(state, GEMS_AD_REWARD);
+}
+function isGemsAdFreeAvailable(state) {
+  return state.gemsAdFree.date !== todayStr() || !state.gemsAdFree.used;
 }
 
 // Ad-based relief valve for unlockCost's 1.5x-per-cell growth, which is what

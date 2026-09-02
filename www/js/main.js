@@ -59,6 +59,10 @@ function requestStorageAccessBestEffort() {
     // Échanger without enough Gems) - handleSwapTap (input.js) reads this to
     // skip the Gems cost entirely for this one swap.
     swapFree: false,
+    // "Choisis une case" mode for the auto-clicker's target pick
+    // (armAutoClickerPicker/handleAutoClickerPick, input.js) - same
+    // in-memory, tap-only-mode pattern as swapArmed/skipCellArmed above.
+    autoClickerArmed: false,
     // Queued god ids awaiting their unlock-reveal modal (Loris: "il n'y a
     // pas de pop up quand on débloque un nouveau dieu hormis pour les deux
     // premiers") - unlockGod() (gods.js) pushes here, maybeOpenGodRevealModal()
@@ -138,6 +142,7 @@ function requestStorageAccessBestEffort() {
     if (Math.abs(Game.state.stardust - Game.displayedStardust) < 0.05) Game.displayedStardust = Game.state.stardust;
 
     tickAutoSpawn(now);
+    tickAutoClicker();
 
     updateHeader();
     updateFabs();
