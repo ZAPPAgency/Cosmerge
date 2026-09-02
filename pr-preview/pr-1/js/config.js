@@ -24,8 +24,17 @@ const UNLOCK_CELL_AD_COOLDOWN_MS = 2 * 60 * 60 * 1000;
 // Deliberately short and repeatable - this is the "grind toward a specific
 // purchase" ad, not a big one-off bonus like the others above.
 const GEMS_AD_COOLDOWN_MS = 3 * 60 * 1000;
-const GEMS_AD_REWARD = 10; // 5 watches = 50 Gems = exactly the swapCells shop cost, see SHOP_GEM_ITEMS
-const VIP_DAILY_GEMS = 50;
+// Loris: "le bouton [...] pour regarder une pub en échange de gemmes
+// rapporte désormais 20 gemmes et on peut le répéter 5 fois d'affilée
+// avant d'avoir un timer de 3 minutes [...] et ainsi de suite. Le compte
+// des 5 fois se réinitialise toujours à minuit." - was a flat cooldown on
+// every single watch; now GEMS_AD_STREAK_SIZE watches are free of any
+// cooldown, only the Nth one (and every following multiple of it) sets
+// GEMS_AD_COOLDOWN_MS - see grantGemsFromAd()/ensureGemsAdStreak()
+// (economy.js/retention.js) and state.gemsAdStreak (state.js).
+const GEMS_AD_REWARD = 20;
+const GEMS_AD_STREAK_SIZE = 5;
+const VIP_DAILY_GEMS = 100; // Loris: 50 -> 100/day for Pass Supernova
 // Short + frequent beats long + forgettable for rewarded-ad engagement: a
 // 30 min boost gets watched once and ignored, a 10 min one stays felt and
 // is worth re-watching for well within a normal play session.
@@ -472,7 +481,7 @@ const QUEST_POOL = [
   { id: "tapBonus5", desc: "Récupère 5 bonus manuels", type: "tapBonuses", target: 5, reward: 4 },
   { id: "spawnAuto10", desc: "Laisse apparaître 10 Météorites automatiques", type: "autoSpawns", target: 10, reward: 7 },
 ];
-const BONUS_AD_QUEST = { id: "watchAd", desc: "Regarde une publicité", reward: 15 };
+const BONUS_AD_QUEST = { id: "watchAd", desc: "Regarde une publicité", reward: 25 }; // Loris: 15 -> 25
 
 // ---- Achievements (permanent, never reset) ----
 // Rewards cut ~50% across the board (Loris: "diminue les récompenses de
@@ -542,22 +551,29 @@ const IAP_CATALOG = [
   // Price swapped with stardust_boost below (Loris) - permanently removing
   // every ad is worth more than a production multiplier, so it should cost
   // more, not less.
+  // Loris: "la suppression de pubs a 4,99$ une fois (pas mensuel comme le
+  // pass)" - already exactly this (nonconsumable, 4,99$), no change here.
   { id: "remove_ads", type: "nonconsumable", name: "Suppression des pubs", price: "4,99 $", desc: "Retire toutes les publicités définitivement, et débloque instantanément tous les bonus normalement obtenus en pub (boost, quête bonus)." },
   // `perks` (structured, one line per benefit) replaces the old single
   // `desc` string of "✅ ..." lines joined by \n - Loris found that plain
   // checklist "pas très premium". Rendered as its own icon+text row list
   // in the hero card (renderShopPanel/ui.js) instead of a wall of
   // checkmarks; `desc` is now just the short tagline above it.
-  { id: "vip_monthly", type: "subscription", name: "Pass Supernova", price: "6,99 $/mois",
+  // Price 6,99->5,99 $/mois, daily Gems 50->100 (VIP_DAILY_GEMS below) -
+  // both per Loris. The Gems perk's own value-comparison badge (vs buying
+  // that many Gems in the shop) is computed and appended at render time by
+  // passGemsValueBadgeText() (ui.js), not hardcoded here, so it can't drift
+  // out of sync if any of these prices change later.
+  { id: "vip_monthly", type: "subscription", name: "Pass Supernova", price: "5,99 $/mois",
     desc: "L'expérience Godspark, sans limites.",
     perks: [
-      "Aucune publicité, pour toujours",
+      "Aucune publicité tant que le Pass est actif",
       "Production de Stardust doublée",
       "Tous les sets d'icônes débloqués",
       "48h de gains hors-ligne couverts (au lieu de 24h)",
-      "50 Gems offertes chaque jour",
+      "100 Gems offertes chaque jour",
     ] },
-  { id: "stardust_boost", type: "nonconsumable", name: "Multiplicateur Stardust", price: "3,99 $", desc: "+50% de production de Stardust, en permanence, cumulable avec tous les autres bonus." },
+  { id: "stardust_boost", type: "nonconsumable", name: "Multiplicateur Stardust", price: "2,99 $", desc: "+50% de production de Stardust, en permanence, cumulable avec tous les autres bonus." },
   { id: "starter_pack", type: "nonconsumable", name: "Pack de démarrage", price: "1,99 $", desc: "500 Gems + 3 cases + boost 1h.", startersOnly: true },
   { id: "gems_small", type: "consumable", name: "100 Gems", price: "0,99 $", amount: 100 },
   { id: "gems_medium", type: "consumable", name: "550 Gems (+10%)", price: "4,99 $", amount: 550 },

@@ -630,52 +630,69 @@ async function onWheelSpinAd() {
 }
 
 // ---------------- Unlock cell fab (rewarded ad) ----------------
-async function onUnlockCellAd() {
+// Loris: "quand on clique sur un bouton boost x2, +10 gemmes et case
+// gratuite il faut un message pour confirmer que l'utilisateur veut
+// regarder une publicité pour recevoir la récompense en question". Skipped
+// entirely when ads are removed (purchase or VIP) - watchRewardedAd()
+// itself grants the reward instantly with no video then, so "confirm you
+// want to watch an ad" would be asking about something that isn't
+// happening. Reuses the same openConfirmModal (ui.js) as every purchase
+// confirmation.
+function confirmThenWatchAd(state, title, text, action) {
+  if (adsRemoved(state)) { action(); return; }
+  openConfirmModal({ title, text, confirmLabel: "Regarder la pub", onConfirm: action });
+}
+
+function onUnlockCellAd() {
   const state = Game.state;
   if (Date.now() < state.cooldowns.unlockCellAdUntil) {
     toast("Disponible dans " + formatDuration(state.cooldowns.unlockCellAdUntil - Date.now()));
     return;
   }
   if (unlockedCount(state) >= TOTAL) { toast("Toutes les cases sont déjà débloquées !"); return; }
-  if (!adsRemoved(state)) toast("📺 Chargement de la publicité...");
-  const ok = await watchRewardedAd(state, "unlock_cell");
-  if (!ok) return;
-  const result = grantFreeCellUnlock(state);
-  if (result.ok) {
-    renderCell(result.idx, { justUnlocked: true });
-    triggerResonanceIfLucky(state);
-    refreshLockedCellPrices();
-    Sfx.unlock();
-    toast("🔓 Case débloquée gratuitement !");
-  } else {
-    toast("Toutes les cases sont déjà débloquées !");
-  }
-  updateHeader();
-  updateFabs();
-  saveState(state);
+  confirmThenWatchAd(state, "Case gratuite", "Regarder une publicité pour débloquer une case gratuitement ?", async () => {
+    if (!adsRemoved(state)) toast("📺 Chargement de la publicité...");
+    const ok = await watchRewardedAd(state, "unlock_cell");
+    if (!ok) return;
+    const result = grantFreeCellUnlock(state);
+    if (result.ok) {
+      renderCell(result.idx, { justUnlocked: true });
+      triggerResonanceIfLucky(state);
+      refreshLockedCellPrices();
+      Sfx.unlock();
+      toast("🔓 Case débloquée gratuitement !");
+    } else {
+      toast("Toutes les cases sont déjà débloquées !");
+    }
+    updateHeader();
+    updateFabs();
+    saveState(state);
+  });
 }
 
 // ---------------- Gems-for-ad (shop + home screen) ----------------
-async function onWatchGemsAd() {
+function onWatchGemsAd() {
   const state = Game.state;
   if (Date.now() < state.cooldowns.gemsAdUntil) {
     toast("Disponible dans " + formatDuration(state.cooldowns.gemsAdUntil - Date.now()));
     return;
   }
-  if (!adsRemoved(state)) toast("📺 Chargement de la publicité...");
-  const ok = await watchRewardedAd(state, "gems_ad");
-  if (!ok) return;
-  const granted = grantGemsFromAd(state);
-  Sfx.purchase();
-  toast(`+${granted} 💎 !`);
-  refreshCurrentPanel();
-  updateHeader();
-  updateFabs();
-  saveState(state);
+  confirmThenWatchAd(state, "Pub contre Gems", `Regarder une publicité pour recevoir ${GEMS_AD_REWARD} Gems ?`, async () => {
+    if (!adsRemoved(state)) toast("📺 Chargement de la publicité...");
+    const ok = await watchRewardedAd(state, "gems_ad");
+    if (!ok) return;
+    const granted = grantGemsFromAd(state);
+    Sfx.purchase();
+    toast(`+${granted} 💎 !`);
+    refreshCurrentPanel();
+    updateHeader();
+    updateFabs();
+    saveState(state);
+  });
 }
 
 // ---------------- Shop / IAP / skills / quests handlers ----------------
-async function onWatchProdBoostAd() {
+function onWatchProdBoostAd() {
   const state = Game.state;
   const boostActive = state.cooldowns.prodBoostActiveUntil > Date.now();
   if (boostActive) { toast("Boost déjà actif encore " + formatDuration(state.cooldowns.prodBoostActiveUntil - Date.now())); return; }
@@ -683,16 +700,36 @@ async function onWatchProdBoostAd() {
     toast("Disponible dans " + formatDuration(state.cooldowns.prodBoostUntil - Date.now()));
     return;
   }
-  if (!adsRemoved(state)) toast("📺 Chargement de la publicité...");
-  const ok = await watchRewardedAd(state, "prod_boost");
-  if (!ok) return;
-  activateProdBoost(state);
-  Sfx.purchase();
-  toast("🚀 Boost x2 production activé pour 10 min !");
-  refreshCurrentPanel();
-  updateHeader();
-  updateFabs();
-  saveState(state);
+  confirmThenWatchAd(state, "Boost x2", "Regarder une publicité pour activer le Boost x2 production (10 min) ?", async () => {
+    if (!adsRemoved(state)) toast("📺 Chargement de la publicité...");
+    const ok = await watchRewardedAd(state, "prod_boost");
+    if (!ok) return;
+    activateProdBoost(state);
+    Sfx.purchase();
+    toast("🚀 Boost x2 production activé pour 10 min !");
+    refreshCurrentPanel();
+    updateHeader();
+    updateFabs();
+    saveState(state);
+  });
+}
+// Loris: "ajouter une demande de confirmation quand on clique sur le
+// bouton échanger [...] possible d'annuler ou de confirmer mais aussi de
+// cocher une case pour ne plus jamais voir ce message". Only the fab
+// (home-screen "Échanger" button) gets this - the Boutique's own
+// "Échanger deux cases" gem-shop card already goes through
+// openConfirmModal via buyBtn() (ui.js) like every other purchase there.
+function onSwapCellsClick() {
+  const state = Game.state;
+  if (state.dontAskAgain.swapConfirm) { onBuyGemItem("swapCells"); return; }
+  const cost = SHOP_GEM_ITEMS.find(i => i.id === "swapCells").cost;
+  openConfirmModal({
+    title: "Échanger deux cases",
+    text: `Dépenser ${cost} ${currencyIconHtml("gems")} pour échanger le contenu de deux cases ?`,
+    confirmLabel: "Échanger",
+    dontAskKey: "swapConfirm",
+    onConfirm: () => onBuyGemItem("swapCells"),
+  });
 }
 function onBuyGemItem(itemId) {
   if (itemId === "skipCell") {
@@ -923,7 +960,7 @@ function wireEvents() {
   dom.fabWheel.addEventListener("click", openWheelModal);
   $("fabBoost").addEventListener("click", onWatchProdBoostAd);
   $("fabUnlockCellAd").addEventListener("click", onUnlockCellAd);
-  dom.fabSwapCells.addEventListener("click", () => onBuyGemItem("swapCells"));
+  dom.fabSwapCells.addEventListener("click", onSwapCellsClick);
   $("fabCurrentGod").addEventListener("click", () => openPanel("gods"));
   $("fabRestart").addEventListener("click", openRestartModal);
   $("fabGemsAd").addEventListener("click", onWatchGemsAd);
