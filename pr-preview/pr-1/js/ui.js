@@ -96,10 +96,12 @@ function tierInlineIconHtml(tier) {
 // the sizing rule from style.css - every god-emoji spot in the UI (Gods
 // panel grid, detail modal, ritual picker, Histoire god-lore card, Cosmic
 // Box reveal) has its own size, so this doesn't hardcode one. `locked`
-// (default false) keeps the existing "❓, don't spoil the portrait" behavior
-// for a not-yet-unlocked god instead of showing its art.
+// (default false) shows the shared "unknown god" illustration
+// (assets/gods/unknown.png, Loris) instead of the real portrait - reuses
+// the same `cls` sizing rule as the real art so it drops into every one of
+// those spots at the right size with no extra CSS.
 function godPortraitHtml(god, cls, locked) {
-  if (locked) return "❓";
+  if (locked) return `<img class="${cls}" src="assets/gods/unknown.png" alt="Dieu inconnu">`;
   return god.icon
     ? `<img class="${cls}" src="assets/gods/${god.icon}" alt="${god.name}">`
     : god.emoji;
