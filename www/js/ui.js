@@ -1012,6 +1012,23 @@ function renderShopPanel() {
 // des onglets par lignes mais des blocs 2 par 2" - cards live inside a
 // .skillGrid (2-column CSS grid, style.css) instead of going straight into
 // panelBody's own single-column flex stack.
+// Per-level effect text (Loris: "dans ascension il manque les états des
+// bonus actuel et suivant comme on a fait sur la page alchimie") - same
+// current/next readout as runUpgradeEffectAtLevel() below, mirrored for
+// SKILL_TREE's own 5 branches. Percentages/values here are display-only
+// copies of the real ones applied in state.js (productionMultiplier/
+// autoSpawnIntervalMs/offlineCapHours) and economy.js (performMerge's
+// luckChance) - keep in sync if either changes. Returns null at level 0.
+function skillEffectAtLevel(key, level) {
+  if (level <= 0) return null;
+  if (key === "prod") return `+${level * 3}% production de Stardust`;
+  if (key === "swarm") return `+${level} case(s) de départ déverrouillée(s)`;
+  if (key === "gravity") return `-${level * 5}% de cooldown de spawn auto`;
+  if (key === "echo") return `+${level * 2}h de plafond hors-ligne`;
+  if (key === "luck") return `+${level}% de chance de Gem bonus par fusion`;
+  return null;
+}
+
 function renderSkillsPanel() {
   const state = Game.state;
   dom.panelBody.innerHTML = "";
@@ -1022,10 +1039,16 @@ function renderSkillsPanel() {
     const level = state.skills[key];
     const maxed = level >= branch.maxLevel;
     const cost = maxed ? null : skillCost(key, level + 1);
+    const currentText = skillEffectAtLevel(key, level) || "Aucun bonus actif";
+    const nextText = maxed ? null : skillEffectAtLevel(key, level + 1);
     const card = el("div", "card skillRow");
     card.innerHTML = `<div class="rowBetween"><h3>${branch.name}</h3><span class="skillLevel">Niv. ${level}/${branch.maxLevel}</span></div>
       <p class="desc">${branch.desc}</p>
-      <div class="progressBar"><div class="fill" style="width:${(level / branch.maxLevel * 100).toFixed(1)}%"></div></div>`;
+      <div class="progressBar"><div class="fill" style="width:${(level / branch.maxLevel * 100).toFixed(1)}%"></div></div>
+      <div class="skillEffects">
+        <span class="effectCurrent">Actuel : ${currentText}</span>
+        ${nextText ? `<span class="effectNext">Prochain : ${nextText}</span>` : ""}
+      </div>`;
     const btn = el("button", "btn primary full", maxed ? "Niveau maximum" : `Améliorer — ${cost} ${currencyIconHtml("energy")}`);
     btn.disabled = maxed || state.cosmicEnergy < cost;
     if (!maxed) btn.addEventListener("click", () => onBuySkill(key));
@@ -1071,7 +1094,7 @@ function renderRunUpgradesPanel() {
     card.innerHTML = `<div class="rowBetween"><h3>${branch.name}</h3><span class="skillLevel">Niv. ${level}/${branch.maxLevel}</span></div>
       <p class="desc">${branch.desc}</p>
       <div class="progressBar"><div class="fill" style="width:${(level / branch.maxLevel * 100).toFixed(1)}%"></div></div>
-      <div class="runUpgradeEffects">
+      <div class="skillEffects">
         <span class="effectCurrent">Actuel : ${currentText}</span>
         ${nextText ? `<span class="effectNext">Prochain : ${nextText}</span>` : ""}
       </div>`;
