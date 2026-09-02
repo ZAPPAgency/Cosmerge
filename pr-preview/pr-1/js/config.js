@@ -149,7 +149,14 @@ const EMOJI_SETS = [
       { emoji: "🫑", name: "Poivron", icon: "legume-4-poivron.png" },
       { emoji: "🍆", name: "Aubergine", icon: "legume-5-aubergine.png" },
       { emoji: "🥦", name: "Brocoli", icon: "legume-6-brocoli.png" },
-      { emoji: "🧅", name: "Oignon", icon: "legume-7-oignon.png" },
+      // Redone (Loris: "on voit pas vraiment ce que ça représente" - the
+      // first version didn't read as an onion at all). Renamed to a new
+      // filename (-v2) rather than overwriting legume-7-oignon.png in
+      // place - unlike the JS/CSS files (cache-busted via ?v=N on every
+      // deploy), image URLs here carry no such param, so a returning
+      // player's browser could otherwise keep showing the old cached
+      // bytes at the same URL indefinitely.
+      { emoji: "🧅", name: "Oignon", icon: "legume-7-oignon-v2.png" },
       { emoji: "🫛", name: "Petit Pois", icon: "legume-8-pois.png" },
       { emoji: "🎃", name: "Citrouille Géante", icon: "legume-9-citrouille.png" },
       { emoji: "🌻", name: "Fleur Cosmique", icon: "legume-10-fleur.png" },
