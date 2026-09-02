@@ -99,6 +99,10 @@ function defaultState() {
     // here as a player actually checks the box for that specific action
     // (currently just "swapConfirm", the Échanger button).
     dontAskAgain: {},
+    // Secret 4-egg challenge (Loris) - unlockedIds only ever grows, ids
+    // from EASTER_EGGS (config.js). The counter widget (fabSecrets,
+    // ui.js) stays hidden until this has its first entry.
+    easterEggs: { unlockedIds: [] },
     // Loris: promos (starter pack, suppression des pubs, Pass Supernova)
     // "devrait[ent] tous arrivée[s] bien plus tard [...] avec un peu plus
     // de temps entre chaque promo" - a real-time floor between any two

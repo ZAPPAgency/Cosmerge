@@ -55,6 +55,11 @@ function requestStorageAccessBestEffort() {
     // fast feels increasingly rewarding rather than just repetitive.
     mergeStreak: 0,
     lastMergeAt: 0,
+    // Rolling window of recent merge timestamps for the "La Cascade" easter
+    // egg (EASTER_EGG_CHAIN_COUNT/MS, config.js) - in-memory only, unrelated
+    // to mergeStreak above (that one's about the *visual* streak effect,
+    // this one's a real detection window pruned in attemptMerge).
+    mergeChainTimes: [],
     pendingOfflineGain: null,
     bigBangPromptShown: hasUniverseTile(state), // don't re-prompt on reload if a Universe tile already existed last save
     // Which fabs have already played their one-shot discovery pop

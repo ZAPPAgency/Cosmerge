@@ -72,6 +72,25 @@ function unlockGod(state, godId) {
   toast(`Nouveau Dieu débloqué : ${getGod(godId).name} ${getGod(godId).emoji}`);
 }
 
+// Loris: "4 easter eggs [...] débloquer 4 easter eggs pour recevoir une
+// récompense inédite [...] informer quand un easter egg est débloqué".
+// Returns null if `id` is already unlocked (or unknown) - the only signal
+// callers need to know whether to trigger the "found it" reveal (ui.js).
+// The 4th egg also unlocks the secret god Ananké right here, in the same
+// mutation, rather than leaving callers to separately notice the count
+// hit 4 - pushed directly (not via unlockGod() above) since that fires
+// its own toast/sound, which would collide with the dedicated grand-finale
+// reveal this triggers instead (openEggGrandRevealModal, ui.js).
+function unlockEasterEgg(state, id) {
+  if (state.easterEggs.unlockedIds.includes(id)) return null;
+  const egg = EASTER_EGGS.find(e => e.id === id);
+  if (!egg) return null;
+  state.easterEggs.unlockedIds.push(id);
+  const complete = state.easterEggs.unlockedIds.length >= EASTER_EGGS.length;
+  if (complete && !isGodUnlocked(state, "ananke")) state.gods.unlockedIds.push("ananke");
+  return { egg, complete };
+}
+
 // Milestone-type gods unlock themselves the moment their `check` passes -
 // same pattern as achievements. Called after every stat-changing event.
 function checkGodMilestones(state) {
@@ -211,7 +230,13 @@ function nextGodMilestoneHint(state) {
 // nothing is left to unlock, this becomes a pure Gems roll instead
 // (rollCosmicBoxGems, below).
 function rollCosmicBox(state) {
-  const unownedGods = GODS.filter(g => !isGodUnlocked(state, g.id));
+  // !g.secret: Ananké (config.js) must never drop from a box, AND must
+  // never block the "every god owned" gems-box transition below just
+  // because she personally isn't unlocked yet - a player who has all 13
+  // normal gods but hasn't found the 4 easter eggs should still see the
+  // box become a Gems roll, not silently keep rolling for a god they can
+  // never actually receive this way.
+  const unownedGods = GODS.filter(g => !g.secret && !isGodUnlocked(state, g.id));
   if (unownedGods.length === 0) {
     return { duplicate: false, allGodsOwned: true, gems: rollCosmicBoxGems(state) };
   }

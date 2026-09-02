@@ -465,6 +465,10 @@ function updateFabs() {
   const gemsAdLabel = gemsAdReady ? `+${GEMS_AD_REWARD} Gems` : formatDuration(state.cooldowns.gemsAdUntil - now);
   if ($("fabGemsAdLabel").textContent !== gemsAdLabel) $("fabGemsAdLabel").textContent = gemsAdLabel;
   revealFab("fabRunUpgrades", fusions >= FAB_DISCOVERY_FUSIONS.fabRunUpgrades);
+  // Not gated by FAB_DISCOVERY_FUSIONS like the fabs above - a true secret,
+  // stays hidden until the player actually stumbles onto the first egg
+  // (unlockEasterEgg, gods.js), whenever that happens to be.
+  revealFab("fabSecrets", state.easterEggs.unlockedIds.length > 0);
   dom.bannerAd.classList.toggle("hidden", adsRemoved(state));
   updateQuestNotifDot();
 
@@ -725,6 +729,12 @@ function renderDrawerHead() {
   $("drawerHeadLogo").textContent = state.profile.emoji;
   $("drawerHeadLogo").style.background = `radial-gradient(circle at 35% 30%, #fff, ${state.profile.color})`;
   $("drawerHeadTitle").textContent = state.profile.name;
+  // Exclusive cosmetic reward for finding all 4 secrets (Loris: "un
+  // cosmétique exclusif mais pas skin de cases") - a permanent animated
+  // ring around the profile avatar, distinct from the tile-skin system
+  // entirely. Pure CSS (.drawerLogo.mythicFrame's ::before), so this
+  // .textContent reassignment above doesn't disturb it.
+  $("drawerHeadLogo").classList.toggle("mythicFrame", state.easterEggs.unlockedIds.length >= EASTER_EGGS.length);
 }
 function openDrawer() {
   dom.drawerOverlay.classList.remove("hidden");
@@ -1267,7 +1277,7 @@ function renderProgressionPanel() {
     <p class="rowBetween"><span>Niveau Cosmique (Big Bang)</span><strong>${state.lifetime.bigBangCount}</strong></p>
     <p class="rowBetween"><span>Palier le plus élevé atteint</span><strong>${TIERS[state.lifetime.maxTierEver - 1].name} ${tierInlineIconHtml(state.lifetime.maxTierEver)}</strong></p>
     <p class="rowBetween"><span>Stardust généré à vie</span><strong>${formatNumber(state.lifetime.stardustEarned)}</strong></p>
-    <p class="rowBetween"><span>Dieux éveillés</span><strong>${state.gods.unlockedIds.length} / ${GODS.length}</strong></p>`;
+    <p class="rowBetween"><span>Dieux éveillés</span><strong>${state.gods.unlockedIds.filter(id => id !== "ananke").length} / ${NORMAL_GODS_COUNT}</strong></p>`;
   dom.panelBody.appendChild(summary);
 
   dom.panelBody.appendChild(el("h3", null, "Ton parcours"));
@@ -1732,6 +1742,122 @@ function openCosmicBoxRevealModal(box) {
   }, 900);
 }
 function closeCosmicBoxModal() { $("cosmicBoxModal").classList.add("hidden"); }
+
+// ---------------- Secret 4-egg challenge (Loris) ----------------
+// See EASTER_EGGS (config.js) and unlockEasterEgg() (gods.js, called from
+// wherever each egg's own trigger naturally happens - economy.js/input.js
+// - this file only ever consumes its return value to decide what to show).
+
+// Small pips row (●/○ = filled/locked) shared by the found-reveal popup and
+// the persistent counter modal. `justUnlockedId` (optional) marks exactly
+// one pip to play its one-shot fill animation (.eggPip.justFilled).
+function renderEggPips(state, justUnlockedId) {
+  const row = el("div", "eggPipsRow");
+  EASTER_EGGS.forEach(egg => {
+    const unlocked = state.easterEggs.unlockedIds.includes(egg.id);
+    const pip = el("span", "eggPip" + (unlocked ? " filled" : "") + (egg.id === justUnlockedId ? " justFilled" : ""), unlocked ? "●" : "○");
+    row.appendChild(pip);
+  });
+  return row;
+}
+
+// Called with unlockEasterEgg()'s own return value - null means "already
+// found, nothing to show" (callers already guard on this, but staying safe
+// here too). `complete` (the 4th egg) skips the modest reveal entirely and
+// goes straight to the grand finale instead - Loris wants that moment to
+// stand alone, not stacked under a smaller popup first.
+function revealEasterEgg(result) {
+  if (!result) return;
+  if (result.complete) { openEggFinaleModal(); return; }
+  openEggFoundModal(result.egg);
+}
+
+function openEggFoundModal(egg) {
+  const state = Game.state;
+  $("eggFoundTitle").textContent = `Secret découvert : ${egg.name}`;
+  $("eggFoundText").textContent = egg.revealText;
+  const pipsHost = $("eggFoundPips");
+  pipsHost.innerHTML = "";
+  pipsHost.appendChild(renderEggPips(state, egg.id));
+  Sfx.chest();
+  $("eggFoundModal").classList.remove("hidden");
+}
+function closeEggFoundModal() { $("eggFoundModal").classList.add("hidden"); }
+
+// ---------------- Secrets counter (fabSecrets) ----------------
+function renderSecretsModal() {
+  const state = Game.state;
+  const list = $("secretsList");
+  list.innerHTML = "";
+  list.appendChild(renderEggPips(state));
+  EASTER_EGGS.forEach(egg => {
+    const unlocked = state.easterEggs.unlockedIds.includes(egg.id);
+    const card = el("div", "card storyCard" + (unlocked ? "" : " locked"));
+    card.innerHTML = unlocked
+      ? `<h3>✨ ${egg.name}</h3><p class="desc">${egg.revealText}</p>`
+      : `<h3>${lockIconHtml()} ???</h3><p class="desc">${egg.hint}</p>`;
+    list.appendChild(card);
+  });
+  if (state.easterEggs.unlockedIds.length >= EASTER_EGGS.length) {
+    list.appendChild(el("p", "desc", "Les quatre secrets sont réunis. Ananké a répondu."));
+  }
+}
+function openSecretsModal() {
+  renderSecretsModal();
+  $("secretsModal").classList.remove("hidden");
+}
+function closeSecretsModal() { $("secretsModal").classList.add("hidden"); }
+
+// ---------------- Grand finale (all 4 eggs found) ----------------
+// Loris: "l'animation la plus impressionnante jamais proposée" - the
+// single biggest visual moment in the game, reserved for this one
+// permanent, once-ever reveal. Same visual vocabulary as the merge-impact
+// effects (burst rays, falling particles) as spawnBurstRays() above, just
+// bigger and combined with a slow dramatic portrait reveal + screen shake.
+function openEggFinaleModal() {
+  const god = getGod("ananke");
+  $("eggFinalePortrait").innerHTML = godPortraitHtml(god, "eggFinalePortraitImg");
+  $("eggFinaleGodName").textContent = god.name;
+  $("eggFinaleGodTitle").textContent = god.title;
+  $("eggFinaleDesc").textContent = `${god.desc}. Un cadre unique orne désormais ton profil - la marque de celles et ceux qui ont trouvé les quatre secrets.`;
+  $("eggFinaleClose").classList.add("hidden");
+  const stage = $("eggFinaleStage");
+  stage.classList.remove("revealed");
+  const burstHost = $("eggFinaleBurst"), sparkleHost = $("eggFinaleSparkles");
+  burstHost.innerHTML = "";
+  sparkleHost.innerHTML = "";
+  $("eggFinaleModal").classList.remove("hidden");
+
+  const RAY_COUNT = 14;
+  for (let i = 0; i < RAY_COUNT; i++) {
+    const ray = el("div", "eggFinaleRay" + (i % 2 === 1 ? " short" : ""));
+    ray.style.setProperty("--ang", (i * (360 / RAY_COUNT)) + "deg");
+    burstHost.appendChild(ray);
+  }
+  const SPARKLE_COUNT = 26;
+  for (let i = 0; i < SPARKLE_COUNT; i++) {
+    const s = el("div", "eggFinaleSparkle");
+    s.style.left = (Math.random() * 100) + "%";
+    s.style.setProperty("--fallDur", (2.2 + Math.random() * 1.8).toFixed(2) + "s");
+    s.style.setProperty("--fallDelay", (Math.random() * 1.2).toFixed(2) + "s");
+    s.style.setProperty("--drift", ((Math.random() - 0.5) * 60).toFixed(0) + "px");
+    sparkleHost.appendChild(s);
+  }
+
+  document.body.classList.add("eggFinaleShake");
+  setTimeout(() => document.body.classList.remove("eggFinaleShake"), 600);
+  Sfx.bigBang();
+  setTimeout(() => Sfx.chest(), 700);
+  setTimeout(() => {
+    stage.classList.add("revealed");
+    $("eggFinaleClose").classList.remove("hidden");
+  }, 1400);
+}
+function closeEggFinaleModal() {
+  $("eggFinaleModal").classList.add("hidden");
+  $("eggFinaleBurst").innerHTML = "";
+  $("eggFinaleSparkles").innerHTML = "";
+}
 
 // ---------------- Skin manager (home screen, tap outside to close) ----------------
 function openSkinManagerModal() {
