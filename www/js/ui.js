@@ -103,7 +103,10 @@ function tierInlineIconHtml(tier) {
 // reuses the same `cls` sizing rule as the real art so it drops into every
 // one of those spots at the right size with no extra CSS.
 function godPortraitHtml(god, cls, locked) {
-  if (locked) return `<img class="${cls}" src="assets/gods/unknown-v2.png" alt="Dieu inconnu">`;
+  // "godPortraitUnknown" lets style.css target this one shared illustration
+  // specifically (see .godTilePortrait.godPortraitUnknown) without touching
+  // the sizing rule every other spot already relies on via `cls`.
+  if (locked) return `<img class="${cls} godPortraitUnknown" src="assets/gods/unknown-v2.png" alt="Dieu inconnu">`;
   return god.icon
     ? `<img class="${cls}" src="assets/gods/${god.icon}" alt="${god.name}">`
     : god.emoji;
@@ -1414,7 +1417,18 @@ function openGodDetailModal(godId) {
       info.innerHTML = `${lockIconHtml()} Boutique : ${god.unlock.cost} ${currencyIconHtml("gems")} ${god.unlock.altLabel ? "(" + god.unlock.altLabel + ")" : ""}`;
     } else if (god.unlock.type === "box") {
       info.innerHTML = `${lockIconHtml()} Uniquement via la Boîte Cosmique (Boutique) - pas d'autre moyen de l'éveiller`;
+    } else if (god.unlock.type === "secret") {
+      // Ananké - was falling into the generic "rituel des lunes" text
+      // below (Loris: "ne fait aucun sens" for her), since that catch-all
+      // branch used to be the only one handling anything past
+      // milestone/challenge/shop/box. A real hint instead, pointing at the
+      // Secrets challenge (fabSecrets/openSecretsModal) without spelling
+      // out its 4 conditions - same enigmatic register as EASTER_EGGS'
+      // own hint/revealText and the Secrets modal's intro copy.
+      info.innerHTML = `${lockIconHtml()} Elle ne répond à aucun rituel connu. Quatre échos discrets sommeillent dans ton Cosmos - trouve-les tous pour qu'elle se révèle.`;
     } else {
+      // "ritual" - Séléna et Zéphar, accordés automatiquement par le
+      // rituel des lunes (gods.js) sans étape à afficher ici d'autre.
       info.innerHTML = `${lockIconHtml()} Éveille ton premier Dieu via le rituel des lunes.`;
     }
     card.appendChild(info);
