@@ -623,6 +623,13 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 
 /* ---- Secret 4-egg challenge (Loris) - see EASTER_EGGS (config.js),
    revealEasterEgg()/openEggFinaleModal() (ui.js). ---- */
+/* Loris: "les sections de textes de chaque fragment dans l'onglet secret
+   sont trop collé les uns sur les autres, il faudrait un espacement entre
+   chaque section/bloc" - #secretsList (renderSecretsModal, ui.js) is a
+   plain div of stacked .card elements with no gap of their own (unlike
+   .panelBody, which gives every sliding-panel list this same gap for free
+   - this list lives in a .modalCard instead, which doesn't). */
+#secretsList{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
 .eggPipsRow{display:flex;gap:8px;justify-content:center;margin:4px 0 14px;font-size:20px;letter-spacing:2px;}
 .eggPip{color:#3a3070;transition:color .3s ease;}
 .eggPip.filled{color:var(--stardust);text-shadow:0 0 10px #fbbf2488;}

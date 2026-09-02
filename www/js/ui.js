@@ -1370,6 +1370,7 @@ function openGodPickerModal() {
         $("godRitualModal").classList.add("hidden");
         saveState(state);
         renderAll();
+        maybeOpenGodRevealModal(); // drains anything queued while the ritual modal was up
       },
     }));
     list.appendChild(card);
@@ -1469,6 +1470,28 @@ function openGodDetailModal(godId) {
   $("godDetailModal").classList.remove("hidden");
 }
 
+// Loris: "il n'y a pas de pop up quand on débloque un nouveau dieu hormis
+// pour les deux premiers" - shared reveal for every unlockGod() (gods.js)
+// that isn't already covered by its own dedicated modal (the ritual pair's
+// picker, the Cosmic Box's reveal). Called via maybeOpenGodRevealModal()
+// (input.js), never directly - that's what drains Game.pendingGodReveals.
+function openGodUnlockModal(godId) {
+  const god = getGod(godId);
+  const rarity = RARITY[god.rarity];
+  const portrait = $("godUnlockPortrait");
+  portrait.innerHTML = godPortraitHtml(god, "godDetailPortrait");
+  portrait.style.background = `radial-gradient(circle at 35% 30%, #2a2452, ${rarity.color}22)`;
+  $("godUnlockTitle").textContent = `✨ Nouveau Dieu éveillé : ${god.name} !`;
+  const power = describeGodEffect(god, 0);
+  $("godUnlockText").textContent = `${rarity.label} — ${god.title}.` + (power ? ` ${power}.` : "");
+  Sfx.chest();
+  $("godUnlockModal").classList.remove("hidden");
+}
+function closeGodUnlockModal() {
+  $("godUnlockModal").classList.add("hidden");
+  maybeOpenGodRevealModal(); // shows the next queued reveal, if any (rare double-unlock in the same moment)
+}
+
 function renderSettingsPanel() {
   const state = Game.state;
   dom.panelBody.innerHTML = "";
@@ -1566,7 +1589,7 @@ function openOfflineModal(gainInfo, spawnedCount) {
   Game.pendingOfflineGain = gainInfo;
   const capNote = gainInfo.wasCapped ? ` (plafonné à ${offlineCapHours(Game.state)}h)` : "";
   const spawnNote = spawnedCount > 0 ? `\n${spawnedCount} case(s) remplie(s) automatiquement` : "";
-  $("offlineText").textContent = `Temps écoulé : ${formatDuration(gainInfo.cappedMs)}${capNote}\n+${formatNumber(gainInfo.gain)} Stardust${spawnNote}`;
+  $("offlineText").textContent = `Temps écoulé : ${formatOfflineDuration(gainInfo.cappedMs)}${capNote}\n+${formatNumber(gainInfo.gain)} Stardust${spawnNote}`;
   $("offlineDouble").textContent = adsRemoved(Game.state) ? "Doubler" : "Doubler (pub)";
   $("offlineModal").classList.remove("hidden");
 }

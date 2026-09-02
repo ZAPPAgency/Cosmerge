@@ -138,12 +138,18 @@ function maybeTriggerResonance(state) {
 function buyGemShopItem(state, itemId, opts) {
   const item = SHOP_GEM_ITEMS.find(i => i.id === itemId);
   if (!item) return { ok: false, reason: "unknown" };
-  if (state.gems < item.cost) return { ok: false, reason: "funds", cost: item.cost };
+  // Loris: offer a rewarded ad instead of a dead-end "Pas assez de Gems."
+  // when clicking Échanger without enough Gems (onSwapCellsClick, input.js)
+  // - opts.free skips the cost check/deduction entirely for that one swap,
+  // everything else (target validation, usedShortcutThisRun) stays identical
+  // to a normal paid swap.
+  const free = opts && opts.free;
+  if (!free && state.gems < item.cost) return { ok: false, reason: "funds", cost: item.cost };
 
   if (itemId === "skipCell") {
     const idx = opts && opts.cellIndex;
     if (idx === undefined || state.unlocked[idx]) return { ok: false, reason: "target" };
-    state.gems -= item.cost;
+    if (!free) state.gems -= item.cost;
     state.unlocked[idx] = true;
     state.extraUnlockedCount += 1;
     state.gods.usedShortcutThisRun = true;
@@ -153,7 +159,7 @@ function buyGemShopItem(state, itemId, opts) {
     const idxA = opts && opts.idxA, idxB = opts && opts.idxB;
     if (idxA === undefined || idxB === undefined || idxA === idxB) return { ok: false, reason: "target" };
     if (!state.unlocked[idxA] || !state.unlocked[idxB]) return { ok: false, reason: "target" };
-    state.gems -= item.cost;
+    if (!free) state.gems -= item.cost;
     const tmp = state.grid[idxA];
     state.grid[idxA] = state.grid[idxB];
     state.grid[idxB] = tmp;

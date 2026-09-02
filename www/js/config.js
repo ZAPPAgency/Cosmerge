@@ -21,6 +21,15 @@ const MAX_OFFLINE_CAP_H = 24;
 // unlockCost grows 1.5x per cell, so it can hit tens of thousands of
 // Stardust), so it's kept frequently available rather than a rarer treat.
 const UNLOCK_CELL_AD_COOLDOWN_MS = 2 * 60 * 60 * 1000;
+// Loris: when Échanger (onSwapCellsClick, input.js) is clicked without
+// enough Gems, offer a rewarded ad instead of a dead-end "Pas assez de
+// Gems." - same cooldown as the free-cell-unlock ad above rather than a new
+// number: swapCells costs 2x skipCell in the Gems shop (config.js
+// SHOP_GEM_ITEMS), so it's the same tier of shortcut, not the frequent
+// small-reward kind GEMS_AD_COOLDOWN_MS below is for. Without a cooldown at
+// all, keeping Gems at 0 would make this a free, repeatable way to bypass
+// swapCells' cost entirely.
+const SWAP_AD_COOLDOWN_MS = UNLOCK_CELL_AD_COOLDOWN_MS;
 // Deliberately short and repeatable - this is the "grind toward a specific
 // purchase" ad, not a big one-off bonus like the others above.
 const GEMS_AD_COOLDOWN_MS = 3 * 60 * 1000;
@@ -721,6 +730,28 @@ function formatDuration(ms) {
   if (h > 0) return `${h}h ${m}m`;
   if (m > 0) return `${m}m ${sec}s`;
   return `${sec}s`;
+}
+
+// Loris: "parfois le nombre de poussière d'étoile récolté durant l'absence
+// bug et ça met '1sec - 1 stardust' ou parfois '1sec - 2 stardust'". Not
+// actually a bug in what's granted - openOfflineModal's Stardust figure is
+// computed from the true elapsed milliseconds (computeOfflineGain,
+// retention.js), while formatDuration above always rounds UP to the
+// nearest whole second (so nothing ever displays as a misleading "0s"
+// while still pending on a cooldown, which is the right behavior for every
+// other thing that calls it). Any elapsed time from just-over-0ms up to
+// 1000ms all reads as the same "1s", while the Stardust figure computed
+// from that same span keeps scaling continuously with it - so two
+// genuinely different-length absences can both show "1s" next to two
+// visibly different Stardust amounts, which reads as broken even though
+// both numbers were individually correct. Used only for the offline-gain
+// popup's duration line (not formatDuration's other callers, where whole
+// seconds are correct) - shows one decimal under 10s specifically, so the
+// two numbers on screen stay visibly, honestly proportional to each other
+// at exactly the timescale where this ambiguity is possible.
+function formatOfflineDuration(ms) {
+  if (ms < 10000) return (Math.max(ms, 0) / 1000).toFixed(1) + "s";
+  return formatDuration(ms);
 }
 
 function rowOf(i) { return Math.floor(i / COLS); }
