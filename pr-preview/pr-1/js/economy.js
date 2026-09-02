@@ -231,9 +231,6 @@ function buyCosmeticWithGems(state, id) {
   state.ownedSkins.push(id);
   return { ok: true };
 }
-function unlockCosmeticFree(state, id) {
-  if (!state.ownedSkins.includes(id)) state.ownedSkins.push(id);
-}
 function equipCosmetic(state, id) {
   if (!findCosmeticItem(id) || !isSkinOwned(state, id)) return false;
   state.equippedEmojiSet = id;

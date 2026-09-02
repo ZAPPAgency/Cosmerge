@@ -629,7 +629,10 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
    plain div of stacked .card elements with no gap of their own (unlike
    .panelBody, which gives every sliding-panel list this same gap for free
    - this list lives in a .modalCard instead, which doesn't). */
-#secretsList{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
+/* Loris: "le dernier fragment de secret [...] est collé au bouton Fermer" -
+   the gap above only applies BETWEEN the .card children, nothing separated
+   the list itself from its next sibling (#secretsClose). */
+#secretsList{display:flex;flex-direction:column;gap:10px;margin:4px 0 12px;}
 .eggPipsRow{display:flex;gap:8px;justify-content:center;margin:4px 0 14px;font-size:20px;letter-spacing:2px;}
 .eggPip{color:#3a3070;transition:color .3s ease;}
 .eggPip.filled{color:var(--stardust);text-shadow:0 0 10px #fbbf2488;}

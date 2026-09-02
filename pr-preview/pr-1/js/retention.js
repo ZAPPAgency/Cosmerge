@@ -191,14 +191,20 @@ function applyDailyReward(state, reward) {
       if (locked.length) state.unlocked[locked[Math.floor(Math.random() * locked.length)]] = true;
       break;
     }
-    case "skinFragment": {
-      state.skinFragments += 1;
-      if (state.skinFragments >= SKIN_FRAGMENTS_REQUIRED) {
-        const next = EMOJI_SETS.find(s => s.cost > 0 && !state.ownedSkins.includes(s.id));
-        if (next) { unlockCosmeticFree(state, next.id); state.skinFragments = 0; }
-      }
+    // Loris: "dans la roue la récompense 'fragment de skin' ne donne rien"
+    // - real bug, not just a perception issue: EMOJI_SETS only ever had 2
+    // paid sets (Fruits/Légumes) to unlock this way, so any player who
+    // already owned both (easy - either bought outright, or from 6 total
+    // fragments across earlier spins/logins) got nothing from every single
+    // "Fragment de skin" afterward, forever, with the fragment counter
+    // just climbing uselessly past SKIN_FRAGMENTS_REQUIRED in the
+    // background. Same reward type backed the daily-login day-6 slot
+    // (config.js DAILY_REWARDS) - replaced there too rather than leaving
+    // an identical dead end half-fixed. See streakFreeze below for its
+    // replacement.
+    case "streakFreeze":
+      state.dailyLogin.streakFreezeCharges += 1;
       break;
-    }
     case "bigReward":
       state.cosmicEnergy += 1;
       grantStardust(state, 500);
@@ -288,7 +294,12 @@ const WHEEL_PRIZES = [
   { type: "stardust", amount: 500, weight: 20, label: "500 ✨" },
   { type: "gems", amount: 10, weight: 20, label: "10 💎" },
   { type: "gems", amount: 25, weight: 10, label: "25 💎" },
-  { type: "skinFragment", amount: 1, weight: 10, label: "Fragment de skin" },
+  // Loris: "la récompense 'fragment de skin' ne donne rien, on ferait mieux
+  // de remplacer ça" - see the case "streakFreeze" comment in
+  // applyDailyReward above for why it was actually broken, not just a
+  // weak prize. A free cell unlock instead - concrete, immediate, and (like
+  // WHEEL_PRIZES' other slots) reuses an existing, already-correct code path.
+  { type: "unlockCell", amount: 1, weight: 10, label: "1 case débloquée" },
   { type: "cosmicEnergy", amount: 1, weight: 5, label: "1 ⚡" },
   { type: "stardust", amount: 1500, weight: 5, label: "1500 ✨" },
 ];
@@ -332,7 +343,7 @@ function spinWheel(state, isBonus) {
   const prize = pickWheelPrize();
   if (prize.type === "stardust") grantStardust(state, prize.amount);
   else if (prize.type === "gems") grantGems(state, prize.amount);
-  else if (prize.type === "skinFragment") applyDailyReward(state, { type: "skinFragment" });
+  else if (prize.type === "unlockCell") applyDailyReward(state, { type: "unlockCell" });
   else if (prize.type === "cosmicEnergy") state.cosmicEnergy += prize.amount;
   if (isBonus) state.dailySpin.bonusUsed = true; else state.dailySpin.freeUsed = true;
   checkAchievements(state);

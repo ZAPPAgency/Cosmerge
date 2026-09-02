@@ -511,10 +511,14 @@ const DAILY_REWARDS = [
   { day: 3, type: "unlockCell", amount: 1, label: "1 case débloquée" },
   { day: 4, type: "stardust", amount: 300, label: "300 ✨" },
   { day: 5, type: "gems", amount: 40, label: "40 💎" },
-  { day: 6, type: "skinFragment", amount: 1, label: "Fragment de skin" },
+  // Loris: "la récompense 'fragment de skin' ne donne rien" (Roue) - same
+  // dead-end mechanic backed this day-6 slot (see applyDailyReward,
+  // retention.js). A free streak-freeze charge instead - fits the "you're
+  // one day from the big day-7 reward" spot better anyway (protects the
+  // very streak this cycle is building toward).
+  { day: 6, type: "streakFreeze", amount: 1, label: "❄️ Gel de série" },
   { day: 7, type: "bigReward", amount: 1, label: "1 ⚡ Énergie Cosmique + gros lot ✨" },
 ];
-const SKIN_FRAGMENTS_REQUIRED = 3;
 
 // ---- Daily quest pool (templates); 3 drawn per day + 1 bonus "watch ad" ----
 // Rewards trimmed ~30% (Loris: quests were the biggest source of "free"
