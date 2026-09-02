@@ -83,7 +83,15 @@ const TIERS = [
   // object-fit:contain sizes to the limiting dimension - a non-square image
   // ends up looking smaller than a square one at the same box size.
   { n: 8, name: "Trou noir", emoji: "🕳️", icon: "tier-8-trou-noir.png", from: "#6a2bb8", to: "#000000", iconScale: 1.15 },
-  { n: 9, name: "Galaxie", emoji: "🌌", icon: "tier-9-galaxie.png", from: "#ff7ce8", to: "#4a00e0" },
+  // v2 (Loris): original was a flat face-on spiral (read as a 2D pattern,
+  // not a 3D object like the other tiers) with cyan/blue tones that clashed
+  // against this tile's own pink-violet gradient. Redone as a spiral galaxy
+  // sealed inside a glossy glass sphere, viewed at a 3/4 tilted angle for
+  // real depth, filling most of the sphere's interior, in the same
+  // magenta/violet family as `from`/`to` below - renamed (not overwritten)
+  // per the usual stale-image-cache convention, image URLs have no
+  // cache-busting query param unlike the JS/CSS files that reference them.
+  { n: 9, name: "Galaxie", emoji: "🌌", icon: "tier-9-galaxie-v2.png", from: "#ff7ce8", to: "#4a00e0" },
   // Was #ffffff/#ffd54f (white/gold) - the artwork's own bright white core
   // washed out almost completely against a white tile background, same
   // "pale subject on pale tile" problem as Lune's original background.
