@@ -668,14 +668,16 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .skillGrid .card p.desc{font-size:10.5px;line-height:1.3;margin-bottom:6px;}
 .skillGrid .skillLevel{font-size:10px;}
 .skillGrid .card .btn{padding:8px;font-size:11.5px;margin-top:auto;}
-.skillGrid .runUpgradeEffects{font-size:10px;flex-direction:column;gap:2px;}
-/* Alchimie Stellaire cards (renderRunUpgradesPanel, ui.js) - current vs
-   next-level effect readout, so a player can see what they already have
-   and what the next purchase actually buys, not just a generic per-level
-   desc line. */
-.runUpgradeEffects{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 10px;font-size:11px;margin:0 0 8px;}
-.runUpgradeEffects .effectCurrent{color:var(--text-dim);}
-.runUpgradeEffects .effectNext{color:var(--accent2);font-weight:700;}
+.skillGrid .skillEffects{font-size:10px;flex-direction:column;gap:2px;}
+/* Ascension AND Alchimie Stellaire cards (renderSkillsPanel/
+   renderRunUpgradesPanel, ui.js) - current vs next-level effect readout,
+   so a player can see what they already have and what the next purchase
+   actually buys, not just a generic per-level desc line. Was
+   .runUpgradeEffects (Alchimie-only name) before Ascension got the same
+   treatment. */
+.skillEffects{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 10px;font-size:11px;margin:0 0 8px;}
+.skillEffects .effectCurrent{color:var(--text-dim);}
+.skillEffects .effectNext{color:var(--accent2);font-weight:700;}
 
 .tabs{display:flex;gap:6px;margin-bottom:6px;}
 .tabBtn{flex:1;padding:8px;border-radius:10px;background:var(--bg-panel2);border:1px solid #2a2450;
