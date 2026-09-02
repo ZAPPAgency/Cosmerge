@@ -76,6 +76,14 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .currency.gems .value{color:var(--gems);}
 .currency.energy .value{color:var(--energy);}
 .currency.energy{flex:0 0 auto;}
+/* Loris: "l'aperçu de la poussière d'étoile et la production [...]
+   actuellement c'est affiché +... [...] en prenant un peu d'espace a
+   l'onglet des gemmes" - stardust needs room for icon+value+the "+X/s"
+   rate suffix, gems only ever shows icon+value (no rate of its own), so
+   giving stardust a bigger share of the space they split lets the rate
+   actually fit instead of ellipsizing to "+…". */
+.currency.stardust{flex:2;}
+.currency.gems{flex:1;}
 .currency.gems,.currency.energy,.currency.stardust{cursor:pointer;}
 /* The owned amount (.value) must never truncate - it's the number that
    actually matters. If the pill runs out of room, the secondary "+X/s"
