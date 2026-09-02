@@ -94,6 +94,11 @@ function defaultState() {
     // can't be, lifetime.fusions only grows, but the flag is the actual
     // guarantee either way).
     promptsShown: { starterPack: false, vipPass: false, removeAdsPrompt: false },
+    // Generic "don't ask again" flags, opted into per confirm-modal key via
+    // openConfirmModal({dontAskKey}) (ui.js) - starts empty, keys get added
+    // here as a player actually checks the box for that specific action
+    // (currently just "swapConfirm", the Échanger button).
+    dontAskAgain: {},
     // Loris: promos (starter pack, suppression des pubs, Pass Supernova)
     // "devrait[ent] tous arrivée[s] bien plus tard [...] avec un peu plus
     // de temps entre chaque promo" - a real-time floor between any two
@@ -124,6 +129,12 @@ function defaultState() {
 
     cooldowns: { prodBoostUntil: 0, prodBoostActiveUntil: 0, unlockCellAdUntil: 0, gemsAdUntil: 0 },
     dailySpin: { date: null, freeUsed: false, bonusUsed: false },
+    // Gems-for-ad streak (Loris: "le compte des 5 fois se réinitialise
+    // toujours à minuit") - same date-keyed reset pattern as dailySpin
+    // above. count resets to 0 each new day; ensureGemsAdStreak()
+    // (retention.js) is what actually resets it, called from
+    // grantGemsFromAd() (economy.js) before every watch.
+    gemsAdStreak: { date: null, count: 0 },
 
     iap: { removeAds: false, vipUntil: 0, ownedSkinPacks: [], stardustBoost: false, vipLastGemsDay: null },
 

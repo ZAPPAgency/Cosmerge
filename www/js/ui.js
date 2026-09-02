@@ -698,7 +698,16 @@ function spawnFloatingBonus(idx, amount) {
   setTimeout(() => el.remove(), 750);
 }
 
+// Loris: "si je spam une case a débloquer mais que j'ai pas assez de
+// stardust ça rempli mon écran de notif, il faudrait une limite" - caps
+// how many toasts with the exact same text can be on screen at once;
+// spamming the same action past that just gets silently dropped instead
+// of piling up further (the existing ones are still visible and will
+// clear on their own 2s timer).
+const TOAST_SAME_MSG_LIMIT = 3;
 function toast(msg) {
+  const sameMsgCount = Array.from(dom.toastContainer.children).filter(t => t.textContent === msg).length;
+  if (sameMsgCount >= TOAST_SAME_MSG_LIMIT) return;
   const el = document.createElement("div");
   el.className = "toast"; el.textContent = msg;
   dom.toastContainer.appendChild(el);
@@ -842,6 +851,29 @@ function renderCosmeticGrid(list, equippedId, onAfterAction) {
   return grid;
 }
 
+// Loris: on the Pass Supernova's daily-Gems perk, "indique le +xx% par
+// rapport au prix des gemmes dans la boutique (genre 100 par jour = 3000
+// dans le mois donc 3000 a 5,99$ par rapport à 100 gemmes qui coûte 0,99$
+// convertie à 3000 [...] comparé combien de % de gemmes on a en plus
+// grâce au pass supernova)". Computed from the live IAP_CATALOG prices
+// (not hardcoded) so it can't go stale if any of them change - parses
+// "0,99 $" style strings (French comma decimal) back into numbers.
+function parsePriceToNumber(priceStr) {
+  const match = priceStr.replace(",", ".").match(/[\d.]+/);
+  return match ? parseFloat(match[0]) : 0;
+}
+function passGemsValueBadgeText() {
+  const smallPack = IAP_CATALOG.find(p => p.id === "gems_small");
+  const pass = IAP_CATALOG.find(p => p.id === "vip_monthly");
+  if (!smallPack || !pass) return "";
+  const perGem = parsePriceToNumber(smallPack.price) / smallPack.amount;
+  const monthlyGemsValue = VIP_DAILY_GEMS * 30 * perGem;
+  const passPrice = parsePriceToNumber(pass.price);
+  if (!passPrice) return "";
+  const percentMore = Math.round((monthlyGemsValue / passPrice - 1) * 100);
+  return percentMore > 0 ? ` <span class="tag value">+${percentMore}% de valeur</span>` : "";
+}
+
 // ---------------- Shop panel ----------------
 function renderShopPanel() {
   const state = Game.state;
@@ -871,9 +903,11 @@ function renderShopPanel() {
   adGrid.appendChild(boostCard);
 
   const gemsAdReady = Date.now() >= state.cooldowns.gemsAdUntil;
+  ensureGemsAdStreak(state);
+  const streakLeft = GEMS_AD_STREAK_SIZE - (state.gemsAdStreak.count % GEMS_AD_STREAK_SIZE);
   const gemsAdCard = el("div", "card compact");
   gemsAdCard.innerHTML = `<div class="rowBetween"><h3>${currencyIconHtml("gems")} Pub contre Gems (+${GEMS_AD_REWARD})</h3></div>
-    <p class="desc">${gemsAdReady ? "Disponible maintenant." : `Disponible dans ${formatDuration(state.cooldowns.gemsAdUntil - Date.now())}`}</p>`;
+    <p class="desc">${gemsAdReady ? `Disponible maintenant (encore ${streakLeft} avant une pause de ${GEMS_AD_COOLDOWN_MS / 60000} min).` : `Disponible dans ${formatDuration(state.cooldowns.gemsAdUntil - Date.now())}`}</p>`;
   const gemsAdBtn = el("button", "btn primary full", adsRemoved(state) ? "Recevoir" : "Regarder une pub");
   gemsAdBtn.disabled = !gemsAdReady;
   gemsAdBtn.addEventListener("click", onWatchGemsAd);
@@ -950,7 +984,11 @@ function renderShopPanel() {
       <div class="rowBetween"><h3><img class="inlineCurrencyIcon" src="assets/ui/supernova.png" alt=""> ${pass.name}</h3><span class="iapPrice">${pass.price}</span></div>
       <p class="iapHeroTagline">${pass.desc}</p>`;
     const perkList = el("ul", "iapPerkList");
-    (pass.perks || []).forEach(p => perkList.appendChild(el("li", null, p)));
+    (pass.perks || []).forEach(p => {
+      // Value badge only on the daily-Gems perk line specifically, not every line.
+      const html = p.includes("Gems offertes chaque jour") ? p + passGemsValueBadgeText() : p;
+      perkList.appendChild(el("li", null, html));
+    });
     hero.appendChild(perkList);
     hero.appendChild(buyBtn(pass, "btn primary full"));
     dom.panelBody.appendChild(hero);
@@ -970,10 +1008,15 @@ function renderShopPanel() {
 }
 
 // ---------------- Skills panel ----------------
+// Loris: "changer la page ascension et alchimie pour que ce ne soit plus
+// des onglets par lignes mais des blocs 2 par 2" - cards live inside a
+// .skillGrid (2-column CSS grid, style.css) instead of going straight into
+// panelBody's own single-column flex stack.
 function renderSkillsPanel() {
   const state = Game.state;
   dom.panelBody.innerHTML = "";
   dom.panelBody.appendChild(el("p", "desc", `Dépense ton Énergie Cosmique (${currencyIconHtml("energy")} ${formatNumber(state.cosmicEnergy)}) gagnée à chaque Big Bang dans des bonus permanents.`));
+  const grid = el("div", "skillGrid");
   Object.keys(SKILL_TREE).forEach(key => {
     const branch = SKILL_TREE[key];
     const level = state.skills[key];
@@ -987,8 +1030,9 @@ function renderSkillsPanel() {
     btn.disabled = maxed || state.cosmicEnergy < cost;
     if (!maxed) btn.addEventListener("click", () => onBuySkill(key));
     card.appendChild(btn);
-    dom.panelBody.appendChild(card);
+    grid.appendChild(card);
   });
+  dom.panelBody.appendChild(grid);
 }
 
 // ---------------- Run upgrades panel ----------------
@@ -1015,6 +1059,7 @@ function renderRunUpgradesPanel() {
   const state = Game.state;
   dom.panelBody.innerHTML = "";
   dom.panelBody.appendChild(el("p", "desc", `Transmute le Stardust (${currencyIconHtml("stardust")} ${formatNumber(state.stardust)}) de cette grille en bonus qui durent jusqu'au prochain Big Bang.`));
+  const grid = el("div", "skillGrid");
   Object.keys(RUN_UPGRADE_TREE).forEach(key => {
     const branch = RUN_UPGRADE_TREE[key];
     const level = state.runUpgrades[key];
@@ -1034,8 +1079,9 @@ function renderRunUpgradesPanel() {
     btn.disabled = maxed || state.stardust < cost;
     if (!maxed) btn.addEventListener("click", () => onBuyRunUpgrade(key));
     card.appendChild(btn);
-    dom.panelBody.appendChild(card);
+    grid.appendChild(card);
   });
+  dom.panelBody.appendChild(grid);
 }
 
 // ---------------- Quests panel ----------------
@@ -1091,34 +1137,29 @@ function renderStoryPanel() {
   const state = Game.state;
   dom.panelBody.innerHTML = "";
 
+  // Loris: "le texte dans la page histoire est bizarre il y a plusieurs
+  // lignes qui ont un retour à la ligne inutile" - same bug as the god
+  // ritual modal text fixed earlier this session: `.card p.desc` has
+  // white-space:pre-line (for genuinely multi-line content elsewhere), so
+  // a paragraph's text wrapped across several source lines for editor
+  // readability was rendering as forced mid-sentence line breaks. Each
+  // <p class="desc"> below is now kept on one single source line - let it
+  // wrap naturally instead.
   const intro = el("div", "card storyCard");
-  intro.innerHTML = `
-    <div class="storyMark">☄️</div>
+  intro.innerHTML = `<div class="storyMark">☄️</div>
     <h3>La Rupture</h3>
-    <p class="desc">Autrefois, le Cosmos ne connaissait pas le chaos. Treize Dieux le
-    façonnaient dans un ordre parfait. Puis, un jour, cet ordre s'est brisé.
-    <strong>Personne ne sait pourquoi.</strong> Il n'en reste qu'une poussière
-    infinie d'astéroïdes muets, dispersée dans le vide.</p>
-    <p class="desc">Les Dieux, eux, n'ont pas disparu. Ils dorment - chacun caché
-    dans un fragment parmi des milliards d'autres, attendant qu'on les retrouve.</p>`;
+    <p class="desc">Autrefois, le Cosmos ne connaissait pas le chaos. Treize Dieux le façonnaient dans un ordre parfait. Puis, un jour, cet ordre s'est brisé. <strong>Personne ne sait pourquoi.</strong> Il n'en reste qu'une poussière infinie d'astéroïdes muets, dispersée dans le vide.</p>
+    <p class="desc">Les Dieux, eux, n'ont pas disparu. Ils dorment - chacun caché dans un fragment parmi des milliards d'autres, attendant qu'on les retrouve.</p>`;
   dom.panelBody.appendChild(intro);
 
   dom.panelBody.appendChild(el("h3", null, "L'Étincelle, c'est toi"));
   const spark = el("div", "card storyCard");
-  spark.innerHTML = `<p class="desc">Chaque fusion recompose un peu de l'ordre perdu.
-    Météorite, Lune, Planète, Étoile... jusqu'à l'Univers. Mais un Univers
-    reconstitué ne tient jamais longtemps : il finit par se replier sur
-    lui-même. C'est le Big Bang - la fin d'un cycle, et le début du suivant,
-    toujours un peu plus loin.</p>`;
+  spark.innerHTML = `<p class="desc">Chaque fusion recompose un peu de l'ordre perdu. Météorite, Lune, Planète, Étoile... jusqu'à l'Univers. Mais un Univers reconstitué ne tient jamais longtemps : il finit par se replier sur lui-même. C'est le Big Bang - la fin d'un cycle, et le début du suivant, toujours un peu plus loin.</p>`;
   dom.panelBody.appendChild(spark);
 
   dom.panelBody.appendChild(el("h3", null, "Deux camps, un seul Cosmos"));
   const camps = el("div", "card storyCard");
-  camps.innerHTML = `<p class="desc">Les Dieux que tu réveilles se souviennent tous
-  de la Rupture, mais pas de la même façon. Les <strong style="color:#93c5fd;">bienveillants</strong> 🕊️
-  veulent restaurer l'ordre ancien. Les <strong style="color:#fca5a5;">déchus</strong> 🔥
-  ont pris goût au chaos et refusent d'y renoncer. Aucun des deux n'a tort -
-  seulement un souvenir différent du même instant.</p>`;
+  camps.innerHTML = `<p class="desc">Les Dieux que tu réveilles se souviennent tous de la Rupture, mais pas de la même façon. Les <strong style="color:#93c5fd;">bienveillants</strong> 🕊️ veulent restaurer l'ordre ancien. Les <strong style="color:#fca5a5;">déchus</strong> 🔥 ont pris goût au chaos et refusent d'y renoncer. Aucun des deux n'a tort - seulement un souvenir différent du même instant.</p>`;
   dom.panelBody.appendChild(camps);
 
   // Progressive lore: unlocked by real milestones, so there's always a next
@@ -1441,7 +1482,12 @@ function renderSettingsPanel() {
 const TUT_STEPS = [
   { title: "Invoquer", text: () => `Appuie sur « Invoquer » pour faire apparaître un Météorite ${tierInlineIconHtml(1)} sur une case vide de la grille.`, target: () => dom.invokeBtnStardust },
   { title: "Fusionner", text: () => `Glisse un astéroïde sur une case adjacente identique pour les fusionner en une Lune ${tierInlineIconHtml(2)}.`, target: () => cellEls[8] },
-  { title: "Progresser", text: () => `Continue à fusionner pour atteindre Planète ${tierInlineIconHtml(4)}, Étoile ${tierInlineIconHtml(6)}, Trou noir ${tierInlineIconHtml(8)}... jusqu'à l'Univers ${tierInlineIconHtml(10)}, puis déclenche un Big Bang pour recommencer plus fort !`, target: () => dom.grid },
+  // No target (Loris: "il y a comme une sorte de carré/rectangle qui
+  // apparaît alors qu'il n'y a pas ça sur l'étape 1 et 2" - the previous
+  // target here was the whole .grid container, so the glowing outline
+  // wrapped all 30 cells instead of pointing at one small thing like the
+  // other two steps do).
+  { title: "Progresser", text: () => `Continue à fusionner pour atteindre Planète ${tierInlineIconHtml(4)}, Étoile ${tierInlineIconHtml(6)}, Trou noir ${tierInlineIconHtml(8)}... jusqu'à l'Univers ${tierInlineIconHtml(10)}, puis déclenche un Big Bang pour recommencer plus fort !`, target: () => null },
 ];
 let tutIndex = 0;
 let currentHighlight = null;
@@ -1545,16 +1591,30 @@ function closeRestartModal() { $("restartModal").classList.add("hidden"); }
 // promo popups - see wireEvents(), input.js) instead of a bespoke confirm
 // step per call site.
 let pendingConfirmAction = null;
-function openConfirmModal({ title, text, confirmLabel, onConfirm }) {
+let pendingConfirmDontAskKey = null;
+// `dontAskKey` (optional): shows a "Ne plus jamais demander" checkbox -
+// checking it before confirming sets state.dontAskAgain[dontAskKey] = true
+// permanently, so future calls to openConfirmModal with that same key can
+// be skipped by the caller entirely (Loris, re: the Échanger button
+// specifically - "possible de cocher une case pour ne plus jamais voir ce
+// message"). Every other caller just omits it, same as before.
+function openConfirmModal({ title, text, confirmLabel, onConfirm, dontAskKey }) {
   $("confirmActionTitle").textContent = title;
   $("confirmActionText").innerHTML = text; // some callers embed an inline currency icon (currencyIconHtml)
   $("confirmActionConfirm").textContent = confirmLabel || "Confirmer";
   pendingConfirmAction = onConfirm;
+  pendingConfirmDontAskKey = dontAskKey || null;
+  $("confirmActionDontAsk").checked = false;
+  $("confirmActionDontAskRow").classList.toggle("hidden", !dontAskKey);
   $("confirmActionModal").classList.remove("hidden");
 }
-function closeConfirmModal() { $("confirmActionModal").classList.add("hidden"); pendingConfirmAction = null; }
+function closeConfirmModal() { $("confirmActionModal").classList.add("hidden"); pendingConfirmAction = null; pendingConfirmDontAskKey = null; }
 function onConfirmActionConfirm() {
   const action = pendingConfirmAction;
+  if (pendingConfirmDontAskKey && $("confirmActionDontAsk").checked) {
+    Game.state.dontAskAgain[pendingConfirmDontAskKey] = true;
+    saveState(Game.state);
+  }
   closeConfirmModal();
   if (action) action();
 }
@@ -1595,7 +1655,7 @@ function openPurchaseConfirmModal(product) {
   // to the text would just compete with it.
   $("purchaseConfirmTitle").textContent = product.name;
   $("purchaseConfirmText").textContent = product.id === "vip_monthly"
-    ? "Le Pass Supernova est actif dès maintenant : +100% de production, plus aucune pub, tous les skins débloqués, et tes 50 Gems quotidiennes dès demain."
+    ? `Le Pass Supernova est actif dès maintenant : +100% de production, plus aucune pub, tous les skins débloqués, et tes ${VIP_DAILY_GEMS} Gems quotidiennes dès demain.`
     : `Achat confirmé - ${product.desc || "profite-en !"}`;
   $("purchaseConfirmModal").classList.remove("hidden");
 }
@@ -1688,7 +1748,14 @@ const FUSION_PROMOS = {
   vipPass: {
     title: "Tu es accroché !",
     icon: "supernova.png",
-    text: "50 fusions déjà - le Pass Supernova retire les pubs pour toujours, double ta production de Stardust et t'offre 50 Gems chaque jour. Pensé pour les joueurs comme toi.",
+    // Loris: "dans le texte de description du pass supernova c'est écrit
+    // 'pas de publicité pour toujours' il faut enlever le 'pour toujours'
+    // puisque c'est appliqué que quand l'utilisateur possède le pass" -
+    // same fix as the perks list (config.js). Also caught while touching
+    // this: "50 fusions déjà" and "50 Gems" were both stale (the vipPass
+    // promo threshold moved to 130 fusions, and VIP_DAILY_GEMS to 100,
+    // both earlier this session).
+    text: "130 fusions déjà - le Pass Supernova retire les pubs tant qu'il est actif, double ta production de Stardust et t'offre 100 Gems chaque jour. Pensé pour les joueurs comme toi.",
     productId: "vip_monthly",
   },
 };
@@ -1834,6 +1901,10 @@ function scheduleShootingStars() {
   // Delay-then-spawn (not spawn-then-delay) so the first one doesn't fire
   // immediately on page load, while everything else is still settling in -
   // it should feel like a rare thing you happen to catch, not a boot cue.
-  const next = 6000 + Math.random() * 12000; // 6-18s
+  // Was 6-18s (avg ~12s) - Loris asked whether this should be more
+  // frequent; roughly doubled to 3-9s (avg ~6s), still random/staggered
+  // enough to read as an occasional "did you catch that?" moment rather
+  // than a repeating pattern, just noticeably livelier.
+  const next = 3000 + Math.random() * 6000; // 3-9s
   setTimeout(() => { spawnShootingStar(); scheduleShootingStars(); }, next);
 }

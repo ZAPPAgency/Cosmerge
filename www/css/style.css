@@ -644,6 +644,8 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
    the pill is pinned to never wrap or shrink below its own content. */
 .tag{font-size:10px;padding:2px 7px;border-radius:8px;background:#2a2450;color:var(--text-dim);white-space:nowrap;flex-shrink:0;}
 .tag.owned{background:#134e2c;color:var(--success);}
+/* Pass Supernova's daily-Gems value-comparison badge (passGemsValueBadgeText, ui.js). */
+.tag.value{background:#4a3a12;color:var(--stardust);margin-left:4px;}
 .tag.equipped{background:#3730a3;color:#c7d2fe;}
 
 .progressBar{height:8px;border-radius:5px;background:#241f47;overflow:hidden;margin:6px 0;}
@@ -651,6 +653,19 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 
 .skillRow .rowBetween{margin-top:6px;}
 .skillLevel{font-size:11px;color:var(--text-dim);}
+/* Ascension/Alchimie Stellaire (renderSkillsPanel/renderRunUpgradesPanel,
+   ui.js) - Loris: "des blocs 2 par 2" instead of one card per row. Same
+   compact-card overrides as .shopGrid2 (min-width:0 so a long button
+   label can't force its column wider than the grid, reduced padding/font
+   sizes so descriptions and the Alchimie Actuel/Prochain readout still
+   fit at half width). */
+.skillGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:stretch;}
+.skillGrid .card{padding:10px;min-width:0;display:flex;flex-direction:column;}
+.skillGrid .card h3{font-size:12.5px;margin-bottom:3px;}
+.skillGrid .card p.desc{font-size:10.5px;line-height:1.3;margin-bottom:6px;}
+.skillGrid .skillLevel{font-size:10px;}
+.skillGrid .card .btn{padding:8px;font-size:11.5px;margin-top:auto;}
+.skillGrid .runUpgradeEffects{font-size:10px;flex-direction:column;gap:2px;}
 /* Alchimie Stellaire cards (renderRunUpgradesPanel, ui.js) - current vs
    next-level effect readout, so a player can see what they already have
    and what the next purchase actually buys, not just a generic per-level
@@ -703,6 +718,8 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
    this icon, everywhere it appears inline. */
 .inlineCurrencyIcon[src*="stardust.png"]{width:19px;height:19px;}
 .currency .icon .inlineCurrencyIcon[src*="stardust.png"]{width:24px;height:24px;}
+.confirmDontAskRow{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-dim);margin-top:4px;cursor:pointer;}
+.confirmDontAskRow input{width:16px;height:16px;accent-color:var(--accent2);flex-shrink:0;}
 .modalBtns{display:flex;gap:8px;margin-top:10px;}
 /* The wheel modal has a standalone "Fermer" button right after its
    .modalBtns spin-buttons row - .modalCard isn't a flex/gap container, so
@@ -771,6 +788,12 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .wheelLegendItem{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--text);}
 .wheelLegendSwatch{width:11px;height:11px;border-radius:3px;flex-shrink:0;box-shadow:0 0 0 1px rgba(255,255,255,.2);}
 .wheelLegendItem .inlineCurrencyIcon{width:15px;height:15px;vertical-align:-3px;}
+/* Reserves the result line's own height from the moment the modal opens
+   (Loris: "je préférerai que l'espace soit déjà prévu au moment où la
+   popup s'ouvre" - #wheelResult starts empty and only gets its text once
+   the spin lands, so without this the whole modal card visibly grew at
+   that exact moment instead of staying a fixed size throughout). */
+#wheelResult{min-height:20px;}
 
 /* Ad / IAP simulation overlay */
 .simOverlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;}

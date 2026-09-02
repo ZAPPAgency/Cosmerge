@@ -304,6 +304,13 @@ function ensureDailySpin(state) {
     state.dailySpin = { date: todayStr(), freeUsed: false, bonusUsed: false };
   }
 }
+// Same date-keyed reset pattern as ensureDailySpin above - see
+// state.gemsAdStreak (state.js) and grantGemsFromAd() (economy.js).
+function ensureGemsAdStreak(state) {
+  if (state.gemsAdStreak.date !== todayStr()) {
+    state.gemsAdStreak = { date: todayStr(), count: 0 };
+  }
+}
 function pickWheelPrize() {
   const total = WHEEL_PRIZES.reduce((s, p) => s + p.weight, 0);
   let r = Math.random() * total;
