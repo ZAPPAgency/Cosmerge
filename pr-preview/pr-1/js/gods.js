@@ -105,11 +105,17 @@ function unlockEasterEgg(state, id) {
 
 // Milestone-type gods unlock themselves the moment their `check` passes -
 // same pattern as achievements. Called after every stat-changing event.
+// Also covers shop-type gods with an `altCheck` (a free alternate unlock
+// condition, config.js - e.g. "ou 10 Big Bang déclenchés") - their `altLabel`
+// was already shown to the player in the detail modal (ui.js), promising
+// this free path, but altCheck itself was never actually evaluated
+// anywhere: those gods could only ever be bought with Gems. Bug found
+// during a full-branch review, fix requested by Loris.
 function checkGodMilestones(state) {
   GODS.forEach(g => {
-    if (g.unlock.type === "milestone" && !isGodUnlocked(state, g.id) && g.unlock.check(state)) {
-      unlockGod(state, g.id);
-    }
+    if (isGodUnlocked(state, g.id)) return;
+    if (g.unlock.type === "milestone" && g.unlock.check(state)) unlockGod(state, g.id);
+    else if (g.unlock.type === "shop" && g.unlock.altCheck && g.unlock.altCheck(state)) unlockGod(state, g.id);
   });
 }
 
@@ -155,27 +161,20 @@ function checkThanatosChallenge(state) {
 }
 
 // ---- Choosing / swapping gods ----
-// The very first pick applies immediately (there is no "current run" to
-// protect yet). Any later pick only takes effect on the *next* Big Bang,
-// per the "changer de dieu qu'entre les parties" rule.
+// Loris: "il faudrait qu'on puisse changer de dieu en pleine partie, pas
+// besoin d'attendre le prochain big bang" - used to only apply immediately
+// for the very first pick, any later pick queued into nextGodId and only
+// took effect at the next Big Bang (applyPendingGodAtBigBang below). Now
+// every pick swaps currentGodId immediately, always.
 function chooseGod(state, godId) {
   if (!isGodUnlocked(state, godId)) return false;
-  if (!state.gods.currentGodId) {
-    state.gods.currentGodId = godId;
-    state.gods.nextGodId = null;
-  } else {
-    state.gods.nextGodId = (godId === state.gods.currentGodId) ? null : godId;
-  }
+  state.gods.currentGodId = godId;
   return true;
 }
 function applyPendingGodAtBigBang(state) {
   if (state.gods.currentGodId) {
     const id = state.gods.currentGodId;
     state.gods.usageCount[id] = (state.gods.usageCount[id] || 0) + 1;
-  }
-  if (state.gods.nextGodId) {
-    state.gods.currentGodId = state.gods.nextGodId;
-    state.gods.nextGodId = null;
   }
   state.moonMergesThisRun = 0;
   state.gods.erebusStreak = 0;

@@ -122,7 +122,6 @@ function defaultState() {
     gods: {
       unlockedIds: [],
       currentGodId: null,
-      nextGodId: null,
       erebusStreak: 0,             // fusions since the last manual tap bonus (Erebus challenge)
       usedShortcutThisRun: false, // Morgorath challenge requires never using a gem-shop grid shortcut (Sauter une case / Échanger deux cases)
       morgorathChallengeCleared: false,

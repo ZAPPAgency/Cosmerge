@@ -885,13 +885,12 @@ async function onRestorePurchases() {
 }
 function onChooseGod(godId) {
   const state = Game.state;
-  const hadCurrent = !!state.gods.currentGodId;
-  const wasQueued = state.gods.nextGodId;
+  // Loris: "il faudrait qu'on puisse changer de dieu en pleine partie, pas
+  // besoin d'attendre le prochain big bang" - chooseGod() (gods.js) always
+  // switches immediately now, so there's only ever this one outcome.
   chooseGod(state, godId);
   Sfx.purchase();
-  if (!hadCurrent) toast(`${getGod(godId).name} t'accompagne désormais !`);
-  else if (wasQueued && !state.gods.nextGodId) toast("Choix annulé.");
-  else toast(`${getGod(godId).name} choisi pour le prochain Big Bang.`);
+  toast(`${getGod(godId).name} t'accompagne désormais !`);
   refreshCurrentPanel();
   saveState(state);
 }

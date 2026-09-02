@@ -1237,13 +1237,8 @@ function renderGodsPanel() {
   dom.panelBody.innerHTML = "";
 
   if (state.gods.currentGodId) {
-    const pendingId = state.gods.nextGodId || state.gods.currentGodId;
-    const pending = getGod(pendingId);
-    const note = el("p", "desc",
-      state.gods.nextGodId
-        ? `${pending.name} prendra le relais au prochain Big Bang.`
-        : `${pending.name} t'accompagne pour cette partie.`);
-    dom.panelBody.appendChild(note);
+    const current = getGod(state.gods.currentGodId);
+    dom.panelBody.appendChild(el("p", "desc", `${current.name} t'accompagne pour cette partie.`));
   } else {
     dom.panelBody.appendChild(el("p", "desc", "Fusionne 4 Lunes en une partie pour éveiller ton premier Dieu."));
   }
@@ -1252,12 +1247,11 @@ function renderGodsPanel() {
   GODS.forEach(god => {
     const unlocked = isGodUnlocked(state, god.id);
     const equipped = state.gods.currentGodId === god.id;
-    const queued = state.gods.nextGodId === god.id;
     const rarity = RARITY[god.rarity];
     const tile = el("button", "godTile" + (equipped ? " equipped" : "") + (unlocked ? "" : " locked"));
     tile.style.setProperty("--rarity-color", rarity.color);
     tile.innerHTML = `
-      ${equipped ? '<span class="godTileBadge">✓</span>' : (queued ? '<span class="godTileBadge queued">⏳</span>' : "")}
+      ${equipped ? '<span class="godTileBadge">✓</span>' : ""}
       <div class="godTileEmoji">${godPortraitHtml(god, "godTilePortrait", !unlocked)}</div>
       <div class="godTileName">${unlocked ? god.name : "???"}</div>
       <div class="godTileTitle">${unlocked ? god.title : rarity.label}</div>`;
@@ -1384,7 +1378,6 @@ function openGodDetailModal(godId) {
   const rarity = RARITY[god.rarity];
   const unlocked = isGodUnlocked(state, god.id);
   const equipped = state.gods.currentGodId === god.id;
-  const queued = state.gods.nextGodId === god.id;
   const level = state.gods.powerLevel[god.id] || 0;
   const card = $("godDetailCard");
   card.innerHTML = `
@@ -1397,7 +1390,7 @@ function openGodDetailModal(godId) {
       <div class="godTagsCol">
         <span class="alignTag">${god.alignment === "bienveillant" ? "🕊️ Bienveillant" : "🔥 Déchu"}</span>
         <span class="rarityTag" style="background:${rarity.color}22;color:${rarity.color};">${rarity.label}</span>
-        ${equipped ? '<span class="equippedTag">En jeu</span>' : (queued ? '<span class="equippedTag queued">Prochaine partie</span>' : "")}
+        ${equipped ? '<span class="equippedTag">En jeu</span>' : ""}
       </div>
     </div>
     ${unlocked ? `<p class="godDesc" style="font-style:italic;">${god.lore}</p>
@@ -1437,13 +1430,12 @@ function openGodDetailModal(godId) {
       btn.addEventListener("click", () => { onBuyGod(god.id); openGodDetailModal(god.id); });
       card.appendChild(btn);
     }
-  } else if (queued) {
-    const btn = el("button", "btn ghost full", "✕ Annuler ce choix");
-    btn.style.marginTop = "8px";
-    btn.addEventListener("click", () => { onChooseGod(state.gods.currentGodId); openGodDetailModal(god.id); });
-    card.appendChild(btn);
   } else if (!equipped) {
-    const btn = el("button", "btn full", "Choisir pour le prochain Big Bang");
+    // Loris: "il faudrait qu'on puisse changer de dieu en pleine partie,
+    // pas besoin d'attendre le prochain big bang" - chooseGod() (gods.js)
+    // now switches immediately, always, so this button has no "queued"
+    // state to distinguish any more - it's the only non-equipped case left.
+    const btn = el("button", "btn full", "Choisir ce Dieu");
     btn.style.marginTop = "8px";
     btn.addEventListener("click", () => { onChooseGod(god.id); openGodDetailModal(god.id); });
     card.appendChild(btn);
