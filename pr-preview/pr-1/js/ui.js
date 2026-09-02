@@ -1145,8 +1145,13 @@ function renderStoryPanel() {
   // readability was rendering as forced mid-sentence line breaks. Each
   // <p class="desc"> below is now kept on one single source line - let it
   // wrap naturally instead.
+  // Loris: "il y a un emoji de météorite dans le premier bloc de texte, on
+  // devrait mettre une illustration du big bang à la place" - reuses the
+  // existing bigbang.png art (already used for the Big Bang button/modal)
+  // rather than commissioning a new one; "La Rupture" is the game's own
+  // in-universe Big-Bang-like event, so the imagery already fits.
   const intro = el("div", "card storyCard");
-  intro.innerHTML = `<div class="storyMark">☄️</div>
+  intro.innerHTML = `<img class="storyMark" src="assets/ui/bigbang.png" alt="">
     <h3>La Rupture</h3>
     <p class="desc">Autrefois, le Cosmos ne connaissait pas le chaos. Treize Dieux le façonnaient dans un ordre parfait. Puis, un jour, cet ordre s'est brisé. <strong>Personne ne sait pourquoi.</strong> Il n'en reste qu'une poussière infinie d'astéroïdes muets, dispersée dans le vide.</p>
     <p class="desc">Les Dieux, eux, n'ont pas disparu. Ils dorment - chacun caché dans un fragment parmi des milliards d'autres, attendant qu'on les retrouve.</p>`;
