@@ -84,7 +84,11 @@ const TIERS = [
   // extending beyond the silhouette" instruction, same as tiers 1-10.
   // Colors keep getting darker/more saturated the same way tiers 6-10 did.
   { n: 11, name: "Multivers", emoji: "🌀", icon: "tier-11-multivers.png", from: "#2e1065", to: "#0a0118" },
-  { n: 12, name: "Singularité", emoji: "⚛️", icon: "tier-12-singularite.png", from: "#4c0519", to: "#0a0005" },
+  // iconScale bump: source art is a wide/flat ringed-sphere shape (200x133)
+  // - same "wide source art reads smaller" correction as tier 8's own
+  // ringed-ish silhouette (Loris: "le visuel de case standard 12 devrait
+  // être un peu plus gros").
+  { n: 12, name: "Singularité", emoji: "⚛️", icon: "tier-12-singularite.png", from: "#4c0519", to: "#0a0005", iconScale: 1.15 },
   { n: 13, name: "Infini", emoji: "♾️", icon: "tier-13-infini.png", from: "#052e2b", to: "#000a08" },
   { n: 14, name: "Genèse", emoji: "🌟", icon: "tier-14-genese.png", from: "#1a1a2e", to: "#000000" },
 ];
@@ -129,7 +133,7 @@ const EMOJI_SETS = [
       // teal, gold) - only Mangue got explicitly recolored to actual mango
       // tones per Loris; Pêche/Myrtille/Kiwi kept their delivered colors).
       { emoji: "🥭", name: "Mangue Cosmique", icon: "fruit-11-mangue.png" },
-      { emoji: "🍑", name: "Pêche Stellaire", icon: "fruit-12-peche.png" },
+      { emoji: "🍑", name: "Pêche Stellaire", icon: "fruit-12-peche.png", iconScale: 1.15 },
       { emoji: "🫐", name: "Myrtille Infinie", icon: "fruit-13-myrtille.png" },
       { emoji: "🥝", name: "Kiwi Primordial", icon: "fruit-14-kiwi.png" },
     ] },
@@ -152,7 +156,7 @@ const EMOJI_SETS = [
       // Tiers 11-14 - illustrated, same delivered-colors-kept note as
       // "fruits" above.
       { emoji: "🥒", name: "Concombre Cosmique", icon: "legume-11-concombre.png" },
-      { emoji: "🧄", name: "Ail Stellaire", icon: "legume-12-ail.png" },
+      { emoji: "🧄", name: "Ail Stellaire", icon: "legume-12-ail.png", iconScale: 1.15 },
       { emoji: "🫘", name: "Haricots Infinis", icon: "legume-13-haricots.png" },
       { emoji: "🥔", name: "Patate Primordiale", icon: "legume-14-patate.png" },
     ] },
