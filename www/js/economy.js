@@ -29,6 +29,11 @@ function previewBigBangGain(state) {
 
 function performBigBang(state) {
   checkThanatosChallenge(state); // must run before the grid resets - it checks the current grid's fill state
+  // Easter egg "Les Extrêmes" (Loris) - every filled cell is tier 1 or
+  // UNIVERSE_TIER, nothing in between. Must read the grid before freshGrid()
+  // replaces it below.
+  const pureExtremes = state.grid.every(t => !t || t.tier === 1 || t.tier === UNIVERSE_TIER);
+  const eggResult = pureExtremes ? unlockEasterEgg(state, "pure_extremes") : null;
   const minEnergy = getGodEffects(state).bigBangMinEnergy || 0;
   const gain = Math.max(previewBigBangGain(state), minEnergy);
   state.cosmicEnergy += gain;
@@ -57,7 +62,7 @@ function performBigBang(state) {
   for (const key in state.runUpgrades) state.runUpgrades[key] = 0;
 
   checkAchievements(state);
-  return gain;
+  return { gain, eggResult };
 }
 
 // Voluntary reset, available anytime (unlike Big Bang, which needs a
@@ -199,8 +204,14 @@ function performMerge(state, fromIdx, toIdx) {
     gemBonus = grantGems(state, 1);
   }
 
+  // Easter egg "Le Second Souffle" (Loris: "atteindre le tier 2 (deux case
+  // de niveau 14 du tier de base qui fusionne)" - his own "tier" here means
+  // this loop counter, `cycle`, not TIERS 1-14) - reaching a second loop
+  // for the first time.
+  const eggResult = newCycle >= 2 ? unlockEasterEgg(state, "second_loop") : null;
+
   trackFusionEvent(state, newTier);
-  return { newTier, newCycle, looped, gemBonus };
+  return { newTier, newCycle, looped, gemBonus, eggResult };
 }
 
 // Was shared between two cosmetic slots (ambiance/background + emoji-set),

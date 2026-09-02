@@ -37,7 +37,7 @@
     <meta name="apple-mobile-web-app-title" content="Godspark" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#0a0620" />
-    <link rel="stylesheet" href="css/style.css?v=99" />
+    <link rel="stylesheet" href="css/style.css?v=100" />
   </head>
   <body>
     <div id="starsBg"></div>
@@ -122,6 +122,14 @@
           <span class="fabIcon"
             ><img class="uiIcon" src="assets/ui/gems_ad.png" alt=""
           /></span><span class="fabLabel" id="fabGemsAdLabel">Pub</span>
+        </button>
+        <!-- Secret 4-egg challenge (Loris) - stays hidden (not gated by
+         FAB_DISCOVERY_FUSIONS like the fabs above, see updateFabs()) until
+         state.easterEggs.unlockedIds has its first entry, then never hides
+         again. No dedicated art yet - plain emoji, same "ships now, art
+         later" pattern as every other placeholder icon this session. -->
+        <button class="fab hidden" id="fabSecrets">
+          <span class="fabIcon">🥚</span><span class="fabLabel">Secrets</span>
         </button>
       </div>
 
@@ -462,6 +470,50 @@
       </div>
     </div>
 
+    <!-- Secret 4-egg challenge (Loris) - see EASTER_EGGS (config.js),
+     unlockEasterEgg() (gods.js), revealEasterEgg() (ui.js). -->
+    <!-- Individual egg found - a modest reveal (unlike the grand finale
+     below, reserved for the 4th). -->
+    <div class="modalOverlay hidden" id="eggFoundModal">
+      <div class="modalCard eggFoundCard">
+        <div class="eggFoundIcon">🥚</div>
+        <h3 id="eggFoundTitle">Secret découvert</h3>
+        <p class="desc" id="eggFoundText"></p>
+        <div class="eggPipsRow" id="eggFoundPips"></div>
+        <button class="btn primary full" id="eggFoundClose">Continuer</button>
+      </div>
+    </div>
+
+    <!-- Persistent counter, reachable via fabSecrets once the first egg is
+     found - stays reachable forever after, whatever the progress. -->
+    <div class="modalOverlay hidden" id="secretsModal">
+      <div class="modalCard">
+        <h3>🥚 Secrets du Cosmos</h3>
+        <p class="desc">Quelque part dans les plis du Cosmos, quatre échos attendent d'être entendus. Certains se révèlent à qui ose renoncer. D'autres à qui va trop vite, ou pas assez loin. Trouve-les tous, et le Cosmos te répondra.</p>
+        <div id="secretsList"></div>
+        <button class="btn ghost full" id="secretsClose">Fermer</button>
+      </div>
+    </div>
+
+    <!-- Grand finale (all 4 found, Ananké unlocked) - its own fullscreen
+     overlay, not a plain .modalCard, deliberately the single biggest
+     visual moment in the game (Loris: "l'animation la plus impressionnante
+     jamais proposée"). Particle/ray elements are generated at runtime
+     (openEggFinaleModal, ui.js) into #eggFinaleBurst/#eggFinaleSparkles. -->
+    <div class="modalOverlay hidden eggFinaleOverlay" id="eggFinaleModal">
+      <div class="eggFinaleSparkles" id="eggFinaleSparkles"></div>
+      <div class="eggFinaleStage" id="eggFinaleStage">
+        <div class="eggFinaleBurst" id="eggFinaleBurst"></div>
+        <div class="eggFinalePortrait" id="eggFinalePortrait">🌀</div>
+        <div class="eggFinaleKicker">Les quatre secrets sont réunis</div>
+        <h2 class="eggFinaleTitle">LE COSMOS RÉPOND</h2>
+        <div class="eggFinaleGodName" id="eggFinaleGodName">Ananké</div>
+        <div class="eggFinaleGodTitle" id="eggFinaleGodTitle">L'Origine Silencieuse</div>
+        <p class="eggFinaleDesc" id="eggFinaleDesc"></p>
+        <button class="btn primary full hidden" id="eggFinaleClose">Continuer</button>
+      </div>
+    </div>
+
     <!-- Skin preview: shows a mini grid with a given emoji set's tiles applied,
      without actually equipping it - opened by the "👁 Aperçu" button on each
      cosmetic tile (renderCosmeticGrid, ui.js). -->
@@ -614,16 +666,16 @@
       </div>
     </div>
 
-    <script src="js/config.js?v=99"></script>
-    <script src="js/state.js?v=99"></script>
-    <script src="js/audio.js?v=99"></script>
-    <script src="js/services.js?v=99"></script>
-    <script src="js/economy.js?v=99"></script>
-    <script src="js/gods.js?v=99"></script>
-    <script src="js/retention.js?v=99"></script>
-    <script src="js/ui.js?v=99"></script>
-    <script src="js/input.js?v=99"></script>
-    <script src="js/main.js?v=99"></script>
+    <script src="js/config.js?v=100"></script>
+    <script src="js/state.js?v=100"></script>
+    <script src="js/audio.js?v=100"></script>
+    <script src="js/services.js?v=100"></script>
+    <script src="js/economy.js?v=100"></script>
+    <script src="js/gods.js?v=100"></script>
+    <script src="js/retention.js?v=100"></script>
+    <script src="js/ui.js?v=100"></script>
+    <script src="js/input.js?v=100"></script>
+    <script src="js/main.js?v=100"></script>
     <script type="module" src="js/native-bridge.js"></script>
   </body>
 </html>

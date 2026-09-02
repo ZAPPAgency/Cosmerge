@@ -619,6 +619,100 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
   animation:cosmicBoxReveal .4s ease-out;}
 @keyframes cosmicBoxReveal{0%{transform:scale(.4);opacity:0;}70%{transform:scale(1.15);}100%{transform:scale(1);opacity:1;}}
 
+/* ---- Secret 4-egg challenge (Loris) - see EASTER_EGGS (config.js),
+   revealEasterEgg()/openEggFinaleModal() (ui.js). ---- */
+.eggPipsRow{display:flex;gap:8px;justify-content:center;margin:4px 0 14px;font-size:20px;letter-spacing:2px;}
+.eggPip{color:#3a3070;transition:color .3s ease;}
+.eggPip.filled{color:var(--stardust);text-shadow:0 0 10px #fbbf2488;}
+.eggPip.justFilled{animation:eggPipFill .6s cubic-bezier(.16,1,.3,1);}
+@keyframes eggPipFill{
+  0%{transform:scale(.3);color:#3a3070;text-shadow:none;}
+  55%{transform:scale(1.5);}
+  100%{transform:scale(1);}
+}
+.eggFoundCard{text-align:center;}
+.eggFoundIcon{font-size:44px;line-height:1;margin:4px 0 8px;animation:cosmicBoxReveal .4s ease-out;}
+
+/* Grand finale - deliberately NOT a plain .modalCard (Loris: "l'animation
+   la plus impressionnante jamais proposée", the single biggest moment in
+   the game). Higher z-index than every other modal, fullscreen dark
+   backdrop, its own staged reveal (.eggFinaleStage.revealed added ~1.4s
+   after opening, once the burst/shake have already landed) instead of
+   everything popping in at once. */
+/* .modalOverlay.eggFinaleOverlay (not just .eggFinaleOverlay): the shared
+   .modalOverlay,.tutOverlay base rule (style.css, further down) sets its
+   own background/z-index at the same specificity (one class each) - as the
+   later rule in the file it would otherwise win regardless of this rule's
+   own declarations, leaving the finale see-through and under other modals.
+   The compound selector's higher specificity guarantees this one wins. */
+.modalOverlay.eggFinaleOverlay{z-index:300;background:radial-gradient(circle at 50% 40%,#1a0f3a,#020103 75%);overflow:hidden;}
+.eggFinaleStage{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;
+  max-width:380px;width:100%;padding:20px;}
+.eggFinaleBurst{position:absolute;top:70px;left:50%;width:0;height:0;pointer-events:none;}
+.eggFinaleRay{position:absolute;top:0;left:0;width:3px;height:170px;transform-origin:top center;
+  background:linear-gradient(to bottom, #f472e0, transparent 75%);
+  transform:rotate(var(--ang,0deg)) scaleY(0);opacity:0;
+  animation:eggFinaleRay 1.6s ease-out forwards;filter:blur(.3px);}
+.eggFinaleRay.short{height:100px;opacity:.7;}
+@keyframes eggFinaleRay{
+  0%{transform:rotate(var(--ang,0deg)) scaleY(0);opacity:0;}
+  30%{opacity:1;}
+  100%{transform:rotate(var(--ang,0deg)) scaleY(1);opacity:0;}
+}
+.eggFinaleSparkles{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
+.eggFinaleSparkle{position:absolute;top:-5%;width:4px;height:4px;border-radius:50%;
+  background:#fff;box-shadow:0 0 6px 2px #f472e0aa;
+  animation:eggFinaleSparkleFall var(--fallDur,3s) linear var(--fallDelay,0s) infinite;}
+@keyframes eggFinaleSparkleFall{
+  0%{transform:translate(0,0);opacity:0;}
+  10%{opacity:1;}
+  90%{opacity:1;}
+  100%{transform:translate(var(--drift,0),115vh);opacity:0;}
+}
+.eggFinalePortrait{position:relative;width:110px;height:110px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:56px;
+  background:radial-gradient(circle at 35% 30%,#3a2450,#0e0a1e);
+  border:2px solid #f472e0;box-shadow:0 0 0 3px #f472e055, 0 0 40px #f472e099;
+  margin:10px 0 16px;opacity:0;transform:scale(.5);
+  transition:opacity .8s ease, transform .8s cubic-bezier(.16,1,.3,1);}
+.eggFinalePortraitImg{width:88%;height:88%;object-fit:contain;border-radius:50%;}
+.eggFinaleStage.revealed .eggFinalePortrait{opacity:1;transform:scale(1);animation:eggFinalePulse 2.4s ease-in-out infinite 1s;}
+@keyframes eggFinalePulse{0%,100%{box-shadow:0 0 0 3px #f472e055, 0 0 40px #f472e099;}50%{box-shadow:0 0 0 5px #f472e088, 0 0 60px #f472e0cc;}}
+.eggFinaleKicker{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-dim);
+  opacity:0;transition:opacity .6s ease .2s;}
+.eggFinaleTitle{font-size:22px;font-weight:800;letter-spacing:.03em;margin:4px 0 10px;
+  background:linear-gradient(90deg,#f472e0,#fbbf24,#f472e0);background-size:200% auto;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  opacity:0;transition:opacity .6s ease .4s;}
+.eggFinaleGodName{font-size:19px;font-weight:800;color:#fff;opacity:0;transition:opacity .6s ease 1.2s;}
+.eggFinaleGodTitle{font-size:13px;color:#f472e0;margin-bottom:10px;opacity:0;transition:opacity .6s ease 1.4s;}
+.eggFinaleDesc{font-size:12.5px;color:var(--text-dim);line-height:1.5;opacity:0;transition:opacity .6s ease 1.6s;}
+.eggFinaleStage.revealed .eggFinaleKicker,
+.eggFinaleStage.revealed .eggFinaleTitle,
+.eggFinaleStage.revealed .eggFinaleGodName,
+.eggFinaleStage.revealed .eggFinaleGodTitle,
+.eggFinaleStage.revealed .eggFinaleDesc{opacity:1;}
+.eggFinaleStage.revealed .eggFinaleTitle{animation:eggFinaleTitleShine 3s linear infinite;}
+@keyframes eggFinaleTitleShine{0%{background-position:0% center;}100%{background-position:200% center;}}
+#eggFinaleClose{margin-top:16px;}
+body.eggFinaleShake{animation:eggFinaleShake .55s cubic-bezier(.36,.07,.19,.97);}
+@keyframes eggFinaleShake{
+  0%,100%{transform:translate(0,0);}
+  20%{transform:translate(-6px,4px);}
+  40%{transform:translate(6px,-4px);}
+  60%{transform:translate(-4px,-3px);}
+  80%{transform:translate(4px,3px);}
+}
+
+/* Exclusive profile cosmetic (Loris: reward #2, not a tile skin) - a
+   rotating prismatic ring around the drawer avatar, only for a player who
+   found all 4 secrets (renderDrawerHead, ui.js). */
+.drawerLogo.mythicFrame{position:relative;}
+.drawerLogo.mythicFrame::before{content:"";position:absolute;inset:-4px;border-radius:14px;
+  background:conic-gradient(from 0deg,#f472e0,#fbbf24,#38bdf8,#f472e0);
+  z-index:-1;animation:mythicFrameSpin 3s linear infinite;}
+@keyframes mythicFrameSpin{to{transform:rotate(360deg);}}
+
 .skinManagerList{display:flex;flex-direction:column;gap:8px;margin-top:10px;max-height:60vh;overflow-y:auto;}
 .storyCard{position:relative;background:linear-gradient(160deg,#1a1640,#141130);border-color:#3a3070;}
 .storyCard h3{font-size:14px;color:#e8e4ff;}

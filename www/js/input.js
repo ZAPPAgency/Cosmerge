@@ -228,6 +228,15 @@ function attemptMerge(fromIdx, toIdx) {
   const now = performance.now();
   Game.mergeStreak = (now - Game.lastMergeAt < MERGE_STREAK_WINDOW_MS) ? Game.mergeStreak + 1 : 0;
   Game.lastMergeAt = now;
+  // Easter egg "La Cascade" (Loris: enchaîner EASTER_EGG_CHAIN_COUNT
+  // fusions en un temps assez court) - a rolling window of merge
+  // timestamps, in-memory only (Game, not state - doesn't need to survive
+  // a reload mid-streak). Pruned to the trailing EASTER_EGG_CHAIN_MS on
+  // every merge.
+  Game.mergeChainTimes.push(now);
+  Game.mergeChainTimes = Game.mergeChainTimes.filter(t => now - t <= EASTER_EGG_CHAIN_MS);
+  const chainEggResult = Game.mergeChainTimes.length >= EASTER_EGG_CHAIN_COUNT
+    ? unlockEasterEgg(state, "merge_chain") : null;
   renderCell(fromIdx);
   // Keep showing the pre-merge tile at toIdx while the spark flicks in, and
   // hold every reward/reveal cue (tile swap, toast, haptic, god-ritual
@@ -252,6 +261,8 @@ function attemptMerge(fromIdx, toIdx) {
       toast(tierName(result.newTier) + " " + tierEmoji(result.newTier) + " !");
     }
     maybeOpenGodRitual();
+    if (result.eggResult) revealEasterEgg(result.eggResult);
+    if (chainEggResult) revealEasterEgg(chainEggResult);
   }, Game.mergeStreak, result.newTier);
   Sfx.meteorImpact(result.newTier, Game.mergeStreak);
   updateHeader();
@@ -459,7 +470,7 @@ async function maybeShowInterstitial() {
 function onBigBangConfirm() {
   const state = Game.state;
   const runRecap = { stardustEarned: state.runStardustEarned, maxTier: state.maxTierThisRun };
-  const gain = performBigBang(state);
+  const { gain, eggResult } = performBigBang(state);
   Game.bigBangPromptShown = false;
   Sfx.bigBang();
   HapticService.impact("success");
@@ -468,10 +479,16 @@ function onBigBangConfirm() {
   saveState(state);
   maybeShowInterstitial();
   openBigBangSummaryModal({ ...runRecap, gain });
+  // After the summary, not instead of it - Loris's easter egg reveal
+  // shouldn't replace the normal Big Bang recap the player is expecting.
+  if (eggResult) revealEasterEgg(eggResult);
 }
 
 function onRestartConfirm() {
   const state = Game.state;
+  // Easter egg "Le Renoncement" (Loris) - restarting while a Big Bang was
+  // already available, checked before restartRun() below wipes the grid.
+  const eggResult = hasUniverseTile(state) ? unlockEasterEgg(state, "restart_at_top") : null;
   restartRun(state);
   Game.bigBangPromptShown = false;
   Sfx.bigBang();
@@ -481,6 +498,7 @@ function onRestartConfirm() {
   toast("Nouvelle partie !");
   renderAll();
   saveState(state);
+  if (eggResult) revealEasterEgg(eggResult);
 }
 
 async function onSaveCodeAction() {
@@ -969,6 +987,11 @@ function wireEvents() {
   $("skinPreviewClose").addEventListener("click", closeSkinPreviewModal);
   $("cosmicBoxClose").addEventListener("click", closeCosmicBoxModal);
   $("purchaseConfirmClose").addEventListener("click", closePurchaseConfirmModal);
+
+  $("fabSecrets").addEventListener("click", openSecretsModal);
+  $("secretsClose").addEventListener("click", closeSecretsModal);
+  $("eggFoundClose").addEventListener("click", closeEggFoundModal);
+  $("eggFinaleClose").addEventListener("click", closeEggFinaleModal);
 
   dom.energyPill.addEventListener("click", () => openPanel("skills"));
   $("gemsPill").addEventListener("click", openGemsMenuModal);

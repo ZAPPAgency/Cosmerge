@@ -260,6 +260,12 @@ const RARITY = {
   rare: { label: "Rare", color: "#38bdf8" },
   epique: { label: "Épique", color: "#a855f7" },
   legendaire: { label: "Légendaire", color: "#fbbf24" },
+  // Ananké only (GODS below) - deliberately not a key in BOX_RARITY_WEIGHTS,
+  // so the Cosmic Box's own weighted roll (which only ever iterates
+  // Object.keys(BOX_RARITY_WEIGHTS)) can mathematically never select her -
+  // that's the actual mechanism keeping her out of the box, not a special
+  // case bolted onto rollCosmicBox().
+  mythique: { label: "Mythique", color: "#f472e0" },
 };
 
 // `icon` (all 13, this whole array): custom AI-generated portrait
@@ -399,7 +405,63 @@ const GODS = [
     unlock: { type: "box" },
     lore: "Némésis ne pardonne à aucun Dieu d'avoir laissé le Cosmos se briser - bienveillant ou déchu, tous lui doivent des comptes. Rare est le fusionneur qu'elle juge digne de son alliance.",
   },
+  // 14th, secret god - Loris's "challenge communautaire" (4 easter eggs,
+  // ui.js/input.js/economy.js). `secret: true` pulls her out of every
+  // normal "X/13" pantheon count (Progression's "Dieux éveillés",
+  // rollCosmicBox's "all gods owned" gems-box transition, gods.js) without
+  // needing to special-case her id all over the place - see
+  // NORMAL_GODS_COUNT below. unlock.type "secret" (not "box"/"milestone"/
+  // "challenge"/"shop") keeps her out of nextGodMilestoneHint's own
+  // `unlock.type === "milestone"` sweep too. rarity "mythique" isn't a key
+  // in BOX_RARITY_WEIGHTS, so the Cosmic Box's weighted roll can
+  // mathematically never land on her - no separate exclusion needed there
+  // either (see the comment on RARITY.mythique above).
+  {
+    id: "ananke", name: "Ananké", title: "L'Origine Silencieuse", emoji: "🌀", secret: true,
+    rarity: "mythique", alignment: "bienveillant",
+    desc: "+20% production globale, +2h de plafond hors-ligne et +5% chance de Gem bonus par fusion",
+    effects: { prodMult: 1.2, offlineCapBonusH: 2, gemChanceBonus: 0.05 },
+    unlock: { type: "secret", label: "Un secret bien gardé du Cosmos" },
+    lore: "Avant les treize, avant la Rupture elle-même, il y avait Ananké. Elle n'a rien causé - elle a simplement toujours su que ça arriverait. Ceux qui la trouvent ne la choisissent pas : elle les attendait déjà.",
+  },
 ];
+// The 13 "normal" gods, for every place that means to say "X/13" - Ananké
+// (secret: true, above) never counts toward this, by design (Loris).
+const NORMAL_GODS_COUNT = GODS.filter(g => !g.secret).length;
+
+// ---- Secret challenge: 4 easter eggs, hidden until the first is found
+// ----
+// Loris: "débloquer 4 easter eggs pour recevoir une récompense inédite
+// [...] compteur d'easter egg avec explications assez synthétique sous
+// forme de copywriting énigme". `hint` is what the counter shows for a
+// still-locked egg (deliberately vague - no instructions on how to find
+// it); `revealText` is what shows once it's actually found. Detection
+// logic for each lives where the trigger naturally happens:
+// - restart_at_top: onRestartConfirm (input.js) - restarting while a
+//   Big Bang was already available (hasUniverseTile).
+// - pure_extremes: performBigBang (economy.js) - every grid cell at Big
+//   Bang time is tier 1 or UNIVERSE_TIER, nothing in between.
+// - merge_chain: attemptMerge (input.js) - EASTER_EGG_CHAIN_COUNT merges
+//   land within EASTER_EGG_CHAIN_MS of each other.
+// - second_loop: performMerge (economy.js) - a tile reaches cycle 2 (two
+//   tier-14 tiles merging for the *second* time - Loris: "atteindre le
+//   tier 2 (deux case de niveau 14 du tier de base qui fusionne)").
+const EASTER_EGGS = [
+  { id: "restart_at_top", name: "Le Renoncement",
+    hint: "Un choix que peu osent faire, à l'instant où tout semblait acquis.",
+    revealText: "Tu as tout recommencé alors que l'infini t'attendait déjà. Certains préfèrent choisir leur propre chemin." },
+  { id: "pure_extremes", name: "Les Extrêmes",
+    hint: "Rien qu'entre le premier souffle et le dernier.",
+    revealText: "Un Big Bang né d'une grille faite uniquement de commencements et d'un seul aboutissement." },
+  { id: "merge_chain", name: "La Cascade",
+    hint: "Une main plus rapide que la pensée.",
+    revealText: "Dix fusions en une poignée de secondes. Le Cosmos a du mal à suivre." },
+  { id: "second_loop", name: "Le Second Souffle",
+    hint: "Ce qui semblait fini a recommencé, une fois de plus.",
+    revealText: "Une deuxième boucle s'est refermée sur elle-même. Le cycle n'a pas de fin." },
+];
+const EASTER_EGG_CHAIN_COUNT = 10;
+const EASTER_EGG_CHAIN_MS = 8000;
 
 // ---- Lore fragments: progressive story reveal in the Histoire panel ----
 // The base story (renderStoryPanel) only tells you THAT the Rupture
