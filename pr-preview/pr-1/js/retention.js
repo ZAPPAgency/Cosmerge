@@ -138,11 +138,19 @@ function trackRewardedAdWatched(state) {
 }
 
 // ---- VIP daily Gems (Pass Supernova perk) ----
+// Loris: "il faudrait que l'utilisateur voit chaque jour qu'il reçoit 100
+// gemmes" - the grant itself already ran silently every day (gated by
+// vipLastGemsDay), it just never told the player. toast() here rather than
+// at each call site (boot + app-resume in main.js) so both paths - and any
+// future one - get the notification for free, same convention as gods.js's
+// unlockGod() owning its own toast instead of leaving it to callers.
 function grantVipDailyGemsIfDue(state) {
   if (!isVipActive(state)) return 0;
   if (state.iap.vipLastGemsDay === todayStr()) return 0;
   state.iap.vipLastGemsDay = todayStr();
-  return grantGems(state, VIP_DAILY_GEMS);
+  const granted = grantGems(state, VIP_DAILY_GEMS);
+  toast(`✨ Pass Supernova : +${granted} 💎 offertes aujourd'hui !`);
+  return granted;
 }
 
 // ---- Daily login ----
