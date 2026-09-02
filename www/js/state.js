@@ -112,7 +112,6 @@ function defaultState() {
     lastPromoShownAt: 0,
 
     dailyLogin: { lastClaimDay: null, streak: 0, cycleDay: 1, streakFreezeCharges: 0 },
-    skinFragments: 0,
 
     quests: { date: null, active: [], bonusAd: { done: false, claimed: false } },
     questsCompletedTotal: 0,

@@ -1015,10 +1015,11 @@ function renderShopPanel() {
     card.appendChild(buyBtn(product, "btn primary full"));
     dom.panelBody.appendChild(card);
   });
-
-  const restoreBtn = el("button", "btn ghost full", "Restaurer mes achats");
-  restoreBtn.addEventListener("click", onRestorePurchases);
-  dom.panelBody.appendChild(restoreBtn);
+  // Loris: "dans la boutique enlève le bouton 'restaurer mes achats' je
+  // vois vraiment pas son utilité" - removed here specifically; the same
+  // button still exists in Réglages (renderSettingsPanel, below), which is
+  // both the more standard location for it and the one Apple's App Store
+  // guidelines actually expect to find it in.
 }
 
 // ---------------- Skills panel ----------------
