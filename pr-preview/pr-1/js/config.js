@@ -417,7 +417,7 @@ const GODS = [
   // mathematically never land on her - no separate exclusion needed there
   // either (see the comment on RARITY.mythique above).
   {
-    id: "ananke", name: "Ananké", title: "L'Origine Silencieuse", emoji: "🌀", secret: true,
+    id: "ananke", name: "Ananké", title: "L'Origine Silencieuse", emoji: "🌀", icon: "ananke.png", secret: true,
     rarity: "mythique", alignment: "bienveillant",
     desc: "+20% production globale, +2h de plafond hors-ligne et +5% chance de Gem bonus par fusion",
     effects: { prodMult: 1.2, offlineCapBonusH: 2, gemChanceBonus: 0.05 },

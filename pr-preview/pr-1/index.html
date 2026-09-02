@@ -37,7 +37,7 @@
     <meta name="apple-mobile-web-app-title" content="Godspark" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#0a0620" />
-    <link rel="stylesheet" href="css/style.css?v=100" />
+    <link rel="stylesheet" href="css/style.css?v=101" />
   </head>
   <body>
     <div id="starsBg"></div>
@@ -126,10 +126,11 @@
         <!-- Secret 4-egg challenge (Loris) - stays hidden (not gated by
          FAB_DISCOVERY_FUSIONS like the fabs above, see updateFabs()) until
          state.easterEggs.unlockedIds has its first entry, then never hides
-         again. No dedicated art yet - plain emoji, same "ships now, art
-         later" pattern as every other placeholder icon this session. -->
+         again. -->
         <button class="fab hidden" id="fabSecrets">
-          <span class="fabIcon">🥚</span><span class="fabLabel">Secrets</span>
+          <span class="fabIcon"
+            ><img class="uiIcon" src="assets/ui/secret-egg.png" alt=""
+          /></span><span class="fabLabel">Secrets</span>
         </button>
       </div>
 
@@ -476,7 +477,7 @@
      below, reserved for the 4th). -->
     <div class="modalOverlay hidden" id="eggFoundModal">
       <div class="modalCard eggFoundCard">
-        <div class="eggFoundIcon">🥚</div>
+        <img class="eggFoundIcon" src="assets/ui/secret-egg.png" alt="" />
         <h3 id="eggFoundTitle">Secret découvert</h3>
         <p class="desc" id="eggFoundText"></p>
         <div class="eggPipsRow" id="eggFoundPips"></div>
@@ -488,7 +489,7 @@
      found - stays reachable forever after, whatever the progress. -->
     <div class="modalOverlay hidden" id="secretsModal">
       <div class="modalCard">
-        <h3>🥚 Secrets du Cosmos</h3>
+        <h3><img class="inlineCurrencyIcon" src="assets/ui/secret-egg.png" alt="" /> Secrets du Cosmos</h3>
         <p class="desc">Quelque part dans les plis du Cosmos, quatre échos attendent d'être entendus. Certains se révèlent à qui ose renoncer. D'autres à qui va trop vite, ou pas assez loin. Trouve-les tous, et le Cosmos te répondra.</p>
         <div id="secretsList"></div>
         <button class="btn ghost full" id="secretsClose">Fermer</button>
@@ -666,16 +667,16 @@
       </div>
     </div>
 
-    <script src="js/config.js?v=100"></script>
-    <script src="js/state.js?v=100"></script>
-    <script src="js/audio.js?v=100"></script>
-    <script src="js/services.js?v=100"></script>
-    <script src="js/economy.js?v=100"></script>
-    <script src="js/gods.js?v=100"></script>
-    <script src="js/retention.js?v=100"></script>
-    <script src="js/ui.js?v=100"></script>
-    <script src="js/input.js?v=100"></script>
-    <script src="js/main.js?v=100"></script>
+    <script src="js/config.js?v=101"></script>
+    <script src="js/state.js?v=101"></script>
+    <script src="js/audio.js?v=101"></script>
+    <script src="js/services.js?v=101"></script>
+    <script src="js/economy.js?v=101"></script>
+    <script src="js/gods.js?v=101"></script>
+    <script src="js/retention.js?v=101"></script>
+    <script src="js/ui.js?v=101"></script>
+    <script src="js/input.js?v=101"></script>
+    <script src="js/main.js?v=101"></script>
     <script type="module" src="js/native-bridge.js"></script>
   </body>
 </html>

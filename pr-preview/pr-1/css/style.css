@@ -631,7 +631,9 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
   100%{transform:scale(1);}
 }
 .eggFoundCard{text-align:center;}
-.eggFoundIcon{font-size:44px;line-height:1;margin:4px 0 8px;animation:cosmicBoxReveal .4s ease-out;}
+/* Now an <img> (secret-egg.png), not a font-size emoji glyph -
+   width/height replace font-size as the sizing knob. */
+.eggFoundIcon{display:block;width:64px;height:64px;object-fit:contain;margin:4px auto 8px;animation:cosmicBoxReveal .4s ease-out;}
 
 /* Grand finale - deliberately NOT a plain .modalCard (Loris: "l'animation
    la plus impressionnante jamais proposée", the single biggest moment in
