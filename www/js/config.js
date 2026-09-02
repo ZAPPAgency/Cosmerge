@@ -122,14 +122,16 @@ const EMOJI_SETS = [
       { emoji: "🥥", name: "Noix de Coco", icon: "fruit-8-coco.png" },
       { emoji: "🍈", name: "Melon Géant", icon: "fruit-9-melon.png" },
       { emoji: "🍯", name: "Nectar Cosmique", icon: "fruit-10-nectar.png" },
-      // Tiers 11-14 (Loris: "pour les cases de niveau supérieur il faut
-      // faire aussi les emojis des skins") - no icon yet, same "emoji now,
-      // art later" pattern as TIERS 11-14 themselves (config.js). Names/
-      // emoji are a first pass, open to renaming.
-      { emoji: "🥭", name: "Mangue Cosmique" },
-      { emoji: "🍑", name: "Pêche Stellaire" },
-      { emoji: "🫐", name: "Myrtille Infinie" },
-      { emoji: "🥝", name: "Kiwi Primordial" },
+      // Tiers 11-14 - illustrated (same "compact solid object, clean
+      // silhouette" prompt style as TIERS 11-14, config.js - the first
+      // fruit prompts read fine but weren't fruit-colored, borrowed the
+      // matching standard tier's own palette instead (violet, red/magenta,
+      // teal, gold) - only Mangue got explicitly recolored to actual mango
+      // tones per Loris; Pêche/Myrtille/Kiwi kept their delivered colors).
+      { emoji: "🥭", name: "Mangue Cosmique", icon: "fruit-11-mangue.png" },
+      { emoji: "🍑", name: "Pêche Stellaire", icon: "fruit-12-peche.png" },
+      { emoji: "🫐", name: "Myrtille Infinie", icon: "fruit-13-myrtille.png" },
+      { emoji: "🥝", name: "Kiwi Primordial", icon: "fruit-14-kiwi.png" },
     ] },
   { id: "legumes", name: "Légumes de l'Espace", cost: 300, currency: "gems",
     tierSkin: [
