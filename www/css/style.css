@@ -616,7 +616,10 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
 .storyCard h3{font-size:14px;color:#e8e4ff;}
 .storyCard.locked{opacity:.5;}
 .storyCard.locked h3{color:var(--text-dim);}
-.storyMark{position:absolute;top:10px;right:14px;font-size:34px;opacity:.12;pointer-events:none;}
+/* Now an <img> (bigbang.png), not a font-size emoji glyph - width/height
+   replace font-size as the sizing knob, everything else (faint corner
+   watermark) stays the same. */
+.storyMark{position:absolute;top:10px;right:14px;width:40px;height:40px;object-fit:contain;opacity:.12;pointer-events:none;}
 .card p.desc{margin:0 0 8px;font-size:12px;color:var(--text-dim);line-height:1.5;white-space:pre-line;}
 .card .rowBetween,.modalCard .rowBetween{display:flex;align-items:center;justify-content:space-between;gap:8px;}
 /* stardustInfoBestRow (openStardustInfoModal, ui.js) switches to this when
