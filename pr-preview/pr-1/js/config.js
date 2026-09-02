@@ -76,17 +76,17 @@ const TIERS = [
   // pouvoir continuer [au-delà] que 10" - players hitting Univers had
   // nowhere left to go but Big Bang, since performMerge/attemptMerge
   // (economy.js/input.js) both hard-block merging past the last TIERS
-  // entry). No custom art yet - plain emoji for now, same "ships now,
-  // gets real art later" pattern as every other placeholder icon this
-  // session. Names/emoji are a first pass, not final - open to Loris
-  // renaming these to fit the game's own "Rupture" lore better. Colors
-  // keep getting darker/more saturated the same way tiers 6-10 did, so
-  // each new tier's (still emoji, for now) subject keeps popping against
-  // its tile once real art exists.
-  { n: 11, name: "Multivers", emoji: "🌀", from: "#2e1065", to: "#0a0118" },
-  { n: 12, name: "Singularité", emoji: "⚛️", from: "#4c0519", to: "#0a0005" },
-  { n: 13, name: "Infini", emoji: "♾️", from: "#052e2b", to: "#000a08" },
-  { n: 14, name: "Genèse", emoji: "🌟", from: "#1a1a2e", to: "#000000" },
+  // entry). `icon`: custom AI-generated 3D renders (Midjourney, background
+  // removed) - first pass of prompts rendered badly for cutout (wispy
+  // vortex/rays/fractal effects with no clean edge, Loris: "rendent très
+  // mal en détourage"), redone as compact solid objects (faceted crystal,
+  // ringed sphere, glossy torus, glowing egg) with an explicit "no glow
+  // extending beyond the silhouette" instruction, same as tiers 1-10.
+  // Colors keep getting darker/more saturated the same way tiers 6-10 did.
+  { n: 11, name: "Multivers", emoji: "🌀", icon: "tier-11-multivers.png", from: "#2e1065", to: "#0a0118" },
+  { n: 12, name: "Singularité", emoji: "⚛️", icon: "tier-12-singularite.png", from: "#4c0519", to: "#0a0005" },
+  { n: 13, name: "Infini", emoji: "♾️", icon: "tier-13-infini.png", from: "#052e2b", to: "#000a08" },
+  { n: 14, name: "Genèse", emoji: "🌟", icon: "tier-14-genese.png", from: "#1a1a2e", to: "#000000" },
 ];
 // Big Bang eligibility used to just be "reached the last TIERS entry"
 // (t.tier === TIERS.length, economy.js hasUniverseTile) - broke the moment
