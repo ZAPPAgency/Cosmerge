@@ -89,13 +89,33 @@ function checkFusionPromo(state) {
   return null;
 }
 
+// Loris: "il faut aussi ajouter que le clicker doit fonctionner offline a
+// la manière d'un jeu idle." Same "rate × time" simplification
+// computeOfflineGain already uses for regular production below (a single
+// snapshot of the current rate, not a real tick-by-tick replay) - grantTapBonus
+// (input.js) pays 5×effectiveTileProd per tap on a TAP_COOLDOWN_MS cadence,
+// so that's the rate here. Bounded by however much of the auto-clicker's own
+// 10-minute window was still left when the app closed (activeUntil is a
+// fixed wall-clock deadline, doesn't extend just because the player was
+// away) - AND by the same offline cap (cappedMs) everything else respects.
+function autoClickerOfflineGain(state, cappedMs) {
+  const ac = state.autoClicker;
+  if (!ac || ac.targetIdx === null) return 0;
+  const activeMsAtClose = ac.activeUntil - state.lastSaveTime;
+  if (activeMsAtClose <= 0) return 0; // already expired before the app closed
+  const activeMs = Math.min(cappedMs, activeMsAtClose);
+  const tile = state.grid[ac.targetIdx];
+  if (!tile) return 0; // target cell was empty when closing - paused, same as while online
+  return 5 * effectiveTileProd(state, tile.tier) * (activeMs / TAP_COOLDOWN_MS);
+}
+
 // ---- Offline gains ----
 function computeOfflineGain(state, nowTs) {
   const elapsedMs = Math.max(0, nowTs - state.lastSaveTime);
   const capMs = offlineCapHours(state) * 3600 * 1000;
   const cappedMs = Math.min(elapsedMs, capMs);
   const prod = totalProduction(state);
-  const gain = prod * (cappedMs / 1000) * 0.5;
+  const gain = prod * (cappedMs / 1000) * 0.5 + autoClickerOfflineGain(state, cappedMs);
   return { elapsedMs, cappedMs, gain, wasCapped: elapsedMs > capMs };
 }
 
@@ -321,13 +341,6 @@ function wheelSegmentBounds(index) {
 function ensureDailySpin(state) {
   if (state.dailySpin.date !== todayStr()) {
     state.dailySpin = { date: todayStr(), freeUsed: false, bonusUsed: false };
-  }
-}
-// Same date-keyed reset pattern as ensureDailySpin above - see
-// state.gemsAdStreak (state.js) and grantGemsFromAd() (economy.js).
-function ensureGemsAdStreak(state) {
-  if (state.gemsAdStreak.date !== todayStr()) {
-    state.gemsAdStreak = { date: todayStr(), count: 0 };
   }
 }
 function pickWheelPrize() {

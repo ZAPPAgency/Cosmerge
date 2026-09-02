@@ -129,14 +129,24 @@ function defaultState() {
     },
     moonMergesThisRun: 0, // toward MOON_MERGES_TO_CHOOSE_GOD (first-god ritual)
 
-    cooldowns: { prodBoostUntil: 0, prodBoostActiveUntil: 0, unlockCellAdUntil: 0, gemsAdUntil: 0, swapAdUntil: 0 },
+    cooldowns: { unlockCellAdUntil: 0, swapAdUntil: 0 },
     dailySpin: { date: null, freeUsed: false, bonusUsed: false },
-    // Gems-for-ad streak (Loris: "le compte des 5 fois se réinitialise
-    // toujours à minuit") - same date-keyed reset pattern as dailySpin
-    // above. count resets to 0 each new day; ensureGemsAdStreak()
-    // (retention.js) is what actually resets it, called from
-    // grantGemsFromAd() (economy.js) before every watch.
-    gemsAdStreak: { date: null, count: 0 },
+    // Loris: "+20 gemmes une fois par jour [...] gratuit [...] (reset à
+    // minuit) [...] pour le relancer [...] regarder une publicité" - date
+    // string, matches todayStr(); the free use is spent for the day once
+    // this equals today - see grantGemsFromAd() (economy.js).
+    gemsAdFree: { date: null, used: false },
+    // "Clicker automatique" (Loris) - replaces the old Boost x2 fab.
+    // targetIdx: the grid cell it auto-taps (grantTapBonus, input.js),
+    // chosen by the player at activation (handleAutoClickerPick, input.js) -
+    // kept even if that cell empties out, so it silently resumes on its own
+    // the moment something occupies that index again, rather than losing
+    // the pick. activeUntil: 0 or in the past = inactive. freeUsedDate: same
+    // once-free-then-ad-gated pattern as gemsAdFree above. tutorialShown:
+    // persisted (unlike the one-shot fab-reveal pop, Game.fabRevealed in
+    // main.js, which is intentionally session-only) - the explainer modal
+    // (openAutoClickerIntroModal, ui.js) must only ever play once, ever.
+    autoClicker: { targetIdx: null, activeUntil: 0, freeUsedDate: null, tutorialShown: false },
 
     iap: { removeAds: false, vipUntil: 0, ownedSkinPacks: [], stardustBoost: false, vipLastGemsDay: null },
 
@@ -226,13 +236,12 @@ function importSaveCode(code) {
 function productionMultiplier(state) {
   const skillMult = 1 + state.skills.prod * 0.03;
   const vipMult = isVipActive(state) ? 2 : 1;
-  const boostMult = (state.cooldowns.prodBoostActiveUntil > Date.now()) ? 2 : 1;
   const godMult = getGodEffects(state).prodMult || 1;
   const iapBoostMult = state.iap.stardustBoost ? 1.5 : 1;
   // "Catalyseur Stellaire" run upgrade (RUN_UPGRADE_TREE, config.js) - resets
   // to 0 at every Big Bang, unlike every other factor here.
   const runUpgradeMult = 1 + (state.runUpgrades.catalyst || 0) * 0.04;
-  return skillMult * vipMult * boostMult * godMult * iapBoostMult * runUpgradeMult;
+  return skillMult * vipMult * godMult * iapBoostMult * runUpgradeMult;
 }
 function tierGodMultiplier(state, tier) {
   const bonus = getGodEffects(state).tierProdBonus;

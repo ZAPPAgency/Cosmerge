@@ -25,30 +25,31 @@ const UNLOCK_CELL_AD_COOLDOWN_MS = 2 * 60 * 60 * 1000;
 // enough Gems, offer a rewarded ad instead of a dead-end "Pas assez de
 // Gems." - same cooldown as the free-cell-unlock ad above rather than a new
 // number: swapCells costs 2x skipCell in the Gems shop (config.js
-// SHOP_GEM_ITEMS), so it's the same tier of shortcut, not the frequent
-// small-reward kind GEMS_AD_COOLDOWN_MS below is for. Without a cooldown at
+// SHOP_GEM_ITEMS), so it's the same tier of shortcut. Without a cooldown at
 // all, keeping Gems at 0 would make this a free, repeatable way to bypass
 // swapCells' cost entirely.
 const SWAP_AD_COOLDOWN_MS = UNLOCK_CELL_AD_COOLDOWN_MS;
-// Deliberately short and repeatable - this is the "grind toward a specific
-// purchase" ad, not a big one-off bonus like the others above.
-const GEMS_AD_COOLDOWN_MS = 3 * 60 * 1000;
-// Loris: "le bouton [...] pour regarder une pub en échange de gemmes
-// rapporte désormais 20 gemmes et on peut le répéter 5 fois d'affilée
-// avant d'avoir un timer de 3 minutes [...] et ainsi de suite. Le compte
-// des 5 fois se réinitialise toujours à minuit." - was a flat cooldown on
-// every single watch; now GEMS_AD_STREAK_SIZE watches are free of any
-// cooldown, only the Nth one (and every following multiple of it) sets
-// GEMS_AD_COOLDOWN_MS - see grantGemsFromAd()/ensureGemsAdStreak()
-// (economy.js/retention.js) and state.gemsAdStreak (state.js).
+// Loris: "le bouton +20 gemmes une fois par jour il devrait être gratuit
+// aussi (reset à minuit) et quand on veut le relancer [...] offre la
+// possibilité [...] de regarder une publicité pour passer outre cette
+// restriction" - replaces the previous "5 free watches in a row, then a
+// flat 3 min cooldown" streak model entirely: now the very first use each
+// day is free (no ad at all), and every use after that needs its own ad
+// watch, with no cap on how many times - see grantGemsFromAd()
+// (economy.js) and state.gemsAdFree (state.js).
 const GEMS_AD_REWARD = 20;
-const GEMS_AD_STREAK_SIZE = 5;
 const VIP_DAILY_GEMS = 100; // Loris: 50 -> 100/day for Pass Supernova
-// Short + frequent beats long + forgettable for rewarded-ad engagement: a
-// 30 min boost gets watched once and ignored, a 10 min one stays felt and
-// is worth re-watching for well within a normal play session.
-const PROD_BOOST_COOLDOWN_MS = 12 * 60 * 1000;
-const PROD_BOOST_DURATION_MS = 10 * 60 * 1000;
+// Loris: "ajouter un bonus 'clicker automatique' [...] accessible
+// gratuitement que une fois par jour (reset à minuit) et ça dure pendant 10
+// minutes. Si on veut réactiver après les 10 minutes alors on doit regarder
+// une publicité. Je pense que ce serait un meilleur bonus que le boost x2.
+// Il devrait remplacer le boost x2." - same free-once-then-ad-gated pattern
+// as GEMS_AD_REWARD above (state.autoClicker.freeUsedDay, state.js), and
+// the same 10-minute duration the old Boost x2 used, but automatically
+// triggering the tap-bonus (grantTapBonus, input.js) on a player-chosen
+// cell instead of a flat production multiplier - see tickAutoClicker()
+// (input.js, called every frame from main.js).
+const AUTO_CLICKER_DURATION_MS = 10 * 60 * 1000;
 const INTERSTITIAL_MIN_GAP_MS = 3 * 60 * 1000;
 const INTERSTITIAL_QUIET_START_MS = 60 * 1000;
 const MOON_MERGES_TO_CHOOSE_GOD = 4;

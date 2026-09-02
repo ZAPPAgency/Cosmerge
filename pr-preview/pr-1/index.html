@@ -37,7 +37,7 @@
     <meta name="apple-mobile-web-app-title" content="Godspark" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#0a0620" />
-    <link rel="stylesheet" href="css/style.css?v=111" />
+    <link rel="stylesheet" href="css/style.css?v=112" />
   </head>
   <body>
     <div id="starsBg"></div>
@@ -113,10 +113,14 @@
             ><img class="uiIcon" src="assets/ui/case_gratuite.png" alt=""
           /></span><span class="fabLabel">Case gratuite</span>
         </button>
-        <button class="fab featured hidden" id="fabBoost">
+        <!-- "Clicker automatique" (Loris) - replaces the old Boost x2, same
+         fab slot/style. Icon reused from Boost for now (assets/ui/boost.png)
+         - a dedicated illustration can follow later, same as every other
+         custom icon in this game (give a Midjourney prompt when asked). -->
+        <button class="fab featured hidden" id="fabAutoClicker">
           <span class="fabIcon"
             ><img class="uiIcon" src="assets/ui/boost.png" alt=""
-          /></span><span class="fabLabel" id="fabBoostLabel">Boost x2</span>
+          /></span><span class="fabLabel" id="fabAutoClickerLabel">Clicker Auto</span>
         </button>
         <button class="fab featured hidden" id="fabGemsAd">
           <span class="fabIcon"
@@ -646,6 +650,21 @@
       </div>
     </div>
 
+    <!-- "Clicker automatique" first-time guide (Loris: "je pense que ce
+     serait efficace d'avoir un pop up qui se déclenche pour proposer et
+     guider le joueur à utiliser cette fonctionnalité pour la première
+     fois"). Opens once ever, the moment fabAutoClicker first becomes
+     visible - see openAutoClickerIntroModal() (ui.js). "Choisir ma case"
+     leads straight into the same cell-picker as tapping the fab itself. -->
+    <div class="modalOverlay hidden" id="autoClickerIntroModal">
+      <div class="modalCard" style="text-align: center">
+        <img class="uiIcon" src="assets/ui/boost.png" alt="" style="width:64px;height:64px;margin:0 auto 10px;display:block;" />
+        <h3>Clicker Automatique</h3>
+        <p class="desc">Choisis une case avec une tuile : le Clicker tapera dessus tout seul pendant 10 minutes, même l'application fermée. Gratuit une fois par jour - regarde une publicité pour le relancer ensuite.</p>
+        <button class="btn primary full" id="autoClickerIntroPick">Choisir ma case</button>
+      </div>
+    </div>
+
     <!-- Manual save backup (export/import) - see state.js exportSaveCode/importSaveCode -->
     <div class="modalOverlay hidden" id="saveCodeModal">
       <div class="modalCard">
@@ -686,16 +705,16 @@
       </div>
     </div>
 
-    <script src="js/config.js?v=111"></script>
-    <script src="js/state.js?v=111"></script>
-    <script src="js/audio.js?v=111"></script>
-    <script src="js/services.js?v=111"></script>
-    <script src="js/economy.js?v=111"></script>
-    <script src="js/gods.js?v=111"></script>
-    <script src="js/retention.js?v=111"></script>
-    <script src="js/ui.js?v=111"></script>
-    <script src="js/input.js?v=111"></script>
-    <script src="js/main.js?v=111"></script>
+    <script src="js/config.js?v=112"></script>
+    <script src="js/state.js?v=112"></script>
+    <script src="js/audio.js?v=112"></script>
+    <script src="js/services.js?v=112"></script>
+    <script src="js/economy.js?v=112"></script>
+    <script src="js/gods.js?v=112"></script>
+    <script src="js/retention.js?v=112"></script>
+    <script src="js/ui.js?v=112"></script>
+    <script src="js/input.js?v=112"></script>
+    <script src="js/main.js?v=112"></script>
     <script type="module" src="js/native-bridge.js"></script>
   </body>
 </html>

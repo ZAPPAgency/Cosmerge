@@ -99,7 +99,7 @@ function onPointerMove(e) {
   const pos = localPos(e);
   const dx = pos.x - pointerState.startX, dy = pos.y - pointerState.startY;
   if (!pointerState.dragging && Math.hypot(dx, dy) > DRAG_THRESHOLD) {
-    if (Game.swapArmed) return; // swap mode is tap-only, see handleSwapTap
+    if (Game.swapArmed || Game.autoClickerArmed) return; // both are tap-only modes, see handleSwapTap/handleAutoClickerPick
     const tileData = Game.state.grid[pointerState.idx];
     if (!tileData) return;
     pointerState.dragging = true;
@@ -169,6 +169,7 @@ function handleSwapTap(idx) {
 
 function handleTap(idx) {
   if (Game.swapArmed) { handleSwapTap(idx); return; }
+  if (Game.autoClickerArmed) { handleAutoClickerPick(idx); return; }
   const state = Game.state;
   const tileHere = state.grid[idx];
 
@@ -190,6 +191,7 @@ function handleTap(idx) {
 function handleLockedTap(idx) {
   const state = Game.state;
   if (Game.swapArmed) { toast("Choisis deux cases débloquées pour l'échange."); Sfx.error(); return; }
+  if (Game.autoClickerArmed) { toast("Choisis une case débloquée avec une tuile."); Sfx.error(); return; }
   if (Game.skipCellArmed) {
     const result = buyGemShopItem(state, "skipCell", { cellIndex: idx });
     Game.skipCellArmed = false;
@@ -709,47 +711,116 @@ function onUnlockCellAd() {
 }
 
 // ---------------- Gems-for-ad (shop + home screen) ----------------
+// Loris: "le bouton +20 gemmes une fois par jour il devrait être gratuit
+// aussi (reset à minuit) et quand on veut le relancer il y a le message
+// pour dire que il faut attendre jusqu'à demain mais offre la possibilité
+// avec un bouton de regarder une publicité pour passer outre cette
+// restriction." Replaces the old "5 free watches, then a flat cooldown"
+// streak - the first grant each day skips the ad entirely (isGemsAdFreeAvailable,
+// economy.js), every grant after that needs its own ad watch, uncapped.
 function onWatchGemsAd() {
   const state = Game.state;
-  if (Date.now() < state.cooldowns.gemsAdUntil) {
-    toast("Disponible dans " + formatDuration(state.cooldowns.gemsAdUntil - Date.now()));
-    return;
-  }
-  confirmThenWatchAd(state, "Pub contre Gems", `Regarder une publicité pour recevoir ${GEMS_AD_REWARD} Gems ?`, async () => {
-    if (!adsRemoved(state)) toast("📺 Chargement de la publicité...");
-    const ok = await watchRewardedAd(state, "gems_ad");
-    if (!ok) return;
+  if (isGemsAdFreeAvailable(state)) {
     const granted = grantGemsFromAd(state);
     Sfx.purchase();
-    toast(`+${granted} 💎 !`);
+    toast(`+${granted} 💎 offertes aujourd'hui !`);
     refreshCurrentPanel();
     updateHeader();
     updateFabs();
     saveState(state);
-  });
-}
-
-// ---------------- Shop / IAP / skills / quests handlers ----------------
-function onWatchProdBoostAd() {
-  const state = Game.state;
-  const boostActive = state.cooldowns.prodBoostActiveUntil > Date.now();
-  if (boostActive) { toast("Boost déjà actif encore " + formatDuration(state.cooldowns.prodBoostActiveUntil - Date.now())); return; }
-  if (Date.now() < state.cooldowns.prodBoostUntil) {
-    toast("Disponible dans " + formatDuration(state.cooldowns.prodBoostUntil - Date.now()));
     return;
   }
-  confirmThenWatchAd(state, "Boost x2", "Regarder une publicité pour activer le Boost x2 production (10 min) ?", async () => {
-    if (!adsRemoved(state)) toast("📺 Chargement de la publicité...");
-    const ok = await watchRewardedAd(state, "prod_boost");
-    if (!ok) return;
-    activateProdBoost(state);
-    Sfx.purchase();
-    toast("🚀 Boost x2 production activé pour 10 min !");
-    refreshCurrentPanel();
-    updateHeader();
-    updateFabs();
-    saveState(state);
-  });
+  confirmThenWatchAd(state, "Déjà réclamées aujourd'hui",
+    `Tu as déjà reçu tes ${GEMS_AD_REWARD} Gems gratuites du jour - reviens demain, ou regarde une publicité pour en recevoir ${GEMS_AD_REWARD} de plus maintenant.`,
+    async () => {
+      if (!adsRemoved(state)) toast("📺 Chargement de la publicité...");
+      const ok = await watchRewardedAd(state, "gems_ad");
+      if (!ok) return;
+      const granted = grantGemsFromAd(state);
+      Sfx.purchase();
+      toast(`+${granted} 💎 !`);
+      refreshCurrentPanel();
+      updateHeader();
+      updateFabs();
+      saveState(state);
+    });
+}
+
+// ---------------- Auto-clicker (replaces the old Boost x2) ----------------
+// Loris: "ajouter un bonus 'clicker automatique' [...] accessible
+// gratuitement que une fois par jour (reset à minuit) et ça dure pendant 10
+// minutes. Si on veut réactiver après les 10 minutes alors on doit regarder
+// une publicité. [...] Je pense que ce serait un meilleur bonus que le
+// boost x2. Il devrait remplacer le boost x2. [...] Le clicker le joueur
+// aurait le choix de le mettre où il veut sur la grille." Same free-once-
+// then-ad-gated pattern as the Gems-ad button above; picking the target
+// cell is a separate step (armAutoClickerPicker/handleAutoClickerPick)
+// after the free/ad gate, tap-only like the Échanger picker (Game.swapArmed).
+function onAutoClickerClick() {
+  const state = Game.state;
+  if (Game.autoClickerArmed) { Game.autoClickerArmed = false; toast("Sélection annulée."); renderAll(); return; }
+  const now = Date.now();
+  if (state.autoClicker.activeUntil > now) {
+    toast("Clicker déjà actif encore " + formatDuration(state.autoClicker.activeUntil - now));
+    return;
+  }
+  if (isAutoClickerFreeAvailable(state)) { armAutoClickerPicker(); return; }
+  confirmThenWatchAd(state, "Clicker automatique",
+    "Tu as déjà utilisé ton clicker automatique gratuit aujourd'hui - reviens demain, ou regarde une publicité pour le relancer maintenant (10 min).",
+    async () => {
+      if (!adsRemoved(state)) toast("📺 Chargement de la publicité...");
+      const ok = await watchRewardedAd(state, "auto_clicker");
+      if (!ok) return;
+      armAutoClickerPicker();
+    });
+}
+function armAutoClickerPicker() {
+  Game.autoClickerArmed = true;
+  closePanel(); // no-op from the fab/intro modal (home screen already), needed when armed from the Boutique card below - the grid must be visible to tap a cell
+  toast("🤖 Choisis une case avec une tuile pour le clicker automatique.");
+  renderAll();
+}
+function handleAutoClickerPick(idx) {
+  const state = Game.state;
+  if (!state.unlocked[idx] || !state.grid[idx]) { toast("Choisis une case débloquée avec une tuile."); Sfx.error(); return; }
+  Game.autoClickerArmed = false;
+  activateAutoClicker(state, idx);
+  Sfx.purchase();
+  toast("🤖 Clicker automatique activé pour 10 min !");
+  renderAll();
+  updateFabs();
+  saveState(state);
+}
+// Called every frame from main.js's loop. grantTapBonus (above) already
+// gates itself on the cell's own TAP_COOLDOWN_MS via Game.cooldownUntil, so
+// this can just call it every frame without any extra throttling of its
+// own - it silently no-ops between real ticks. The visual pulse
+// (playAutoClickEffect) is throttled separately, well below that cadence
+// (Loris: "pas trop agressif mais de quand même visible") - the underlying
+// Stardust grants stay fast, only the on-screen flash is calmed down.
+let autoClickerLastPulseAt = 0;
+const AUTO_CLICKER_PULSE_MIN_GAP_MS = 900;
+function tickAutoClicker() {
+  const state = Game.state;
+  const ac = state.autoClicker;
+  const idx = ac.targetIdx;
+  const isActive = idx !== null && ac.activeUntil > Date.now();
+  if (idx !== null && cellEls[idx]) cellEls[idx].classList.toggle("autoClickTarget", isActive);
+  if (!isActive || !state.grid[idx]) return; // inactive, or paused - the target cell is currently empty
+  const now = performance.now();
+  const fired = grantTapBonus(idx);
+  if (fired && now - autoClickerLastPulseAt >= AUTO_CLICKER_PULSE_MIN_GAP_MS) {
+    autoClickerLastPulseAt = now;
+    playAutoClickEffect(idx);
+  }
+}
+function playAutoClickEffect(idx) {
+  const cell = cellEls[idx];
+  if (!cell) return;
+  cell.classList.remove("autoClickPulse");
+  void cell.offsetWidth; // force reflow so re-adding the class restarts the animation even if it's still finishing
+  cell.classList.add("autoClickPulse");
+  setTimeout(() => cell.classList.remove("autoClickPulse"), 500);
 }
 // Loris: "ajouter une demande de confirmation quand on clique sur le
 // bouton échanger [...] possible d'annuler ou de confirmer mais aussi de
@@ -865,7 +936,15 @@ async function onBuyIAP(productId) {
       state.gems += 500; state.lifetime.gemsEarned += 500;
       { const locked = []; for (let i = 0; i < TOTAL; i++) if (!state.unlocked[i]) locked.push(i);
         for (let k = 0; k < 3 && locked.length; k++) { const pick = locked.splice(Math.floor(Math.random() * locked.length), 1)[0]; state.unlocked[pick] = true; state.extraUnlockedCount += 1; } }
-      state.cooldowns.prodBoostActiveUntil = Date.now() + 3600000;
+      // Was a flat 1h production-boost grant (prodBoostActiveUntil, now
+      // gone) - the same mechanic that replaced Boost x2 everywhere else
+      // (activateAutoClicker, economy.js) grants an equivalent 1h here,
+      // auto-targeting the player's own highest-tier occupied cell since
+      // this grant is programmatic, not player-picked like every other
+      // activation of this feature.
+      { let bestIdx = null, bestTier = 0;
+        for (let i = 0; i < TOTAL; i++) { const t = state.grid[i]; if (t && t.tier > bestTier) { bestTier = t.tier; bestIdx = i; } }
+        if (bestIdx !== null) { activateAutoClicker(state, bestIdx); state.autoClicker.activeUntil = Date.now() + 3600000; } }
       break;
     case "gems_small": case "gems_medium": case "gems_large": case "gems_mega":
       state.gems += product.amount; state.lifetime.gemsEarned += product.amount; break;
@@ -1021,7 +1100,11 @@ function wireEvents() {
   $("fabRunUpgrades").addEventListener("click", () => openPanel("runUpgrades"));
   dom.fabDailyLogin.addEventListener("click", openDailyModal);
   dom.fabWheel.addEventListener("click", openWheelModal);
-  $("fabBoost").addEventListener("click", onWatchProdBoostAd);
+  $("fabAutoClicker").addEventListener("click", onAutoClickerClick);
+  $("autoClickerIntroPick").addEventListener("click", () => {
+    $("autoClickerIntroModal").classList.add("hidden");
+    armAutoClickerPicker();
+  });
   $("fabUnlockCellAd").addEventListener("click", onUnlockCellAd);
   dom.fabSwapCells.addEventListener("click", onSwapCellsClick);
   $("fabCurrentGod").addEventListener("click", () => openPanel("gods"));
