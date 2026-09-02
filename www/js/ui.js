@@ -1665,6 +1665,11 @@ function onConfirmActionConfirm() {
 function openStardustInfoModal() {
   const state = Game.state;
   ensureDailyStats(state);
+  // Loris: "dans le pop up de poussière étoiles on devrait pouvoir voir la
+  // production actuelle de stardust" - same value/format as the header's
+  // live rate (updateHeader, above), just surfaced here too since this
+  // popup is where players go to check on their grid's stats.
+  $("stardustInfoRate").textContent = "+" + formatNumber(totalProduction(state)) + "/s";
   const runElapsedMs = Date.now() - state.runStartedAt;
   $("stardustInfoRunTime").textContent = formatDuration(runElapsedMs);
   $("stardustInfoToday").textContent = "+" + formatNumber(state.lifetime.stardustEarned - state.dailyStats.stardustAtDayStart);
