@@ -947,7 +947,6 @@ body.eggFinaleShake{animation:eggFinaleShake .55s cubic-bezier(.36,.07,.19,.97);
 .godTileTitle{font-size:9px;color:var(--text-dim);text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
 .godTileBadge{position:absolute;top:4px;right:4px;font-size:11px;background:#0d2a30;color:var(--accent2);
   width:16px;height:16px;border-radius:5px;display:flex;align-items:center;justify-content:center;}
-.godTileBadge.queued{background:#3a2a0d;color:var(--stardust);}
 
 .godTop{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
 .godEmoji{width:42px;height:42px;border-radius:12px;background:#1a1640;display:flex;align-items:center;
@@ -968,7 +967,6 @@ body.eggFinaleShake{animation:eggFinaleShake .55s cubic-bezier(.36,.07,.19,.97);
 .godUnlockInfo{font-size:11px;color:var(--text-dim);margin-top:6px;}
 .equippedTag{font-size:9px;font-weight:800;color:var(--accent2);
   background:#0d2a30;padding:2px 8px;border-radius:8px;text-transform:uppercase;white-space:nowrap;}
-.equippedTag.queued{color:var(--stardust);background:#3a2a0d;}
 .godPower{margin-top:10px;padding-top:10px;border-top:1px solid #2a2450;}
 .godPowerLabel{font-size:11px;color:var(--text-dim);}
 

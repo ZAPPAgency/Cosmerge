@@ -69,10 +69,6 @@ function performBigBang(state) {
 // Universe tile). No Cosmic Energy is granted and lifetime.bigBangCount is
 // NOT incremented - this is giving up on a run, not completing one.
 function restartRun(state) {
-  if (state.gods.nextGodId) {
-    state.gods.currentGodId = state.gods.nextGodId;
-    state.gods.nextGodId = null;
-  }
   state.moonMergesThisRun = 0;
   state.gods.erebusStreak = 0;
   state.gods.usedShortcutThisRun = false;
