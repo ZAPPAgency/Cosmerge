@@ -149,11 +149,12 @@ const EMOJI_SETS = [
       { emoji: "🫛", name: "Petit Pois", icon: "legume-8-pois.png" },
       { emoji: "🎃", name: "Citrouille Géante", icon: "legume-9-citrouille.png" },
       { emoji: "🌻", name: "Fleur Cosmique", icon: "legume-10-fleur.png" },
-      // Tiers 11-14 - see the matching comment on "fruits" above.
-      { emoji: "🥒", name: "Concombre Cosmique" },
-      { emoji: "🧄", name: "Ail Stellaire" },
-      { emoji: "🫘", name: "Haricots Infinis" },
-      { emoji: "🥔", name: "Patate Primordiale" },
+      // Tiers 11-14 - illustrated, same delivered-colors-kept note as
+      // "fruits" above.
+      { emoji: "🥒", name: "Concombre Cosmique", icon: "legume-11-concombre.png" },
+      { emoji: "🧄", name: "Ail Stellaire", icon: "legume-12-ail.png" },
+      { emoji: "🫘", name: "Haricots Infinis", icon: "legume-13-haricots.png" },
+      { emoji: "🥔", name: "Patate Primordiale", icon: "legume-14-patate.png" },
     ] },
 ];
 
