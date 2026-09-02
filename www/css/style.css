@@ -957,13 +957,22 @@ body.eggFinaleShake{animation:eggFinaleShake .55s cubic-bezier(.36,.07,.19,.97);
 
 .godTop{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
 .godEmoji{width:42px;height:42px;border-radius:12px;background:#1a1640;display:flex;align-items:center;
-  justify-content:center;font-size:22px;flex-shrink:0;border:1px solid #2a2450;}
+  justify-content:center;font-size:22px;flex-shrink:0;border:1px solid #2a2450;overflow:hidden;}
 /* The detail modal is the closest thing to a "profile view" a god gets -
    worth showing its portrait much bigger than the 42px generic badge
    above (was a 52x52 inline-style override before real portraits
    existed). */
 .godDetailEmoji{width:96px;height:96px;border-radius:18px;font-size:44px;}
 .godDetailPortrait{width:88px;height:88px;object-fit:contain;}
+/* Loris (screenshot of the detail modal): "il y a toujours un espace
+   entre la silhouette et la case" - the grid-tile fix above
+   (.godTilePortrait.godPortraitUnknown) only covered the Gods grid;
+   the detail modal renders the same unknown-v2.png through its own
+   88px .godDetailPortrait rule, so it needed the same treatment. Same
+   scale-from-the-bottom approach; .godEmoji now clips overflow (added
+   above) so the extra headroom this crops into disappears instead of
+   spilling past the rounded badge. */
+.godDetailPortrait.godPortraitUnknown{transform:scale(1.25);transform-origin:center bottom;}
 .godNames{flex:1;min-width:0;}
 .godName{font-size:15px;font-weight:800;}
 .godTitle{font-size:11px;color:var(--text-dim);}
