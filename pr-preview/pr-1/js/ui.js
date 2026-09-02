@@ -103,10 +103,7 @@ function tierInlineIconHtml(tier) {
 // reuses the same `cls` sizing rule as the real art so it drops into every
 // one of those spots at the right size with no extra CSS.
 function godPortraitHtml(god, cls, locked) {
-  // "godPortraitUnknown" lets style.css target this one shared illustration
-  // specifically (see .godTilePortrait.godPortraitUnknown) without touching
-  // the sizing rule every other spot already relies on via `cls`.
-  if (locked) return `<img class="${cls} godPortraitUnknown" src="assets/gods/unknown-v2.png" alt="Dieu inconnu">`;
+  if (locked) return `<img class="${cls}" src="assets/gods/unknown-v2.png" alt="Dieu inconnu">`;
   return god.icon
     ? `<img class="${cls}" src="assets/gods/${god.icon}" alt="${god.name}">`
     : god.emoji;
