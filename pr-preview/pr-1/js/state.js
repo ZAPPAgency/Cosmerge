@@ -202,11 +202,14 @@ function saveState(state) {
 }
 
 // Manual backup, independent of localStorage: lets the player copy their
-// progress as a short text code and paste it back in later. This exists
-// because this page runs inside a sandboxed cross-origin iframe (the Claude
-// Artifact viewer) that does not grant the permission needed for the
-// Storage Access API to work, so automatic persistence can fail after a
-// full browser restart with no client-side fix available - see main.js.
+// progress as a short text code and paste it back in later. Originally
+// added because an early Claude-Artifact-hosted version of this game ran
+// inside a sandboxed cross-origin iframe that could not reliably persist
+// localStorage, with no client-side fix available - see main.js and
+// docs/SAVE_BACKUP.md for that history. Kept now as a genuinely useful,
+// storage-mechanism-independent way for a player to move their save
+// between devices or recover it after clearing site data - not only a
+// workaround for that original bug.
 function exportSaveCode(state) {
   return btoa(unescape(encodeURIComponent(JSON.stringify(state))));
 }

@@ -1,25 +1,30 @@
 // Godspark - boot sequence & main loop
 "use strict";
 
-// This page is normally embedded cross-origin (the Claude Artifact iframe,
-// e.g. b7a8...frame.claudeusercontent.com inside claude.ai). On iOS Safari,
-// a cross-origin iframe only gets persistent localStorage after an explicit
-// grant via the Storage Access API - and that grant does not reliably
-// survive a full browser/app restart, which is the save-loss bug this is
-// working around.
+// Legacy defensive code: early in this project's life the game was
+// prototyped as a Claude Artifact, embedded cross-origin inside claude.ai's
+// own iframe. On iOS Safari, a cross-origin iframe only gets persistent
+// localStorage after an explicit grant via the Storage Access API - and that
+// grant does not reliably survive a full browser/app restart, which caused
+// real save loss in that context. The real fix, since then, is that the
+// game no longer needs that context at all: it's hosted top-level on GitHub
+// Pages (see README.md) and, going forward, ships as a Capacitor native app
+// (native-bridge.js) using @capacitor/preferences instead of localStorage
+// entirely - neither has this problem, since `window.self === window.top`
+// on GitHub Pages and there is no iframe/ITP model on native at all.
 //
-// A previous version of this function blocked boot behind a mandatory tap
-// that called document.requestStorageAccess(). That call requires the
-// embedding iframe's `sandbox` attribute to include
-// `allow-storage-access-by-user-activation` - and Claude's artifact iframe
-// (sandbox="allow-scripts allow-same-origin allow-forms") does not have
-// that flag, so the call always silently fails there. The tap gate was
-// therefore pure friction with zero effect, so it's gone. We still fire the
-// request in the background (harmless, and it *would* help on any host that
-// does grant the flag), but nothing blocks on it, and it is NOT the actual
-// fix for save loss - see docs/SAVE_BACKUP.md and the in-app "Sauvegarde
-// manuelle" export/import in the Réglages panel for the real mitigation
-// available while running inside this specific iframe sandbox.
+// This function is kept as a harmless no-op safety net (the `embedded`
+// check below is false in both of today's real deployments, so it returns
+// immediately) rather than removed outright, in case the game is ever
+// re-embedded in some other cross-origin host later. A previous version
+// blocked boot behind a mandatory tap that called
+// document.requestStorageAccess() - removed because that call's actual
+// requirements (the embedding iframe's `sandbox` attribute needing
+// `allow-storage-access-by-user-activation`) were never under this game's
+// control anyway, so the tap gate was pure friction with zero guaranteed
+// effect. See docs/SAVE_BACKUP.md and the in-app "Sauvegarde manuelle"
+// export/import in the Réglages panel for the manual-backup mitigation that
+// was actually needed during the Artifact-prototype period.
 function requestStorageAccessBestEffort() {
   const embedded = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
   if (!embedded || !document.hasStorageAccess || !document.requestStorageAccess) return;

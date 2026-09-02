@@ -405,8 +405,6 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg-deep);color:var(--t
   65%{transform:scale(.92) rotate(-3deg);box-shadow:0 0 14px 4px #fbbf2455;}
   100%{transform:scale(1) rotate(0deg);opacity:1;box-shadow:0 0 0 0 #fbbf2400;}
 }
-.fab.muted{opacity:.5;padding:6px;background:linear-gradient(180deg,#1c1838,#151230);}
-.fab.muted:active{opacity:.85;}
 /* The two ad-for-currency fabs (boost, gems) are the ones we most want
    watched, per explicit request to make them stand out from the rest of
    the row rather than blend in as just another same-weight button. */
