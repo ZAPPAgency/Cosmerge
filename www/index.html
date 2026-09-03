@@ -37,7 +37,7 @@
     <meta name="apple-mobile-web-app-title" content="Godspark" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#0a0620" />
-    <link rel="stylesheet" href="css/style.css?v=113" />
+    <link rel="stylesheet" href="css/style.css?v=114" />
   </head>
   <body>
     <div id="starsBg"></div>
@@ -646,7 +646,22 @@
         <div class="godEmoji" id="godUnlockPortrait" style="width:88px;height:88px;border-radius:18px;margin:0 auto 10px;"></div>
         <h3 id="godUnlockTitle">Nouveau Dieu éveillé</h3>
         <p class="desc" id="godUnlockText"></p>
-        <button class="btn primary full" id="godUnlockClose">Continuer</button>
+        <!-- Loris: "on peut l'équiper ou fermer le pop up" -->
+        <button class="btn primary full" id="godUnlockEquip" style="margin-bottom:8px;">Équiper</button>
+        <button class="btn ghost full" id="godUnlockClose">Fermer</button>
+      </div>
+    </div>
+
+    <!-- VIP daily Gems (Pass Supernova) - Loris: "j'aimerais que ce soit
+     bien un pop up qui apparaisse devant l'écran [...] et pas simplement
+     une petite bannière en bas" - see maybeOpenVipGemsModal()/
+     grantVipDailyGemsIfDue() (ui.js/retention.js). -->
+    <div class="modalOverlay hidden" id="vipGemsModal">
+      <div class="modalCard" style="text-align: center">
+        <img class="uiIcon" src="assets/ui/supernova.png" alt="" style="width:64px;height:64px;margin:0 auto 10px;display:block;" />
+        <h3>Bravo !</h3>
+        <p class="desc" id="vipGemsText"></p>
+        <button class="btn primary full" id="vipGemsClose">Continuer</button>
       </div>
     </div>
 
@@ -660,7 +675,7 @@
       <div class="modalCard" style="text-align: center">
         <img class="uiIcon" src="assets/ui/boost.png" alt="" style="width:64px;height:64px;margin:0 auto 10px;display:block;" />
         <h3>Clicker Automatique</h3>
-        <p class="desc">Choisis une case avec une tuile : le Clicker tapera dessus tout seul pendant 10 minutes, même l'application fermée. Gratuit une fois par jour - regarde une publicité pour le relancer ensuite.</p>
+        <p class="desc">Place-le sur une case et il tape à ta place pendant 10 minutes, même l'application fermée. Une activation gratuite chaque jour, et autant de relances que tu veux ensuite en regardant une publicité.</p>
         <button class="btn primary full" id="autoClickerIntroPick">Choisir ma case</button>
       </div>
     </div>
@@ -705,16 +720,16 @@
       </div>
     </div>
 
-    <script src="js/config.js?v=113"></script>
-    <script src="js/state.js?v=113"></script>
-    <script src="js/audio.js?v=113"></script>
-    <script src="js/services.js?v=113"></script>
-    <script src="js/economy.js?v=113"></script>
-    <script src="js/gods.js?v=113"></script>
-    <script src="js/retention.js?v=113"></script>
-    <script src="js/ui.js?v=113"></script>
-    <script src="js/input.js?v=113"></script>
-    <script src="js/main.js?v=113"></script>
+    <script src="js/config.js?v=114"></script>
+    <script src="js/state.js?v=114"></script>
+    <script src="js/audio.js?v=114"></script>
+    <script src="js/services.js?v=114"></script>
+    <script src="js/economy.js?v=114"></script>
+    <script src="js/gods.js?v=114"></script>
+    <script src="js/retention.js?v=114"></script>
+    <script src="js/ui.js?v=114"></script>
+    <script src="js/input.js?v=114"></script>
+    <script src="js/main.js?v=114"></script>
     <script type="module" src="js/native-bridge.js"></script>
   </body>
 </html>

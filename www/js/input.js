@@ -286,6 +286,19 @@ function maybeOpenBigBangPrompt() {
   setTimeout(openBigBangModal, 700);
 }
 
+// Loris: "j'aimerais que ce soit bien un pop up [...] pas simplement une
+// petite bannière" - Game.pendingVipGems is set by grantVipDailyGemsIfDue()
+// (retention.js), consumed here at the next safe moment (main.js, right
+// after the boot/resume tutorial-or-offline-gain decision), same pattern
+// as Game.pendingGodRitual above.
+function maybeOpenVipGemsModal() {
+  if (Game.pendingVipGems) {
+    const amount = Game.pendingVipGems;
+    Game.pendingVipGems = null;
+    openVipGemsModal(amount);
+  }
+}
+
 function maybeOpenGodRitual() {
   if (Game.pendingGodRitual) {
     Game.pendingGodRitual = false;
@@ -712,16 +725,18 @@ function onUnlockCellAd() {
 
 // ---------------- Gems-for-ad (shop + home screen) ----------------
 // Loris: "le bouton +20 gemmes une fois par jour il devrait être gratuit
-// aussi (reset à minuit) et quand on veut le relancer il y a le message
-// pour dire que il faut attendre jusqu'à demain mais offre la possibilité
-// avec un bouton de regarder une publicité pour passer outre cette
-// restriction." Replaces the old "5 free watches, then a flat cooldown"
-// streak - the first grant each day skips the ad entirely (isGemsAdFreeAvailable,
-// economy.js), every grant after that needs its own ad watch, uncapped.
+// aussi (reset à minuit)." Then, once that's spent: "il faudrait qu'on
+// puisse faire ça [...] cinq fois avant que ça se bloque derrière un timer
+// de cinq minutes [...] comme on avait avant [...] et à minuit ça se
+// reset" - the free daily claim comes first (isGemsAdFreeAvailable,
+// economy.js, no ad at all), then the original "up to GEMS_AD_STREAK_SIZE
+// ad watches in a row, then GEMS_AD_COOLDOWN_MS pause" streak system is
+// kept exactly as it was, just moved to sit behind that free claim instead
+// of being replaced by it.
 function onWatchGemsAd() {
   const state = Game.state;
   if (isGemsAdFreeAvailable(state)) {
-    const granted = grantGemsFromAd(state);
+    const granted = grantGemsFree(state);
     Sfx.purchase();
     toast(`+${granted} 💎 offertes aujourd'hui !`);
     refreshCurrentPanel();
@@ -730,20 +745,22 @@ function onWatchGemsAd() {
     saveState(state);
     return;
   }
-  confirmThenWatchAd(state, "Déjà réclamées aujourd'hui",
-    `Tu as déjà reçu tes ${GEMS_AD_REWARD} Gems gratuites du jour - reviens demain, ou regarde une publicité pour en recevoir ${GEMS_AD_REWARD} de plus maintenant.`,
-    async () => {
-      if (!adsRemoved(state)) toast("📺 Chargement de la publicité...");
-      const ok = await watchRewardedAd(state, "gems_ad");
-      if (!ok) return;
-      const granted = grantGemsFromAd(state);
-      Sfx.purchase();
-      toast(`+${granted} 💎 !`);
-      refreshCurrentPanel();
-      updateHeader();
-      updateFabs();
-      saveState(state);
-    });
+  if (Date.now() < state.cooldowns.gemsAdUntil) {
+    toast("Disponible dans " + formatDuration(state.cooldowns.gemsAdUntil - Date.now()));
+    return;
+  }
+  confirmThenWatchAd(state, "Pub contre Gems", `Regarder une publicité pour recevoir ${GEMS_AD_REWARD} Gems ?`, async () => {
+    if (!adsRemoved(state)) toast("📺 Chargement de la publicité...");
+    const ok = await watchRewardedAd(state, "gems_ad");
+    if (!ok) return;
+    const granted = grantGemsFromAd(state);
+    Sfx.purchase();
+    toast(`+${granted} 💎 !`);
+    refreshCurrentPanel();
+    updateHeader();
+    updateFabs();
+    saveState(state);
+  });
 }
 
 // ---------------- Auto-clicker (replaces the old Boost x2) ----------------
@@ -766,7 +783,7 @@ function onAutoClickerClick() {
   }
   if (isAutoClickerFreeAvailable(state)) { armAutoClickerPicker(); return; }
   confirmThenWatchAd(state, "Clicker automatique",
-    "Tu as déjà utilisé ton clicker automatique gratuit aujourd'hui - reviens demain, ou regarde une publicité pour le relancer maintenant (10 min).",
+    "Ton clicker gratuit du jour est déjà utilisé. Regarde une publicité pour le relancer tout de suite, pour 10 minutes de plus.",
     async () => {
       if (!adsRemoved(state)) toast("📺 Chargement de la publicité...");
       const ok = await watchRewardedAd(state, "auto_clicker");
@@ -973,6 +990,11 @@ function onChooseGod(godId) {
   refreshCurrentPanel();
   saveState(state);
 }
+// Loris: "on peut l'équiper ou fermer le pop up" (godUnlockModal, ui.js).
+function onEquipGodFromUnlockModal() {
+  if (godUnlockModalGodId) onChooseGod(godUnlockModalGodId);
+  closeGodUnlockModal();
+}
 function onBuyGod(godId) {
   const result = buyGodWithGems(Game.state, godId);
   if (!result.ok) { Sfx.error(); toast("Pas assez de Gems."); return; }
@@ -1121,6 +1143,8 @@ function wireEvents() {
   $("eggFoundClose").addEventListener("click", closeEggFoundModal);
   $("eggFinaleClose").addEventListener("click", closeEggFinaleModal);
   $("godUnlockClose").addEventListener("click", closeGodUnlockModal);
+  $("godUnlockEquip").addEventListener("click", onEquipGodFromUnlockModal);
+  $("vipGemsClose").addEventListener("click", closeVipGemsModal);
 
   dom.energyPill.addEventListener("click", () => openPanel("skills"));
   $("gemsPill").addEventListener("click", openGemsMenuModal);

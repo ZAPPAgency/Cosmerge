@@ -478,8 +478,10 @@ function updateFabs() {
 
   revealFab("fabGemsAd", fusions >= FAB_DISCOVERY_FUSIONS.fabGemsAd);
   const gemsAdFree = isGemsAdFreeAvailable(state);
-  $("fabGemsAd").classList.toggle("ready", gemsAdFree);
-  const gemsAdLabel = gemsAdFree ? `+${GEMS_AD_REWARD} Gems` : `📺 +${GEMS_AD_REWARD} Gems`;
+  const gemsAdOnCooldown = !gemsAdFree && now < state.cooldowns.gemsAdUntil;
+  $("fabGemsAd").classList.toggle("ready", gemsAdFree || !gemsAdOnCooldown);
+  const gemsAdLabel = gemsAdFree ? `+${GEMS_AD_REWARD} Gems`
+    : (gemsAdOnCooldown ? formatDuration(state.cooldowns.gemsAdUntil - now) : `📺 +${GEMS_AD_REWARD} Gems`);
   if ($("fabGemsAdLabel").textContent !== gemsAdLabel) $("fabGemsAdLabel").textContent = gemsAdLabel;
   revealFab("fabRunUpgrades", fusions >= FAB_DISCOVERY_FUSIONS.fabRunUpgrades);
   // Not gated by FAB_DISCOVERY_FUSIONS like the fabs above - a true secret,
@@ -924,7 +926,7 @@ function renderShopPanel() {
   const autoClickerCard = el("div", "card compact");
   autoClickerCard.innerHTML = `<div class="rowBetween"><h3><img class="inlineCurrencyIcon" src="assets/ui/boost.png" alt=""> Clicker Automatique (10 min)</h3></div>
     <p class="desc">${autoClickerActive ? `Actif encore ${formatDuration(ac.activeUntil - Date.now())}` :
-      (autoClickerFree ? "Gratuit aujourd'hui - choisis une case sur la grille." : "Déjà utilisé aujourd'hui - regarde une publicité pour le relancer.")}</p>`;
+      (autoClickerFree ? "Ton clicker gratuit du jour t'attend. Choisis une case, il tapera dessus tout seul pendant 10 minutes." : "Ton clicker gratuit du jour est déjà utilisé. Regarde une publicité pour le relancer.")}</p>`;
   const autoClickerBtn = el("button", "btn primary full", autoClickerActive ? "Actif" : (autoClickerFree || adsRemoved(state) ? "Choisir ma case" : "Regarder une pub"));
   autoClickerBtn.disabled = autoClickerActive;
   autoClickerBtn.addEventListener("click", onAutoClickerClick);
@@ -932,10 +934,13 @@ function renderShopPanel() {
   adGrid.appendChild(autoClickerCard);
 
   const gemsAdFree = isGemsAdFreeAvailable(state);
+  const gemsAdOnCooldown = !gemsAdFree && Date.now() < state.cooldowns.gemsAdUntil;
   const gemsAdCard = el("div", "card compact");
   gemsAdCard.innerHTML = `<div class="rowBetween"><h3>${currencyIconHtml("gems")} Pub contre Gems (+${GEMS_AD_REWARD})</h3></div>
-    <p class="desc">${gemsAdFree ? "Gratuit aujourd'hui." : "Déjà reçues aujourd'hui - regarde une publicité pour en recevoir plus."}</p>`;
-  const gemsAdBtn = el("button", "btn primary full", gemsAdFree || adsRemoved(state) ? "Recevoir" : "Regarder une pub");
+    <p class="desc">${gemsAdFree ? "Ton don gratuit du jour t'attend." :
+      (gemsAdOnCooldown ? `Prochaine salve de publicités dans ${formatDuration(state.cooldowns.gemsAdUntil - Date.now())}.` : "Regarde une publicité pour en recevoir plus.")}</p>`;
+  const gemsAdBtn = el("button", "btn primary full", gemsAdOnCooldown ? formatDuration(state.cooldowns.gemsAdUntil - Date.now()) : (gemsAdFree || adsRemoved(state) ? "Recevoir" : "Regarder une pub"));
+  gemsAdBtn.disabled = gemsAdOnCooldown;
   gemsAdBtn.addEventListener("click", onWatchGemsAd);
   gemsAdCard.appendChild(gemsAdBtn);
   adGrid.appendChild(gemsAdCard);
@@ -1481,7 +1486,9 @@ function openGodDetailModal(godId) {
 // that isn't already covered by its own dedicated modal (the ritual pair's
 // picker, the Cosmic Box's reveal). Called via maybeOpenGodRevealModal()
 // (input.js), never directly - that's what drains Game.pendingGodReveals.
+let godUnlockModalGodId = null;
 function openGodUnlockModal(godId) {
+  godUnlockModalGodId = godId;
   const god = getGod(godId);
   const rarity = RARITY[god.rarity];
   const portrait = $("godUnlockPortrait");
@@ -1489,14 +1496,26 @@ function openGodUnlockModal(godId) {
   portrait.style.background = `radial-gradient(circle at 35% 30%, #2a2452, ${rarity.color}22)`;
   $("godUnlockTitle").textContent = `✨ Nouveau Dieu éveillé : ${god.name} !`;
   const power = describeGodEffect(god, 0);
-  $("godUnlockText").textContent = `${rarity.label} — ${god.title}.` + (power ? ` ${power}.` : "");
+  $("godUnlockText").textContent = `${rarity.label}, ${god.title}.` + (power ? ` ${power}.` : "");
   Sfx.chest();
   $("godUnlockModal").classList.remove("hidden");
 }
+// Loris: "quand on débloque les dieux [...] on peut l'équiper ou fermer le
+// pop up" - onEquipGodFromUnlockModal (input.js) calls chooseGod() then
+// this, so the modal's own closing logic (draining the reveal queue) stays
+// in one place regardless of which button sent the player here.
 function closeGodUnlockModal() {
+  godUnlockModalGodId = null;
   $("godUnlockModal").classList.add("hidden");
   maybeOpenGodRevealModal(); // shows the next queued reveal, if any (rare double-unlock in the same moment)
 }
+
+// ---------------- VIP daily Gems (Pass Supernova) ----------------
+function openVipGemsModal(amount) {
+  $("vipGemsText").textContent = `Tu as reçu ${amount} Gems grâce à ton Pass Supernova ! Reviens chaque jour pour ne jamais en manquer un.`;
+  $("vipGemsModal").classList.remove("hidden");
+}
+function closeVipGemsModal() { $("vipGemsModal").classList.add("hidden"); }
 
 // ---------------- Auto-clicker intro (first-time guide) ----------------
 function openAutoClickerIntroModal() {

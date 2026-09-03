@@ -32,12 +32,17 @@ const SWAP_AD_COOLDOWN_MS = UNLOCK_CELL_AD_COOLDOWN_MS;
 // Loris: "le bouton +20 gemmes une fois par jour il devrait être gratuit
 // aussi (reset à minuit) et quand on veut le relancer [...] offre la
 // possibilité [...] de regarder une publicité pour passer outre cette
-// restriction" - replaces the previous "5 free watches in a row, then a
-// flat 3 min cooldown" streak model entirely: now the very first use each
-// day is free (no ad at all), and every use after that needs its own ad
-// watch, with no cap on how many times - see grantGemsFromAd()
-// (economy.js) and state.gemsAdFree (state.js).
+// restriction." Puis précisé : le premier don du jour est gratuit (aucune
+// pub), mais au-delà, garde le même principe que l'ancien système plutôt
+// que de l'enlever - jusqu'à GEMS_AD_STREAK_SIZE pubs d'affilée, chacune
+// donnant la récompense, puis GEMS_AD_COOLDOWN_MS de pause obligatoire
+// avant de pouvoir relancer une nouvelle salve de pubs (le compteur de
+// salve, comme le don gratuit, se réinitialise à minuit) - voir
+// grantGemsFree()/grantGemsFromAd() (economy.js), state.gemsAdFree/
+// gemsAdStreak (state.js).
 const GEMS_AD_REWARD = 20;
+const GEMS_AD_STREAK_SIZE = 5;
+const GEMS_AD_COOLDOWN_MS = 5 * 60 * 1000;
 const VIP_DAILY_GEMS = 100; // Loris: 50 -> 100/day for Pass Supernova
 // Loris: "ajouter un bonus 'clicker automatique' [...] accessible
 // gratuitement que une fois par jour (reset à minuit) et ça dure pendant 10

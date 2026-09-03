@@ -253,20 +253,31 @@ function isAutoClickerFreeAvailable(state) {
   return state.autoClicker.freeUsedDate !== todayStr();
 }
 
-// Ad-based Gems source. Loris: "le bouton +20 gemmes une fois par jour il
-// devrait être gratuit aussi (reset à minuit) [...] offre la possibilité
-// [...] de regarder une publicité pour passer outre cette restriction" -
-// same pattern as the auto-clicker above: the day's first grant is free
-// (onWatchGemsAd, input.js skips the ad for it entirely), every grant after
-// that needs its own ad watch, uncapped. Marking the day's free flag "used"
-// here regardless of which path led here keeps both call sites this simple.
-function grantGemsFromAd(state) {
+// Gems source, home-screen "+20 Gems" fab. Loris: "le bouton +20 gemmes une
+// fois par jour il devrait être gratuit aussi (reset à minuit)" - the day's
+// very first claim, no ad at all (onWatchGemsAd, input.js).
+function grantGemsFree(state) {
   state.gemsAdFree.date = todayStr();
   state.gemsAdFree.used = true;
   return grantGems(state, GEMS_AD_REWARD);
 }
 function isGemsAdFreeAvailable(state) {
   return state.gemsAdFree.date !== todayStr() || !state.gemsAdFree.used;
+}
+// Beyond that free daily claim: Loris explicitly asked to keep the original
+// "up to GEMS_AD_STREAK_SIZE ad watches in a row, then a cooldown" streak
+// system rather than drop it, only with the free claim added in front of it
+// and the cooldown lengthened (3 min -> GEMS_AD_COOLDOWN_MS, now 5 min).
+// The streak's own count resets at midnight (ensureGemsAdStreak,
+// retention.js) independently of the cooldown itself.
+function grantGemsFromAd(state) {
+  ensureGemsAdStreak(state);
+  const granted = grantGems(state, GEMS_AD_REWARD);
+  state.gemsAdStreak.count += 1;
+  if (state.gemsAdStreak.count % GEMS_AD_STREAK_SIZE === 0) {
+    state.cooldowns.gemsAdUntil = Date.now() + GEMS_AD_COOLDOWN_MS;
+  }
+  return granted;
 }
 
 // Ad-based relief valve for unlockCost's 1.5x-per-cell growth, which is what

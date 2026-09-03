@@ -169,7 +169,14 @@ function grantVipDailyGemsIfDue(state) {
   if (state.iap.vipLastGemsDay === todayStr()) return 0;
   state.iap.vipLastGemsDay = todayStr();
   const granted = grantGems(state, VIP_DAILY_GEMS);
-  toast(`✨ Pass Supernova : +${granted} 💎 offertes aujourd'hui !`);
+  // Loris: "j'aimerais que ce soit bien un pop up qui apparaisse devant
+  // l'écran [...] pas simplement une petite bannière" - was a toast() call
+  // right here; queued instead (same "set now, show at the next safe
+  // moment" pattern as Game.pendingGodRitual/pendingGodReveals) since this
+  // runs very early in boot/handleAppResume, before the tutorial/offline-gain
+  // modal decision - see maybeOpenVipGemsModal() (ui.js), called from both
+  // call sites in main.js right after that decision.
+  Game.pendingVipGems = granted;
   return granted;
 }
 
@@ -341,6 +348,13 @@ function wheelSegmentBounds(index) {
 function ensureDailySpin(state) {
   if (state.dailySpin.date !== todayStr()) {
     state.dailySpin = { date: todayStr(), freeUsed: false, bonusUsed: false };
+  }
+}
+// Same date-keyed reset pattern as ensureDailySpin above - see
+// state.gemsAdStreak (state.js) and grantGemsFromAd() (economy.js).
+function ensureGemsAdStreak(state) {
+  if (state.gemsAdStreak.date !== todayStr()) {
+    state.gemsAdStreak = { date: todayStr(), count: 0 };
   }
 }
 function pickWheelPrize() {

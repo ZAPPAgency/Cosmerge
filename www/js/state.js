@@ -129,13 +129,19 @@ function defaultState() {
     },
     moonMergesThisRun: 0, // toward MOON_MERGES_TO_CHOOSE_GOD (first-god ritual)
 
-    cooldowns: { unlockCellAdUntil: 0, swapAdUntil: 0 },
+    cooldowns: { unlockCellAdUntil: 0, swapAdUntil: 0, gemsAdUntil: 0 },
     dailySpin: { date: null, freeUsed: false, bonusUsed: false },
     // Loris: "+20 gemmes une fois par jour [...] gratuit [...] (reset à
-    // minuit) [...] pour le relancer [...] regarder une publicité" - date
-    // string, matches todayStr(); the free use is spent for the day once
-    // this equals today - see grantGemsFromAd() (economy.js).
+    // minuit)" - date string, matches todayStr(); the free daily claim is
+    // spent once this equals today - see grantGemsFree() (economy.js).
     gemsAdFree: { date: null, used: false },
+    // Beyond the free daily claim above: up to GEMS_AD_STREAK_SIZE ad
+    // watches in a row (each granting GEMS_AD_REWARD), then
+    // cooldowns.gemsAdUntil forces a GEMS_AD_COOLDOWN_MS pause before the
+    // next salvo - same shape as the original streak system, count resets
+    // to 0 each new day (ensureGemsAdStreak, retention.js) independently of
+    // the cooldown itself. See grantGemsFromAd() (economy.js).
+    gemsAdStreak: { date: null, count: 0 },
     // "Clicker automatique" (Loris) - replaces the old Boost x2 fab.
     // targetIdx: the grid cell it auto-taps (grantTapBonus, input.js),
     // chosen by the player at activation (handleAutoClickerPick, input.js) -
