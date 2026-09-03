@@ -467,9 +467,15 @@ function updateFabs() {
   const justRevealedAutoClicker = revealFab("fabAutoClicker", fusions >= FAB_DISCOVERY_FUSIONS.fabAutoClicker);
   $("fabAutoClicker").classList.toggle("ready", autoClickerFree);
   $("fabAutoClicker").classList.toggle("active", autoClickerActive);
+  // Loris: "il faudrait qu'on fasse une illustration" pour l'indicateur
+  // "pub requise" (était l'emoji 📺) - watch-ad.png, même formule que
+  // currencyIconHtml (icône inline dans du texte). .fabLabel passe en
+  // innerHTML (au lieu de textContent) uniquement pour ce cas - les deux
+  // autres branches restent du texte pur, sans caractère HTML spécial, donc
+  // toujours sûres à passer par innerHTML elles aussi.
   const autoClickerLabel = autoClickerActive ? formatDuration(ac.activeUntil - now)
-    : (autoClickerFree ? "Clicker Auto" : "📺 Clicker Auto");
-  if ($("fabAutoClickerLabel").textContent !== autoClickerLabel) $("fabAutoClickerLabel").textContent = autoClickerLabel;
+    : (autoClickerFree ? "Clicker Auto" : `<img class="inlineCurrencyIcon" src="assets/ui/watch-ad.png" alt=""> Clicker Auto`);
+  if ($("fabAutoClickerLabel").innerHTML !== autoClickerLabel) $("fabAutoClickerLabel").innerHTML = autoClickerLabel;
   // Loris: "un pop up [...] pour proposer et guider le joueur à utiliser
   // cette fonctionnalité pour la première fois" - fires once, ever
   // (tutorialShown persists in the save, unlike Game.fabRevealed which is
@@ -481,8 +487,8 @@ function updateFabs() {
   const gemsAdOnCooldown = !gemsAdFree && now < state.cooldowns.gemsAdUntil;
   $("fabGemsAd").classList.toggle("ready", gemsAdFree || !gemsAdOnCooldown);
   const gemsAdLabel = gemsAdFree ? `+${GEMS_AD_REWARD} Gems`
-    : (gemsAdOnCooldown ? formatDuration(state.cooldowns.gemsAdUntil - now) : `📺 +${GEMS_AD_REWARD} Gems`);
-  if ($("fabGemsAdLabel").textContent !== gemsAdLabel) $("fabGemsAdLabel").textContent = gemsAdLabel;
+    : (gemsAdOnCooldown ? formatDuration(state.cooldowns.gemsAdUntil - now) : `<img class="inlineCurrencyIcon" src="assets/ui/watch-ad.png" alt=""> +${GEMS_AD_REWARD} Gems`);
+  if ($("fabGemsAdLabel").innerHTML !== gemsAdLabel) $("fabGemsAdLabel").innerHTML = gemsAdLabel;
   revealFab("fabRunUpgrades", fusions >= FAB_DISCOVERY_FUSIONS.fabRunUpgrades);
   // Not gated by FAB_DISCOVERY_FUSIONS like the fabs above - a true secret,
   // stays hidden until the player actually stumbles onto the first egg
