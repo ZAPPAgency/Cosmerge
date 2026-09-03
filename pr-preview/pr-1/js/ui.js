@@ -1204,17 +1204,18 @@ function renderStoryPanel() {
   intro.innerHTML = `<img class="storyMark" src="assets/ui/bigbang.png" alt="">
     <h3>La Rupture</h3>
     <p class="desc">Autrefois, le Cosmos ne connaissait pas le chaos. Treize Dieux le façonnaient dans un ordre parfait. Puis, un jour, cet ordre s'est brisé. <strong>Personne ne sait pourquoi.</strong> Il n'en reste qu'une poussière infinie d'astéroïdes muets, dispersée dans le vide.</p>
-    <p class="desc">Les Dieux, eux, n'ont pas disparu. Ils dorment - chacun caché dans un fragment parmi des milliards d'autres, attendant qu'on les retrouve.</p>`;
+    <p class="desc">Les Dieux, eux, n'ont pas disparu. Ils dorment, chacun caché dans un fragment parmi des milliards d'autres, attendant qu'on les retrouve.</p>`;
   dom.panelBody.appendChild(intro);
 
   dom.panelBody.appendChild(el("h3", null, "L'Étincelle, c'est toi"));
   const spark = el("div", "card storyCard");
-  spark.innerHTML = `<p class="desc">Chaque fusion recompose un peu de l'ordre perdu. Météorite, Lune, Planète, Étoile... jusqu'à l'Univers. Mais un Univers reconstitué ne tient jamais longtemps : il finit par se replier sur lui-même. C'est le Big Bang - la fin d'un cycle, et le début du suivant, toujours un peu plus loin.</p>`;
+  spark.innerHTML = `<p class="desc">Chaque fusion recompose un peu de l'ordre perdu. Météorite, Lune, Planète, Étoile... jusqu'à l'Univers. Mais un Univers reconstitué ne tient jamais longtemps : il finit par se replier sur lui-même. C'est le Big Bang : la fin d'un cycle, et le début du suivant, toujours un peu plus loin.</p>`;
   dom.panelBody.appendChild(spark);
 
   dom.panelBody.appendChild(el("h3", null, "Deux camps, un seul Cosmos"));
   const camps = el("div", "card storyCard");
-  camps.innerHTML = `<p class="desc">Les Dieux que tu réveilles se souviennent tous de la Rupture, mais pas de la même façon. Les <strong style="color:#93c5fd;">bienveillants</strong> 🕊️ veulent restaurer l'ordre ancien. Les <strong style="color:#fca5a5;">déchus</strong> 🔥 ont pris goût au chaos et refusent d'y renoncer. Aucun des deux n'a tort - seulement un souvenir différent du même instant.</p>`;
+  // Loris: "enlève la phrase 'aucun des deux n'a tort - seulement etc'" - retirée, pas remplacée.
+  camps.innerHTML = `<p class="desc">Les Dieux que tu réveilles se souviennent tous de la Rupture, mais pas de la même façon. Les <strong style="color:#93c5fd;">bienveillants</strong> 🕊️ veulent restaurer l'ordre ancien. Les <strong style="color:#fca5a5;">déchus</strong> 🔥 ont pris goût au chaos et refusent d'y renoncer.</p>`;
   dom.panelBody.appendChild(camps);
 
   // Progressive lore: unlocked by real milestones, so there's always a next
@@ -1226,7 +1227,7 @@ function renderStoryPanel() {
     const card = el("div", "card storyCard" + (unlocked ? "" : " locked"));
     card.innerHTML = unlocked
       ? `<h3>✨ ${frag.title}</h3><p class="desc">${frag.text}</p>`
-      : `<h3>${lockIconHtml()} ???</h3><p class="desc">Fragment verrouillé - continue ta progression pour le découvrir.</p>`;
+      : `<h3>${lockIconHtml()} ???</h3><p class="desc">Fragment verrouillé. Continue ta progression pour le découvrir.</p>`;
     dom.panelBody.appendChild(card);
   });
 
