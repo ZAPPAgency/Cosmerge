@@ -118,6 +118,12 @@ function requestStorageAccessBestEffort() {
     // this is a no-op, the queue is still empty at boot.
     maybeOpenGodRevealModal();
   }
+  // Loris: "j'aimerais que ce soit bien un pop up qui apparaisse devant
+  // l'écran [...] pas simplement une petite bannière en bas" - unconditional
+  // (not nested above): a brand new player on the tutorial branch can never
+  // have Game.pendingVipGems set anyway (no VIP before ever finishing the
+  // tutorial), so this only ever does something for a returning VIP player.
+  maybeOpenVipGemsModal();
 
   let lastFrame = performance.now();
   function frame(now) {
@@ -181,6 +187,7 @@ function requestStorageAccessBestEffort() {
     const spawned = applyOfflineAutoSpawns(Game.state, info.cappedMs);
     if (spawned > 0) renderAll();
     if (info.gain >= 1) openOfflineModal(info, spawned);
+    maybeOpenVipGemsModal();
     lastFrame = performance.now();
     saveState(Game.state); // refreshes lastSaveTime so a redundant resume event is a no-op
     resuming = false;
