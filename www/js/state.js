@@ -73,12 +73,45 @@ function defaultState() {
     dailyStats: { date: null, stardustAtDayStart: 0 }, // see ensureDailyStats() - powers the Stardust info popup's "today" figure
 
     skills: { prod: 0, swarm: 0, gravity: 0, echo: 0, luck: 0 },
-    ownedSkins: ["default", "classic"], // "default" ambiance + "classic" emoji set - the two free starting cosmetics
-    equippedAmbiance: "default",
+    // Run upgrades (RUN_UPGRADE_TREE, config.js) - Stardust-priced, reset to
+    // 0 at every Big Bang (performBigBang, economy.js), unlike `skills`
+    // above which is permanent.
+    runUpgrades: { catalyst: 0, resonance: 0, surge: 0, cadence: 0 },
+    ownedSkins: ["classic"], // "classic" emoji set - the free starting cosmetic (the ambiance/color-skin slot was removed entirely)
     equippedEmojiSet: "classic",
+    // Independent of which set (classic/fruits/legumes) is equipped above -
+    // this picks whether that set's tiles show its custom illustrated
+    // artwork or the plain emoji glyph, see tierIconNode() in ui.js. A set
+    // with no artwork for a given tier yet (Fruits/Légumes, for now) just
+    // falls back to emoji regardless of this setting - no special-casing
+    // needed once the art exists later, it starts working automatically.
+    iconStyle: "illustrated", // "illustrated" | "emoji"
+
+    // One-time IAP soft-prompts triggered by real progress (fusion count),
+    // not a timer - see checkFusionPromo() in retention.js. Each flag
+    // guarantees its popup fires at most once ever, ever if the exact
+    // fusion count that would trigger it is somehow reached twice (it
+    // can't be, lifetime.fusions only grows, but the flag is the actual
+    // guarantee either way).
+    promptsShown: { starterPack: false, vipPass: false, removeAdsPrompt: false },
+    // Generic "don't ask again" flags, opted into per confirm-modal key via
+    // openConfirmModal({dontAskKey}) (ui.js) - starts empty, keys get added
+    // here as a player actually checks the box for that specific action
+    // (currently just "swapConfirm", the Échanger button).
+    dontAskAgain: {},
+    // Secret 4-egg challenge (Loris) - unlockedIds only ever grows, ids
+    // from EASTER_EGGS (config.js). The counter widget (fabSecrets,
+    // ui.js) stays hidden until this has its first entry.
+    easterEggs: { unlockedIds: [] },
+    // Loris: promos (starter pack, suppression des pubs, Pass Supernova)
+    // "devrait[ent] tous arrivée[s] bien plus tard [...] avec un peu plus
+    // de temps entre chaque promo" - a real-time floor between any two
+    // promo popups, on top of their own individual fusion-count gates
+    // (checkFusionPromo, retention.js) and the ad-watch-count gate
+    // (trackRewardedAdWatched) - see PROMO_MIN_GAP_MS, retention.js.
+    lastPromoShownAt: 0,
 
     dailyLogin: { lastClaimDay: null, streak: 0, cycleDay: 1, streakFreezeCharges: 0 },
-    skinFragments: 0,
 
     quests: { date: null, active: [], bonusAd: { done: false, claimed: false } },
     questsCompletedTotal: 0,
@@ -88,7 +121,6 @@ function defaultState() {
     gods: {
       unlockedIds: [],
       currentGodId: null,
-      nextGodId: null,
       erebusStreak: 0,             // fusions since the last manual tap bonus (Erebus challenge)
       usedShortcutThisRun: false, // Morgorath challenge requires never using a gem-shop grid shortcut (Sauter une case / Échanger deux cases)
       morgorathChallengeCleared: false,
@@ -97,8 +129,30 @@ function defaultState() {
     },
     moonMergesThisRun: 0, // toward MOON_MERGES_TO_CHOOSE_GOD (first-god ritual)
 
-    cooldowns: { freePlanetUntil: 0, prodBoostUntil: 0, prodBoostActiveUntil: 0, unlockCellAdUntil: 0, gemsAdUntil: 0 },
+    cooldowns: { unlockCellAdUntil: 0, swapAdUntil: 0, gemsAdUntil: 0 },
     dailySpin: { date: null, freeUsed: false, bonusUsed: false },
+    // Loris: "+20 gemmes une fois par jour [...] gratuit [...] (reset à
+    // minuit)" - date string, matches todayStr(); the free daily claim is
+    // spent once this equals today - see grantGemsFree() (economy.js).
+    gemsAdFree: { date: null, used: false },
+    // Beyond the free daily claim above: up to GEMS_AD_STREAK_SIZE ad
+    // watches in a row (each granting GEMS_AD_REWARD), then
+    // cooldowns.gemsAdUntil forces a GEMS_AD_COOLDOWN_MS pause before the
+    // next salvo - same shape as the original streak system, count resets
+    // to 0 each new day (ensureGemsAdStreak, retention.js) independently of
+    // the cooldown itself. See grantGemsFromAd() (economy.js).
+    gemsAdStreak: { date: null, count: 0 },
+    // "Clicker automatique" (Loris) - replaces the old Boost x2 fab.
+    // targetIdx: the grid cell it auto-taps (grantTapBonus, input.js),
+    // chosen by the player at activation (handleAutoClickerPick, input.js) -
+    // kept even if that cell empties out, so it silently resumes on its own
+    // the moment something occupies that index again, rather than losing
+    // the pick. activeUntil: 0 or in the past = inactive. freeUsedDate: same
+    // once-free-then-ad-gated pattern as gemsAdFree above. tutorialShown:
+    // persisted (unlike the one-shot fab-reveal pop, Game.fabRevealed in
+    // main.js, which is intentionally session-only) - the explainer modal
+    // (openAutoClickerIntroModal, ui.js) must only ever play once, ever.
+    autoClicker: { targetIdx: null, activeUntil: 0, freeUsedDate: null, tutorialShown: false },
 
     iap: { removeAds: false, vipUntil: 0, ownedSkinPacks: [], stardustBoost: false, vipLastGemsDay: null },
 
@@ -162,11 +216,14 @@ function saveState(state) {
 }
 
 // Manual backup, independent of localStorage: lets the player copy their
-// progress as a short text code and paste it back in later. This exists
-// because this page runs inside a sandboxed cross-origin iframe (the Claude
-// Artifact viewer) that does not grant the permission needed for the
-// Storage Access API to work, so automatic persistence can fail after a
-// full browser restart with no client-side fix available - see main.js.
+// progress as a short text code and paste it back in later. Originally
+// added because an early Claude-Artifact-hosted version of this game ran
+// inside a sandboxed cross-origin iframe that could not reliably persist
+// localStorage, with no client-side fix available - see main.js and
+// docs/SAVE_BACKUP.md for that history. Kept now as a genuinely useful,
+// storage-mechanism-independent way for a player to move their save
+// between devices or recover it after clearing site data - not only a
+// workaround for that original bug.
 function exportSaveCode(state) {
   return btoa(unescape(encodeURIComponent(JSON.stringify(state))));
 }
@@ -185,10 +242,12 @@ function importSaveCode(code) {
 function productionMultiplier(state) {
   const skillMult = 1 + state.skills.prod * 0.03;
   const vipMult = isVipActive(state) ? 2 : 1;
-  const boostMult = (state.cooldowns.prodBoostActiveUntil > Date.now()) ? 2 : 1;
   const godMult = getGodEffects(state).prodMult || 1;
   const iapBoostMult = state.iap.stardustBoost ? 1.5 : 1;
-  return skillMult * vipMult * boostMult * godMult * iapBoostMult;
+  // "Catalyseur Stellaire" run upgrade (RUN_UPGRADE_TREE, config.js) - resets
+  // to 0 at every Big Bang, unlike every other factor here.
+  const runUpgradeMult = 1 + (state.runUpgrades.catalyst || 0) * 0.04;
+  return skillMult * vipMult * godMult * iapBoostMult * runUpgradeMult;
 }
 function tierGodMultiplier(state, tier) {
   const bonus = getGodEffects(state).tierProdBonus;
@@ -228,7 +287,12 @@ function offlineCapHours(state) {
 function autoSpawnIntervalMs(state) {
   const reduction = Math.min(state.skills.gravity * 0.05, 0.4);
   const godMult = getGodEffects(state).spawnSpeedMult || 1;
-  return Math.max(MIN_AUTO_SPAWN_MS, BASE_AUTO_SPAWN_MS * (1 - reduction) * godMult);
+  // "Cadence Stellaire" run upgrade (RUN_UPGRADE_TREE, config.js) - a
+  // separate multiplier rather than folded into `reduction`'s own 0.4 cap,
+  // same pattern as godMult - MIN_AUTO_SPAWN_MS is still the real floor
+  // regardless of how many speed sources stack.
+  const runUpgradeMult = Math.max(0.4, 1 - (state.runUpgrades.cadence || 0) * 0.04);
+  return Math.max(MIN_AUTO_SPAWN_MS, BASE_AUTO_SPAWN_MS * (1 - reduction) * godMult * runUpgradeMult);
 }
 
 function emptyUnlockedIndices(state) {

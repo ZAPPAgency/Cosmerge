@@ -65,20 +65,57 @@ function describeGodEffect(god, level) {
 }
 function isGodUnlocked(state, godId) { return state.gods.unlockedIds.includes(godId); }
 
-function unlockGod(state, godId) {
+// Loris: "il n'y a pas de pop up quand on débloque un nouveau dieu hormis
+// pour les deux premiers" - a plain toast (2s, easy to miss mid-merge) was
+// the only feedback for every unlock except the moon-ritual pair, which get
+// the picker modal as their own reveal. Every unlock now queues a real
+// modal (Game.pendingGodReveals, consumed by maybeOpenGodRevealModal() in
+// ui.js/input.js at the next safe moment - same "queue now, show after the
+// current animation/modal settles" pattern as unlockEasterEgg/
+// Game.pendingGodRitual). `opts.silent` is for the two unlocks that already
+// have their own dedicated fanfare and would otherwise double up with this
+// one: the ritual pair (the picker modal opens right after) and the Cosmic
+// Box (openCosmicBoxRevealModal already shows the exact same portrait/name).
+function unlockGod(state, godId, opts) {
   if (isGodUnlocked(state, godId)) return;
   state.gods.unlockedIds.push(godId);
+  if (opts && opts.silent) return;
   Sfx.chest();
-  toast(`Nouveau Dieu débloqué : ${getGod(godId).name} ${getGod(godId).emoji}`);
+  Game.pendingGodReveals.push(godId);
+}
+
+// Loris: "4 easter eggs [...] débloquer 4 easter eggs pour recevoir une
+// récompense inédite [...] informer quand un easter egg est débloqué".
+// Returns null if `id` is already unlocked (or unknown) - the only signal
+// callers need to know whether to trigger the "found it" reveal (ui.js).
+// The 4th egg also unlocks the secret god Ananké right here, in the same
+// mutation, rather than leaving callers to separately notice the count
+// hit 4 - pushed directly (not via unlockGod() above) since that fires
+// its own toast/sound, which would collide with the dedicated grand-finale
+// reveal this triggers instead (openEggGrandRevealModal, ui.js).
+function unlockEasterEgg(state, id) {
+  if (state.easterEggs.unlockedIds.includes(id)) return null;
+  const egg = EASTER_EGGS.find(e => e.id === id);
+  if (!egg) return null;
+  state.easterEggs.unlockedIds.push(id);
+  const complete = state.easterEggs.unlockedIds.length >= EASTER_EGGS.length;
+  if (complete && !isGodUnlocked(state, "ananke")) state.gods.unlockedIds.push("ananke");
+  return { egg, complete };
 }
 
 // Milestone-type gods unlock themselves the moment their `check` passes -
 // same pattern as achievements. Called after every stat-changing event.
+// Also covers shop-type gods with an `altCheck` (a free alternate unlock
+// condition, config.js - e.g. "ou 10 Big Bang déclenchés") - their `altLabel`
+// was already shown to the player in the detail modal (ui.js), promising
+// this free path, but altCheck itself was never actually evaluated
+// anywhere: those gods could only ever be bought with Gems. Bug found
+// during a full-branch review, fix requested by Loris.
 function checkGodMilestones(state) {
   GODS.forEach(g => {
-    if (g.unlock.type === "milestone" && !isGodUnlocked(state, g.id) && g.unlock.check(state)) {
-      unlockGod(state, g.id);
-    }
+    if (isGodUnlocked(state, g.id)) return;
+    if (g.unlock.type === "milestone" && g.unlock.check(state)) unlockGod(state, g.id);
+    else if (g.unlock.type === "shop" && g.unlock.altCheck && g.unlock.altCheck(state)) unlockGod(state, g.id);
   });
 }
 
@@ -86,9 +123,14 @@ function checkGodMilestones(state) {
 function onFusionForGods(state, newTier) {
   if (newTier === 2) {
     state.moonMergesThisRun += 1;
+    // Both ritual gods (Séléna, Zéphar) unlock together, so the picker modal
+    // that opens next render (openGodPickerModal, ui.js) shows an actual
+    // choice - un dieu bienveillant, un dieu déchu - instead of a single
+    // card that had nothing to choose between (Loris).
     if (state.moonMergesThisRun === MOON_MERGES_TO_CHOOSE_GOD && !state.gods.currentGodId) {
-      unlockGod(state, "selena");
-      Game.pendingGodRitual = true; // main loop opens the picker modal next render
+      unlockGod(state, "selena", { silent: true });
+      unlockGod(state, "zephar", { silent: true });
+      Game.pendingGodRitual = true; // main loop opens the picker modal next render - that IS their reveal
     }
   }
 
@@ -100,8 +142,11 @@ function onFusionForGods(state, newTier) {
   }
 
   // Morgorath challenge: reach the Universe tier without ever using a
-  // grid-shortcut shop item (Sauter une case / Échanger deux cases) this run.
-  if (newTier === TIERS.length && !state.gods.usedShortcutThisRun) {
+  // grid-shortcut shop item (Sauter une case / Échanger deux cases) this
+  // run. Fixed at UNIVERSE_TIER (config.js) - this is specifically about
+  // reaching Univers, not whatever the current top tier happens to be now
+  // that TIERS extends past it.
+  if (newTier === UNIVERSE_TIER && !state.gods.usedShortcutThisRun) {
     state.gods.morgorathChallengeCleared = true;
   }
 
@@ -116,27 +161,20 @@ function checkThanatosChallenge(state) {
 }
 
 // ---- Choosing / swapping gods ----
-// The very first pick applies immediately (there is no "current run" to
-// protect yet). Any later pick only takes effect on the *next* Big Bang,
-// per the "changer de dieu qu'entre les parties" rule.
+// Loris: "il faudrait qu'on puisse changer de dieu en pleine partie, pas
+// besoin d'attendre le prochain big bang" - used to only apply immediately
+// for the very first pick, any later pick queued into nextGodId and only
+// took effect at the next Big Bang (applyPendingGodAtBigBang below). Now
+// every pick swaps currentGodId immediately, always.
 function chooseGod(state, godId) {
   if (!isGodUnlocked(state, godId)) return false;
-  if (!state.gods.currentGodId) {
-    state.gods.currentGodId = godId;
-    state.gods.nextGodId = null;
-  } else {
-    state.gods.nextGodId = (godId === state.gods.currentGodId) ? null : godId;
-  }
+  state.gods.currentGodId = godId;
   return true;
 }
 function applyPendingGodAtBigBang(state) {
   if (state.gods.currentGodId) {
     const id = state.gods.currentGodId;
     state.gods.usageCount[id] = (state.gods.usageCount[id] || 0) + 1;
-  }
-  if (state.gods.nextGodId) {
-    state.gods.currentGodId = state.gods.nextGodId;
-    state.gods.nextGodId = null;
   }
   state.moonMergesThisRun = 0;
   state.gods.erebusStreak = 0;
@@ -182,28 +220,59 @@ function nextGodMilestoneHint(state) {
   };
   const best = candidates.slice().sort((a, b) => progressOf(b) - progressOf(a))[0];
   const pct = Math.min(99, Math.round(progressOf(best) * 100));
-  return `Prochain Dieu en approche : ${best.emoji} ${best.name} (${pct}% - ${best.unlock.label})`;
+  // godPortraitHtml (ui.js), not best.emoji directly (Loris: "il y a
+  // plusieurs écrans quand on fait un big bang ou c'est encore les emoji
+  // qui sont utilisés") - same real-portrait-as-a-teaser convention
+  // already used for locked gods everywhere else (Progression roadmap
+  // steps, etc.) instead of falling back to the plain glyph.
+  return `Prochain Dieu en approche : ${godPortraitHtml(best, "inlineTierIcon")} ${best.name} (${pct}% - ${best.unlock.label})`;
 }
 
 // Cosmic Box: rolls any god weighted by rarity, regardless of that god's
 // normal unlock path (including the "box"-only gods, whose only path IS
-// this roll). A duplicate roll pays out Gems instead (scaled to the rarity
-// rolled) so the box never feels wasted.
+// this roll).
+// Loris: "dans les boites cosmiques on doit pouvoir gagner uniquement des
+// dieux qu'on possède pas, comme ça on enlève les doublons c'est moins
+// frustrant" - re-rolls the RARITY (not the god) until landing on one that
+// still has an unowned god, so the odds stay proportional to
+// BOX_RARITY_WEIGHTS among what's actually still obtainable, instead of
+// ever handing out a duplicate. "Et quand le joueur a tout les dieux, la
+// boite cosmique se transforme en une boite [...] de gemmes" - once
+// nothing is left to unlock, this becomes a pure Gems roll instead
+// (rollCosmicBoxGems, below).
 function rollCosmicBox(state) {
+  // !g.secret: Ananké (config.js) must never drop from a box, AND must
+  // never block the "every god owned" gems-box transition below just
+  // because she personally isn't unlocked yet - a player who has all 13
+  // normal gods but hasn't found the 4 easter eggs should still see the
+  // box become a Gems roll, not silently keep rolling for a god they can
+  // never actually receive this way.
+  const unownedGods = GODS.filter(g => !g.secret && !isGodUnlocked(state, g.id));
+  if (unownedGods.length === 0) {
+    return { duplicate: false, allGodsOwned: true, gems: rollCosmicBoxGems(state) };
+  }
   const total = Object.values(BOX_RARITY_WEIGHTS).reduce((a, b) => a + b, 0);
-  let r = Math.random() * total;
-  let pickedRarity = "commun";
-  for (const rarity of Object.keys(BOX_RARITY_WEIGHTS)) {
-    const weight = BOX_RARITY_WEIGHTS[rarity];
-    if (r < weight) { pickedRarity = rarity; break; }
-    r -= weight;
+  let pool = [];
+  while (pool.length === 0) {
+    let r = Math.random() * total;
+    let pickedRarity = "commun";
+    for (const rarity of Object.keys(BOX_RARITY_WEIGHTS)) {
+      const weight = BOX_RARITY_WEIGHTS[rarity];
+      if (r < weight) { pickedRarity = rarity; break; }
+      r -= weight;
+    }
+    pool = unownedGods.filter(g => g.rarity === pickedRarity);
   }
-  const pool = GODS.filter(g => g.rarity === pickedRarity);
   const god = pool[Math.floor(Math.random() * pool.length)];
-  if (isGodUnlocked(state, god.id)) {
-    const gems = grantGems(state, BOX_DUPLICATE_GEMS[pickedRarity]);
-    return { duplicate: true, god, gems };
-  }
-  unlockGod(state, god.id);
+  unlockGod(state, god.id, { silent: true }); // openCosmicBoxRevealModal (ui.js) is this one's reveal
   return { duplicate: false, god };
+}
+
+// Loris: "un montant de gemmes aléatoires qui peut aller jusqu'à 200 (très
+// faible chance, le joueur a plus de chance de recevoir moins que 100
+// gemmes)". Math.random() squared skews the roll toward the low end
+// instead of a flat/uniform one - P(≤100) ≈ 71%, P(>180) ≈ 5%.
+function rollCosmicBoxGems(state) {
+  const amount = Math.max(10, Math.round(Math.pow(Math.random(), 2) * 200));
+  return grantGems(state, amount);
 }

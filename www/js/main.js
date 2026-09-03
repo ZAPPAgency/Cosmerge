@@ -1,25 +1,30 @@
 // Godspark - boot sequence & main loop
 "use strict";
 
-// This page is normally embedded cross-origin (the Claude Artifact iframe,
-// e.g. b7a8...frame.claudeusercontent.com inside claude.ai). On iOS Safari,
-// a cross-origin iframe only gets persistent localStorage after an explicit
-// grant via the Storage Access API - and that grant does not reliably
-// survive a full browser/app restart, which is the save-loss bug this is
-// working around.
+// Legacy defensive code: early in this project's life the game was
+// prototyped as a Claude Artifact, embedded cross-origin inside claude.ai's
+// own iframe. On iOS Safari, a cross-origin iframe only gets persistent
+// localStorage after an explicit grant via the Storage Access API - and that
+// grant does not reliably survive a full browser/app restart, which caused
+// real save loss in that context. The real fix, since then, is that the
+// game no longer needs that context at all: it's hosted top-level on GitHub
+// Pages (see README.md) and, going forward, ships as a Capacitor native app
+// (native-bridge.js) using @capacitor/preferences instead of localStorage
+// entirely - neither has this problem, since `window.self === window.top`
+// on GitHub Pages and there is no iframe/ITP model on native at all.
 //
-// A previous version of this function blocked boot behind a mandatory tap
-// that called document.requestStorageAccess(). That call requires the
-// embedding iframe's `sandbox` attribute to include
-// `allow-storage-access-by-user-activation` - and Claude's artifact iframe
-// (sandbox="allow-scripts allow-same-origin allow-forms") does not have
-// that flag, so the call always silently fails there. The tap gate was
-// therefore pure friction with zero effect, so it's gone. We still fire the
-// request in the background (harmless, and it *would* help on any host that
-// does grant the flag), but nothing blocks on it, and it is NOT the actual
-// fix for save loss - see docs/SAVE_BACKUP.md and the in-app "Sauvegarde
-// manuelle" export/import in the Réglages panel for the real mitigation
-// available while running inside this specific iframe sandbox.
+// This function is kept as a harmless no-op safety net (the `embedded`
+// check below is false in both of today's real deployments, so it returns
+// immediately) rather than removed outright, in case the game is ever
+// re-embedded in some other cross-origin host later. A previous version
+// blocked boot behind a mandatory tap that called
+// document.requestStorageAccess() - removed because that call's actual
+// requirements (the embedding iframe's `sandbox` attribute needing
+// `allow-storage-access-by-user-activation`) were never under this game's
+// control anyway, so the tap gate was pure friction with zero guaranteed
+// effect. See docs/SAVE_BACKUP.md and the in-app "Sauvegarde manuelle"
+// export/import in the Réglages panel for the manual-backup mitigation that
+// was actually needed during the Artifact-prototype period.
 function requestStorageAccessBestEffort() {
   const embedded = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
   if (!embedded || !document.hasStorageAccess || !document.requestStorageAccess) return;
@@ -49,8 +54,40 @@ function requestStorageAccessBestEffort() {
     skipCellArmed: false,
     swapArmed: false,
     swapFirstIdx: null,
+    // Set when the current armed swap was earned by watching an ad (Loris:
+    // offer that instead of a dead-end "Pas assez de Gems." when clicking
+    // Échanger without enough Gems) - handleSwapTap (input.js) reads this to
+    // skip the Gems cost entirely for this one swap.
+    swapFree: false,
+    // "Choisis une case" mode for the auto-clicker's target pick
+    // (armAutoClickerPicker/handleAutoClickerPick, input.js) - same
+    // in-memory, tap-only-mode pattern as swapArmed/skipCellArmed above.
+    autoClickerArmed: false,
+    // Queued god ids awaiting their unlock-reveal modal (Loris: "il n'y a
+    // pas de pop up quand on débloque un nouveau dieu hormis pour les deux
+    // premiers") - unlockGod() (gods.js) pushes here, maybeOpenGodRevealModal()
+    // (ui.js) consumes one at the next safe moment, same pattern as
+    // Game.pendingGodRitual/pendingPromo below.
+    pendingGodReveals: [],
+    // How many merges have landed within MERGE_STREAK_WINDOW_MS of each
+    // other (see attemptMerge in input.js) - scales the impact effect and
+    // raises the reward chime's pitch a step each time, so chaining merges
+    // fast feels increasingly rewarding rather than just repetitive.
+    mergeStreak: 0,
+    lastMergeAt: 0,
+    // Rolling window of recent merge timestamps for the "La Cascade" easter
+    // egg (EASTER_EGG_CHAIN_COUNT/MS, config.js) - in-memory only, unrelated
+    // to mergeStreak above (that one's about the *visual* streak effect,
+    // this one's a real detection window pruned in attemptMerge).
+    mergeChainTimes: [],
     pendingOfflineGain: null,
     bigBangPromptShown: hasUniverseTile(state), // don't re-prompt on reload if a Universe tile already existed last save
+    // Which fabs have already played their one-shot discovery pop
+    // animation this session (revealFab/FAB_DISCOVERY_FUSIONS, ui.js) -
+    // intentionally in-memory only, not saved: a returning player whose
+    // fusions count already clears every threshold just sees them all pop
+    // in once on this load, rather than the animation never playing again.
+    fabRevealed: new Set(),
   });
 
   buildStars();
@@ -74,7 +111,19 @@ function requestStorageAccessBestEffort() {
     showTutStep(0);
   } else if (gainInfo.gain >= 1) {
     openOfflineModal(gainInfo, spawnedAtBoot);
+  } else {
+    // Safety net: checkGodMilestones(state) above could in principle have
+    // just queued a reveal (e.g. an imported save code that already clears
+    // a milestone) - in the ordinary case (unlocks happen mid-merge/mid-run)
+    // this is a no-op, the queue is still empty at boot.
+    maybeOpenGodRevealModal();
   }
+  // Loris: "j'aimerais que ce soit bien un pop up qui apparaisse devant
+  // l'écran [...] pas simplement une petite bannière en bas" - unconditional
+  // (not nested above): a brand new player on the tutorial branch can never
+  // have Game.pendingVipGems set anyway (no VIP before ever finishing the
+  // tutorial), so this only ever does something for a returning VIP player.
+  maybeOpenVipGemsModal();
 
   let lastFrame = performance.now();
   function frame(now) {
@@ -99,6 +148,7 @@ function requestStorageAccessBestEffort() {
     if (Math.abs(Game.state.stardust - Game.displayedStardust) < 0.05) Game.displayedStardust = Game.state.stardust;
 
     tickAutoSpawn(now);
+    tickAutoClicker();
 
     updateHeader();
     updateFabs();
@@ -117,13 +167,18 @@ function requestStorageAccessBestEffort() {
   // tick, which as a side effect silently discarded any longer time spent
   // away instead of crediting it. This computes the catch-up on resume too,
   // and resets lastFrame so the next tick doesn't also try to claim that gap.
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") {
-      saveState(Game.state);
-      MusicService.stop(); // stop scheduling further chords/sparkles
-      muteAllAudio(); // clean fade of EVERYTHING currently sounding (SFX included) instead of the OS abruptly cutting it mid-envelope (the "bizarre"/dull click on close)
-      return;
-    }
+  //
+  // Wired to BOTH visibilitychange AND focus/pageshow (not just
+  // visibilitychange alone): mobile Safari/WKWebView don't reliably fire
+  // visibilitychange on every "switched to another app, then back" cycle -
+  // this was reported as auto-spawns simply not resuming after a
+  // backgrounding that didn't fully close the app. saveState() at the end
+  // makes repeat calls safe (lastSaveTime is current by the time a second,
+  // redundant event fires, so it computes ~0 elapsed and no-ops).
+  let resuming = false;
+  function handleAppResume() {
+    if (resuming) return; // re-entrancy guard - visibilitychange+focus can fire back to back
+    resuming = true;
     unmuteAllAudio();
     if (Game.settings.music) MusicService.start();
     ensureDailyStats(Game.state);
@@ -132,6 +187,20 @@ function requestStorageAccessBestEffort() {
     const spawned = applyOfflineAutoSpawns(Game.state, info.cappedMs);
     if (spawned > 0) renderAll();
     if (info.gain >= 1) openOfflineModal(info, spawned);
+    maybeOpenVipGemsModal();
     lastFrame = performance.now();
+    saveState(Game.state); // refreshes lastSaveTime so a redundant resume event is a no-op
+    resuming = false;
+  }
+  function handleAppHide() {
+    saveState(Game.state);
+    MusicService.stop(); // stop scheduling further chords/sparkles
+    muteAllAudio(); // clean fade of EVERYTHING currently sounding (SFX included) instead of the OS abruptly cutting it mid-envelope (the "bizarre"/dull click on close)
+  }
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") handleAppHide();
+    else handleAppResume();
   });
+  window.addEventListener("focus", handleAppResume);
+  window.addEventListener("pageshow", handleAppResume);
 })();
