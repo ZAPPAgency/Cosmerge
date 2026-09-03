@@ -299,7 +299,7 @@ const GODS = [
     desc: "+15% production des Lunes et Planètes naines",
     effects: { tierProdBonus: { minTier: 2, maxTier: 3, mult: 1.15 } }, // used in state.js effectiveTileProd/totalProduction
     unlock: { type: "ritual" }, // granted automatically by the moon-merge ritual, see gods.js
-    lore: "La première à avoir répondu à l'appel du rituel des lunes. Séléna veille sur chaque fragment qui tourne encore dans le noir, patiente, et guide la main du fusionneur novice.",
+    lore: "La première à avoir répondu à l'appel du rituel des lunes. Elle veille sur chaque fragment qui tourne encore dans le noir et guide la main du fusionneur novice. Elle n'a jamais cru que la Rupture fût un simple accident, et murmure qu'une présence bien plus ancienne qu'elle regardait, ce jour-là, sans rien faire pour l'empêcher.",
   },
   // Loris: the moon-merge ritual should offer a real choice, not hand you
   // Séléna alone with a "choisis celui qui t'accompagnera" that lied about
@@ -317,7 +317,7 @@ const GODS = [
     desc: "+15% chance de Gem bonus par fusion, mais -8% production des Lunes et Planètes naines",
     effects: { gemChanceBonus: 0.15, tierProdBonus: { minTier: 2, maxTier: 3, mult: 0.92 } },
     unlock: { type: "ritual" }, // granted automatically by the moon-merge ritual, alongside Séléna - see gods.js
-    lore: "Zéphar n'a jamais pardonné à la Lune d'avoir survécu presque intacte quand tout le reste s'est brisé. Il rôde parmi les fragments et offre, à qui l'écoute, la richesse cachée dans chaque éclat - contre un peu de la lumière qu'ils portaient encore.",
+    lore: "Zéphar n'a jamais pardonné à la Lune d'avoir survécu presque intacte quand tout le reste s'est brisé. Séléna continue d'y veiller comme avant. Lui y voit surtout ce qui reste à prendre. Il rôde parmi les fragments et offre, à qui l'écoute, la richesse cachée dans chaque éclat, contre un peu de la lumière qu'ils portaient encore.",
   },
   {
     id: "astreos", name: "Astréos", title: "Gardien des Astéroïdes", emoji: "☄️", icon: "astreos.png",
@@ -325,7 +325,7 @@ const GODS = [
     desc: "Spawn automatique 10% plus rapide",
     effects: { spawnSpeedMult: 0.9 }, // used in state.js autoSpawnIntervalMs
     unlock: { type: "milestone", check: (s) => s.lifetime.fusions >= 180, label: "Réalise 180 fusions à vie" },
-    lore: "Il fut le premier corps à se briser lors de la Rupture. Depuis, il pousse inlassablement la poussière vers la lumière, pour que jamais une case ne reste vide trop longtemps.",
+    lore: "Il fut le premier corps à se briser lors de la Rupture, avant même que les treize n'aient eu le temps de réagir. Depuis, il pousse inlassablement la poussière vers la lumière, dans le vide que Nyx maintient grand ouvert, pour que jamais une case ne reste vide trop longtemps.",
   },
   {
     id: "nyx", name: "Nyx", title: "Dame du Vide", emoji: "🌌", icon: "nyx.png",
@@ -333,7 +333,7 @@ const GODS = [
     desc: "+1 case de départ supplémentaire",
     effects: { extraStartCells: 1 }, // used in state.js freshGrid
     unlock: { type: "milestone", check: (s) => s.achievements.unlockedIds.includes("unlocked_20"), label: "Débloque 20 cases en une partie" },
-    lore: "Nyx n'a jamais choisi de camp - elle est l'espace lui-même, celui qui reste à conquérir. Ceux qui apprennent à l'apprivoiser trouvent toujours un peu plus de place qu'annoncé.",
+    lore: "Nyx n'a jamais choisi de camp, elle est l'espace lui-même, celui qui reste à conquérir. Elle prête volontiers un peu de vide à qui la sert, mais se tait dès qu'on lui demande ce qui habite les recoins qu'elle n'a jamais osé cartographier.",
   },
   {
     id: "helios", name: "Hélios", title: "Cœur Ardent", emoji: "☀️", icon: "helios.png",
@@ -341,7 +341,7 @@ const GODS = [
     desc: "+20% production des Étoiles et Étoiles à neutrons",
     effects: { tierProdBonus: { minTier: 6, maxTier: 7, mult: 1.2 } },
     unlock: { type: "milestone", check: (s) => s.lifetime.maxTierEver >= 7, label: "Atteins le palier Étoile à neutrons" },
-    lore: "Quand la fusion atteint l'incandescence, Hélios se réveille. Il ne connaît qu'une loi : brûler plus fort, encore, jusqu'à ce que le froid du vide n'ait plus aucune prise.",
+    lore: "Quand la fusion atteint l'incandescence, Hélios se réveille. Il ne connaît qu'une loi : brûler plus fort, encore, jusqu'à ce que le froid du vide n'ait plus aucune prise, le même froid dont Erebus, dit-on, s'est fait un allié plutôt qu'un ennemi.",
   },
   {
     id: "chronos", name: "Chronos", title: "Maître du Temps", emoji: "⏳", icon: "chronos.png",
@@ -349,7 +349,7 @@ const GODS = [
     desc: "+4h de plafond de gains hors-ligne",
     effects: { offlineCapBonusH: 4 }, // used in state.js offlineCapHours
     unlock: { type: "milestone", check: (s) => s.lifetime.bigBangCount >= 3, label: "Déclenche 3 Big Bang" },
-    lore: "Chronos a vu trois univers se replier sur eux-mêmes et renaître. Il ne juge plus le temps qui passe - il apprend simplement à en garder un peu plus de côté pour toi.",
+    lore: "Chronos a vu trois univers se replier sur eux-mêmes et renaître, assez pour reconnaître la main de Thanatos dans chaque fin prématurée. Il ne juge plus le temps qui passe. Il apprend simplement à en garder un peu plus de côté pour toi. Une seule chose le trouble encore : dans aucun de ses souvenirs, il n'a jamais vu le tout premier instant de la toute première Rupture.",
   },
   {
     id: "erebus", name: "Erebus", title: "Seigneur du Chaos", emoji: "🌑", icon: "erebus.png",
@@ -361,7 +361,7 @@ const GODS = [
       label: "Défi : fusionne 35 fois d'affilée sans jamais appuyer sur une case pour récupérer son bonus (appuyer remet ce compteur à zéro)",
       target: 35,
     },
-    lore: "Erebus fut banni pour avoir préféré le désordre fécond à l'ordre stérile. Le servir a un prix - moins de matière produite - mais il paie grassement en poussière précieuse ceux qui l'acceptent.",
+    lore: "Erebus fut banni pour avoir préféré un désordre plein de promesses à un ordre qui n'avançait plus. Le servir coûte un peu de matière produite, mais il paie grassement en poussière précieuse ceux qui acceptent de le suivre.",
   },
   {
     id: "thanatos", name: "Thanatos", title: "l'Inévitable", emoji: "💀", icon: "thanatos.png",
@@ -373,7 +373,7 @@ const GODS = [
       label: "Défi : déclenche un Big Bang alors que moins de la moitié des cases débloquées sont occupées",
       target: 1,
     },
-    lore: "Thanatos n'attend jamais que tout soit fini pour mettre un terme aux choses. Il enseigne qu'un cycle interrompu à temps vaut parfois mieux qu'un cycle mené jusqu'à l'épuisement.",
+    lore: "Thanatos n'attend jamais que tout soit fini pour mettre un terme aux choses. Là où Erebus cherche à prolonger le désordre, lui préfère l'arrêter net. Il enseigne qu'un cycle interrompu à temps vaut parfois mieux qu'un cycle mené jusqu'à l'épuisement.",
   },
   {
     id: "gaia", name: "Gaïa Suprême", title: "Créatrice", emoji: "🌍", icon: "gaia.png",
@@ -381,7 +381,7 @@ const GODS = [
     desc: "+10% à toute la production, +5% chance de Gem bonus par fusion",
     effects: { prodMult: 1.1, gemChanceBonus: 0.05 },
     unlock: { type: "shop", cost: 800, altCheck: (s) => s.lifetime.bigBangCount >= 10, altLabel: "ou 10 Big Bang déclenchés" },
-    lore: "Avant la Rupture, Gaïa était le Cosmos tout entier. Ce qu'elle t'offre n'est qu'un souvenir de cette unité - mais même un souvenir de la Création reste un cadeau immense.",
+    lore: "Avant la Rupture, Gaïa était le Cosmos tout entier, la même unité que Morgorath essaie aujourd'hui de reconstituer à l'envers, en avalant plutôt qu'en créant. Ce qu'elle t'offre n'est qu'un souvenir de cette unité perdue, mais même un souvenir de la Création reste un cadeau immense.",
   },
   {
     id: "morgorath", name: "Morgorath", title: "Dévoreur d'Étoiles", emoji: "🕳️", icon: "morgorath.png",
@@ -392,7 +392,7 @@ const GODS = [
       type: "shop", cost: 800,
       altCheck: (s) => s.gods.morgorathChallengeCleared, altLabel: "ou atteins l'Univers sans utiliser Sauter une case ni Échanger deux cases dans la partie",
     },
-    lore: "Morgorath ne crée rien - il concentre. Chaque étoile qu'il engloutit devient un peu plus dense, un peu plus lourde, jusqu'à ce que la lumière elle-même n'ose plus s'en échapper.",
+    lore: "Morgorath ne crée rien, il concentre. Chaque étoile qu'il engloutit devient un peu plus dense, un peu plus lourde, jusqu'à ce que la lumière elle-même n'ose plus s'en échapper.",
   },
 
   // ---- Box-exclusive gods: unlock.type "box" means no story/milestone/shop
@@ -405,7 +405,7 @@ const GODS = [
     desc: "+18% production des Planètes et Géantes gazeuses",
     effects: { tierProdBonus: { minTier: 4, maxTier: 5, mult: 1.18 } },
     unlock: { type: "box" },
-    lore: "Iris ne s'éveille jamais d'elle-même - elle apparaît, ou elle n'apparaît pas, au hasard d'une Boîte Cosmique ouverte. Elle porte les messages qu'aucun autre Dieu endormi ne peut plus entendre.",
+    lore: "Iris ne s'éveille jamais d'elle-même. Elle apparaît, ou elle n'apparaît pas, au hasard d'une Boîte Cosmique ouverte. Elle porte les messages qu'aucun autre Dieu endormi ne peut plus entendre, y compris, murmure-t-on, un message qu'elle refuse de délivrer en entier : celui d'une voix plus vieille que les treize, qu'elle n'a croisée qu'une fois et qu'elle espère ne jamais recroiser.",
   },
   {
     id: "eris", name: "Éris", title: "Semeuse de Discorde", emoji: "🔮", icon: "eris.png",
@@ -413,7 +413,7 @@ const GODS = [
     desc: "+8% chance de Gem bonus par fusion, mais -7% production globale",
     effects: { gemChanceBonus: 0.08, prodMult: 0.93 },
     unlock: { type: "box" },
-    lore: "Éris trouve la Rupture magnifique - un chaos si parfait qu'elle refuse d'y voir un accident. Ceux qui l'invoquent gagnent en fortune ce qu'ils perdent en constance.",
+    lore: "Éris trouve la Rupture magnifique, un chaos si parfait qu'elle refuse d'y voir un accident, là où Némésis n'y voit qu'une faute à punir. Ceux qui l'invoquent gagnent en fortune ce qu'ils perdent en constance.",
   },
   {
     id: "nemesis", name: "Némésis", title: "la Justicière Cosmique", emoji: "⚖️", icon: "nemesis.png",
@@ -421,7 +421,7 @@ const GODS = [
     desc: "+12% production globale et +12% Gems gagnées",
     effects: { prodMult: 1.12, gemsMult: 1.12 },
     unlock: { type: "box" },
-    lore: "Némésis ne pardonne à aucun Dieu d'avoir laissé le Cosmos se briser - bienveillant ou déchu, tous lui doivent des comptes. Rare est le fusionneur qu'elle juge digne de son alliance.",
+    lore: "Némésis ne pardonne à aucun Dieu d'avoir laissé le Cosmos se briser, bienveillant ou déchu, tous lui doivent des comptes, même Éris et son goût pour le désordre. Un seul être, dit-on, échappe à son jugement : une présence plus ancienne que la Rupture elle-même, que même Némésis n'ose pas accuser.",
   },
   // 14th, secret god - Loris's "challenge communautaire" (4 easter eggs,
   // ui.js/input.js/economy.js). `secret: true` pulls her out of every
@@ -440,7 +440,7 @@ const GODS = [
     desc: "+20% production globale, +2h de plafond hors-ligne et +5% chance de Gem bonus par fusion",
     effects: { prodMult: 1.2, offlineCapBonusH: 2, gemChanceBonus: 0.05 },
     unlock: { type: "secret", label: "Un secret bien gardé du Cosmos" },
-    lore: "Avant les treize, avant la Rupture elle-même, il y avait Ananké. Elle n'a rien causé - elle a simplement toujours su que ça arriverait. Ceux qui la trouvent ne la choisissent pas : elle les attendait déjà.",
+    lore: "Avant les treize, avant la Rupture elle-même, il y avait Ananké. Elle n'a rien causé. Elle a simplement toujours su que ça arriverait. Ceux qui la trouvent ne la choisissent pas : elle les attendait déjà.",
   },
 ];
 // The 13 "normal" gods, for every place that means to say "X/13" - Ananké
@@ -489,27 +489,39 @@ const LORE_FRAGMENTS = [
   {
     id: "frag_doubt", title: "Le Premier Doute",
     unlock: (s) => !!s.gods.currentGodId,
-    text: "Séléna te le dira, si tu l'écoutes vraiment : elle n'a jamais cru à l'accident. \"Un ordre parfait ne se brise pas tout seul\", murmure-t-elle. Alors quoi - ou qui ?",
+    text: "Séléna te le dira, si tu l'écoutes vraiment : elle n'a jamais cru à l'accident. \"Un ordre parfait ne se brise pas tout seul\", murmure-t-elle. Alors quoi, ou qui ?",
   },
   {
     id: "frag_voices", title: "Les Deux Voix",
     unlock: (s) => s.gods.unlockedIds.length >= 3,
-    text: "Chaque Dieu se souvient de la Rupture différemment - c'est ça, le vrai clivage entre bienveillants et déchus. Les uns l'ont vécue comme un vol. Les autres, comme une porte enfin ouverte. Aucun des deux souvenirs ne ment.",
+    text: "Chaque Dieu se souvient de la Rupture différemment, et c'est cette différence qui sépare aujourd'hui bienveillants et déchus. Les uns l'ont vécue comme un vol. Les autres, comme une porte enfin ouverte.",
   },
   {
     id: "frag_echo", title: "L'Écho du Big Bang",
     unlock: (s) => s.lifetime.bigBangCount >= 1,
-    text: "Ce que tu viens de déclencher a un nom ancien. Chaque Big Bang que tu provoques est un écho miniature de LA Rupture originelle - en plus petit, en plus doux, mais un écho tout de même. Toi aussi, tu recommences le monde.",
+    text: "Ce que tu viens de déclencher a un nom ancien. Chaque Big Bang que tu provoques est un écho miniature de LA Rupture originelle : en plus petit, en plus doux, mais un écho tout de même. Toi aussi, tu recommences le monde.",
   },
   {
     id: "frag_name", title: "Le Nom Interdit",
     unlock: (s) => s.gods.unlockedIds.length >= 6,
-    text: "Un seul Dieu refuse d'en parler : Némésis. Pas par ignorance - par jugement. Elle seule, dit-on, sait ce qui s'est vraiment passé. Et elle seule a décidé que personne ne le méritait encore.",
+    // Loris: "il faut aussi faire attention car dans l'histoire c'est
+    // némésis qui détient le savoir alors que [...] ce ne sera que le dieu
+    // caché derrière les secrets" - redirige entièrement vers ce dieu
+    // (jamais nommé ici), cohérent avec la nouvelle lore de Némésis
+    // (config.js, GODS) qui ne prétend plus tout savoir elle-même.
+    text: "Un nom ne figure sur aucune liste, ne se prononce dans aucun temple : celui du quatorzième. Certains Dieux jurent qu'il n'existe pas. D'autres refusent simplement d'en parler. Némésis, elle, se contente de dire qu'un seul être échappe à son jugement, et qu'elle préfère ne pas savoir pourquoi.",
   },
   {
     id: "frag_truth", title: "La Vérité",
     unlock: (s) => s.achievements.unlockedIds.length >= ACHIEVEMENTS.length,
-    text: "La Rupture n'était pas un accident, ni une attaque. C'était une question - posée par un Cosmos trop parfait pour savoir s'il méritait de durer. Chaque fusion que tu accomplis est une réponse. La tienne, jusqu'ici, a toujours été oui.",
+    // Loris: "je pense que ce serait efficace [...] permettre d'en
+    // apprendre plus sur l'histoire sans jamais réussir à comprendre la
+    // raison de la rupture" - le fragment donnait auparavant une réponse
+    // assez explicite (une "question posée par le Cosmos"). Récrit pour
+    // rester un mystère jusqu'au bout, même au sommet de la progression :
+    // la seule piste qui reste pointe vers le quatorzième (frag_name
+    // ci-dessus), sans jamais rien confirmer.
+    text: "Tu as tout accompli. Et pourtant la question reste entière : personne, pas même les treize, ne sait vraiment pourquoi le Cosmos s'est brisé ce jour-là. Une seule ombre a peut-être vu ce qui s'est réellement passé. Elle n'a jamais rien confirmé. Elle n'a jamais rien nié non plus.",
   },
 ];
 
